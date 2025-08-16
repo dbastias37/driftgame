@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Top‑Down Drift Racer — Pista Dibujada</title>
+  <title>Top-Down Drift Racer — Pista Dibujada</title>
   <style>
     html,body{height:100%;margin:0;background:#0b0b0b;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Arial}
     button{cursor:pointer;background:#2b72ff;border:none;color:#fff;padding:10px 16px;border-radius:10px;font-weight:700;box-shadow:0 6px 20px rgba(43,114,255,.3)}
@@ -33,6 +33,17 @@
     #btnStart{background:#00b341}
     #cWarn{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:8px 12px;background:rgba(0,0,0,.65);border:1px solid rgba(255,255,255,.2);border-radius:10px;color:#fff;z-index:30;display:none}
     #countHint{position:fixed;top:18%;left:50%;transform:translateX(-50%);font:bold 26px system-ui;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.6);z-index:15;display:none}
+
+    /* ======= ADICIONES: panel de coches (no interfiere con nada) ======= */
+    .modal{position:fixed;inset:0;display:grid;place-items:center;background:#000a;z-index:60}
+    .hidden{display:none}
+    .card{width:min(980px,92vw);background:#101215;border:1px solid #fff2;border-radius:14px;padding:16px 18px;box-shadow:0 20px 60px #0008}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .arrow{width:36px;height:36px;border-radius:9px;background:#fff1;color:#fff;border:1px solid #fff2;cursor:pointer}
+    .bar{height:8px;background:#0003;border:1px solid #fff3;border-radius:6px;overflow:hidden}
+    .bar>i{display:block;height:100%;background:linear-gradient(90deg,#3b82f6,#22d3ee);width:0%}
+    #carPreview{width:min(640px,72vw);height:300px;background:#0b0e12;border:1px solid #fff2;border-radius:10px}
+    .btn.gray{background:#374151}
   </style>
 </head>
 <body>
@@ -454,6 +465,143 @@
   })();
   </script>
 
+  <!-- ====== ADICIONES: Panel de coche y lógica sin tocar tu estructura ====== -->
+  <div id="carPanel" class="modal hidden">
+    <div class="card">
+      <h2 style="margin:0 0 10px">Elige tu coche</h2>
+      <div class="row" style="align-items:center;gap:14px">
+        <button id="carPrev" class="arrow">‹</button>
+        <canvas id="carPreview"></canvas>
+        <button id="carNext" class="arrow">›</button>
+      </div>
+      <div id="carName" style="font-weight:700;margin-top:10px">—</div>
+      <div id="carDesc" style="font-size:12px;opacity:.85">—</div>
+      <div class="row" style="margin-top:8px">
+        <div style="min-width:170px">Aceleración<div class="bar"><i id="barAcc"></i></div></div>
+        <div style="min-width:170px">Torque<div class="bar"><i id="barTrq"></i></div></div>
+        <div style="min-width:170px">Vel. máx<div class="bar"><i id="barVmax"></i></div></div>
+        <div style="min-width:170px">Peso<div class="bar"><i id="barMass"></i></div></div>
+      </div>
+      <div class="row" style="justify-content:space-between;margin-top:12px">
+        <button id="btnChooseStart" class="btn">Elegir y comenzar</button>
+        <button id="btnBackToGame" class="btn gray">Volver al juego</button>
+      </div>
+    </div>
+  </div>
 
+  <script>
+  // ===== Helpers UI añadidos =====
+  const carPanel=document.getElementById('carPanel');
+  (function injectBackButton(){
+    // botón "Volver al juego" dentro de la pizarra (sin editar HTML original)
+    const btn=document.createElement('button');
+    btn.textContent='Volver al juego'; btn.className='btn gray';
+    btn.style.position='absolute'; btn.style.right='16px'; btn.style.bottom='14px';
+    document.getElementById('startCard').appendChild(btn);
+    btn.addEventListener('click',()=>document.getElementById('startPanel').classList.add('hidden'));
+  })();
+
+  // ESC abre/cierras la pizarra (no reemplazo tu tecla R)
+  addEventListener('keydown',e=>{
+    if(e.key!=='Escape') return;
+    const sp=document.getElementById('startPanel');
+    if (!sp) return;
+    if(sp.classList.contains('hidden')) sp.classList.remove('hidden'); else sp.classList.add('hidden');
+    e.preventDefault();
+  });
+
+  // ===== Car select (no toca tu flujo si no lo usas) =====
+  const CAR_DATA=[
+    {name:'Sumaru Impressa GTI', color:'#2b72ff', stripes:0,
+     desc:'Tracción total afinada para drift estable y recuperaciones rápidas.',
+     stats:{acc:.75,trq:.70,vmax:.82,mass:.75},
+     tune:{engine:1.10, lat:0.95, hand:0.85, drag:0.98, mass:0.95}},
+    {name:'Chevriolette C´Maro V8', color:'#ff3b3b', stripes:2,
+     desc:'Muscle car pesado y con mucho par. Derrapa si abusas del gas.',
+     stats:{acc:.68,trq:1.00,vmax:.86,mass:1.20},
+     tune:{engine:1.20, lat:0.90, hand:0.80, drag:1.02, mass:1.15}},
+    {name:'Mclauren F1', color:'#ffd93b', stripes:0,
+     desc:'Muy veloz y estable. Gran aceleración y agarre en alta.',
+     stats:{acc:.90,trq:.82,vmax:1.00,mass:.92},
+     tune:{engine:1.25, lat:1.05, hand:0.90, drag:0.95, mass:0.92}},
+    {name:'Toiota Corona 1990', color:'#9aa0a6', stripes:0,
+     desc:'City car ágil y noble. Ligero, fácil de llevar.',
+     stats:{acc:.60,trq:.55,vmax:.70,mass:.95},
+     tune:{engine:0.95, lat:1.00, hand:1.00, drag:1.05, mass:0.95}},
+  ];
+  let carIdx=0, chosen=CAR_DATA[0];
+
+  const carPv=document.getElementById('carPreview'), pv=carPv.getContext('2d');
+  function drawCarPreview(color,stripes){
+    const w=carPv.width=carPv.clientWidth*devicePixelRatio,
+          h=carPv.height=carPv.clientHeight*devicePixelRatio;
+    pv.setTransform(1,0,0,1,0,0); pv.clearRect(0,0,w,h);
+    pv.translate(w/2,h/2); pv.scale(18,18); pv.rotate(-.05);
+    pv.fillStyle='rgba(0,0,0,.35)'; pv.beginPath(); pv.ellipse(0,1.2,4.2,.9,0,0,Math.PI*2); pv.fill();
+    pv.fillStyle=color; pv.beginPath(); pv.moveTo(-2.2,-4.2); pv.arcTo(2.2,-4.2,2.2,4.2,.6); pv.arcTo(2.2,4.2,-2.2,4.2,.6); pv.arcTo(-2.2,4.2,-2.2,-4.2,.6); pv.arcTo(-2.2,-4.2,2.2,-4.2,.6); pv.closePath(); pv.fill();
+    pv.fillStyle='#1b1f27'; pv.beginPath(); pv.moveTo(-1.6,-1.2); pv.arcTo(1.6,-1.2,1.6,1.6,.4); pv.arcTo(1.6,1.6,-1.6,1.6,.4); pv.arcTo(-1.6,1.6,-1.6,-1.2,.4); pv.arcTo(-1.6,-1.2,1.6,-1.2,.4); pv.closePath(); pv.fill();
+    if(stripes){ pv.fillStyle='#fff'; pv.fillRect(-.68,-4,.26,8); pv.fillRect(.42,-4,.26,8); }
+    pv.fillStyle='#111'; pv.fillRect(-2.4,-2.8,.5,1.2); pv.fillRect(1.9,-2.8,.5,1.2); pv.fillRect(-2.4,2.0,.5,1.2); pv.fillRect(1.9,2.0,.5,1.2);
+  }
+  function updatePanel(){
+    chosen=CAR_DATA[carIdx];
+    drawCarPreview(chosen.color,chosen.stripes);
+    document.getElementById('carName').textContent=chosen.name;
+    document.getElementById('carDesc').textContent=chosen.desc;
+    document.getElementById('barAcc').style.width=(chosen.stats.acc*100)+'%';
+    document.getElementById('barTrq').style.width=(chosen.stats.trq*100)+'%';
+    document.getElementById('barVmax').style.width=(chosen.stats.vmax*100)+'%';
+    document.getElementById('barMass').style.width=(chosen.stats.mass*100)+'%';
+  }
+  function openCarPanel(){ updatePanel(); carPanel.classList.remove('hidden'); }
+  function closeCarPanel(){ carPanel.classList.add('hidden'); }
+
+  document.getElementById('carPrev').onclick=()=>{ carIdx=(carIdx+CAR_DATA.length-1)%CAR_DATA.length; updatePanel(); };
+  document.getElementById('carNext').onclick=()=>{ carIdx=(carIdx+1)%CAR_DATA.length; updatePanel(); };
+  document.getElementById('btnBackToGame').onclick=closeCarPanel;
+
+  // Aplicar tune sin tocar clase Car: ajustar tras startCountdown()
+  function applyChosenToPlayer(){
+    if(!player) return;
+    player.color=chosen.color;
+    player.engineForce*=chosen.tune.engine;
+    player.baseLatFriction*=chosen.tune.lat;
+    player.handLatFriction*=chosen.tune.hand;
+    player.dragLinear*=chosen.tune.drag;
+    player.mass*=chosen.tune.mass;
+    // Pequeño detalle de franjas para el muscle car
+    player._stripes = chosen.stripes?2:0;
+  }
+  // Dibujar franjas encima del coche (envolvemos sin tocar clase)
+  (function patchStripes(){
+    const origDraw=Car.prototype.draw;
+    Car.prototype.draw=function(g,cam){
+      origDraw.call(this,g,cam);
+      if(!this._stripes) return;
+      g.save(); g.translate(cam.tx,cam.ty); g.scale(cam.s,cam.s);
+      g.translate(this.pos.x,this.pos.y); g.rotate(this.angle+Math.PI/2);
+      g.fillStyle='#fff'; g.fillRect(-.35,-2,.12,4); g.fillRect(.23,-2,.12,4);
+      g.restore();
+    };
+  })();
+
+  // Reemplazar la acción del botón Start por selección de coche (sin tocar tu asignación previa)
+  (function hookStart(){
+    const b=document.getElementById('btnStart');
+    if(!b) return;
+    b.onclick=null; // anulamos la asignación previa
+    b.addEventListener('click',()=>{
+      if(b.disabled) return;
+      openCarPanel();
+    });
+    document.getElementById('btnChooseStart').addEventListener('click',()=>{
+      closeCarPanel();
+      // usa tu startCountdown original
+      startCountdown();
+      // si arrancó, aplicar el coche
+      applyChosenToPlayer();
+    });
+  })();
+  </script>
 </body>
 </html>
