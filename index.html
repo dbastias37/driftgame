@@ -163,16 +163,16 @@ const elScore=$('#score'), elSpeed=$('#speed'), elLives=$('#lives'), elMulti=$('
 const PH2=['¡Buen drift!','¡Limpio!','Nice Slide!','Good Drift!','¡Suave!','Clean lines!'];
 const PH3=['¡Increíble!','¡Brutal!','Insane Drift!','¡Dominio total!','Legendary!','¡Bestia!'];
 
-/* ===== SPRITES PNG (Drive) ===== */
-const drive = id => `https://drive.google.com/uc?export=view&id=${id}`;
+/* ===== SPRITES PNG (Google Drive) ===== */
+function makeImage(url){ const img=new Image(); img.crossOrigin='anonymous'; img.src=url; return img; }
+const driveURL = id => `https://drive.google.com/uc?export=view&id=${id}`;
 
 const CAR_IMG = {
-  blue:   makeImage(drive('1J9E1h92ar_NzyM-SEN09fQ9VBJdz4JXW')), // Subaru / azul
-  red:    makeImage(drive('1YAP2ZnXLKbrXoHqChtHgF1Jyz7AS6FdO')), // Camaro / rojo
-  yellow: makeImage(drive('1Ba6Nf5jAAozWvy6odSvTXauXfT1SzOE5')), // McLaren / amarillo
-  gray:   makeImage(drive('1AxB6W4C7V7nEGlU4m9XH9W3qG7s7v4Yr')), // Corolla / gris
+  blue:   makeImage(driveURL('1mYuoZ3rokmmorvabmY6DeGP44tT4bG6N')), // Azul
+  red:    makeImage(driveURL('1ay0UuzWcx5Abkk499VMygNq_g5ee0gkR')), // Rojo
+  yellow: makeImage(driveURL('104g6rlHm7sti5lEszTgAuWOKGG5orLfC')), // Amarillo
+  gray:   makeImage(driveURL('1i7PPHtSUg9iPC3EshvDPMJTmxkCiLKB7')), // Gris
 };
-function makeImage(src){ const img=new Image(); img.crossOrigin='anonymous'; img.src=src; return img; }
 
 /* ===== Track ===== */
 class Track{
@@ -332,26 +332,43 @@ class Car{
       g.fillStyle=gr; g.beginPath(); g.arc(p.x,p.y,p.r,0,PI*2); g.fill();
     }
 
-    /* --- cuerpo del coche: PNG si existe, si no tu dibujo original --- */
-    g.translate(this.pos.x,this.pos.y); g.rotate(this.angle+PI/2);
-    const img=this.sprite;
-    if(img && (img.complete && (img.naturalWidth||img.width))){
-      const ih=4; // altura en "metros" del sprite en tu escala
-      const iw=ih*((img.naturalWidth||img.width)/((img.naturalHeight||img.height)||1));
-      g.drawImage(img,-iw/2,-ih/2,iw,ih);
-      // Rayas opcionales encima del sprite
-      if(this._stripes){ g.fillStyle='#fff'; g.fillRect(-.35,-2,.12,4); g.fillRect(.23,-2,.12,4); }
+    /* --- cuerpo del coche: dibujar PNG o rectángulo de fallback --- */
+    g.translate(this.pos.x, this.pos.y);
+    g.rotate(this.angle + Math.PI/2);
+
+    const img = this.sprite;
+    g.globalAlpha = 1;
+    if (img && (img.complete && (img.naturalWidth || img.width))) {
+      const ih = 4; // altura en unidades de mundo
+      const iw = ih * ((img.naturalWidth || img.width)/((img.naturalHeight || img.height)||1));
+      g.drawImage(img, -iw/2, -ih/2, iw, ih);
     } else {
-      // FALLBACK: tu aspecto original
-      g.fillStyle='rgba(0,0,0,.35)'; g.fillRect(-1.2,-2.2,2.4,4.4);
-      g.fillStyle=this.color; roundedRect(g,-1,-2,2,4,.4); g.fill();
-      g.fillStyle='#e6f1ff'; roundedRect(g,-.7,-1.1,1.4,1.6,.25); g.fill();
-      g.fillStyle='#111'; g.fillRect(-1,-1.9,.5,.9); g.fillRect(.5,-1.9,.5,.9); g.fillRect(-1,1,.5,.9); g.fillRect(.5,1,.5,.9);
+      // fallback al rectángulo original
+      g.fillStyle = this.color;
+      g.fillRect(-1.2,-2,2.4,4);
     }
     g.restore();
   }
 }
 function roundedRect(g,x,y,w,h,r){ const k=Math.min(r,Math.abs(w),Math.abs(h))*.5; g.beginPath(); g.moveTo(x+k,y); g.arcTo(x+w,y,x+w,y+h,k); g.arcTo(x+w,y+h,x,y+h,k); g.arcTo(x,y+h,x,y,k); g.arcTo(x,y,x+w,y,k); g.closePath(); }
+
+// (opcional) Dibujo de las franjas por encima del sprite
+(function stripesPatch(){
+  const draw = Car.prototype.draw;
+  Car.prototype.draw = function(g,cam){
+    draw.call(this,g,cam);
+    if(!this._stripes) return;
+    g.save();
+    g.translate(cam.tx,cam.ty);
+    g.scale(cam.s,cam.s);
+    g.translate(this.pos.x,this.pos.y);
+    g.rotate(this.angle + Math.PI/2);
+    g.fillStyle = '#fff';
+    g.fillRect(-.35,-2,.12,4);
+    g.fillRect(.23,-2,.12,4);
+    g.restore();
+  };
+})();
 
 /* ===== Cámara / HUD (SIN CAMBIOS a velocímetro) ===== */
 const camera={ s:22, tx:0, ty:0, shakeAmp:0, shakeTime:0, minS:10, maxS:42, targetS:22,
@@ -424,7 +441,6 @@ function gameOver(){ state='gameover'; overlayTitle.textContent='¡Game Over!'; 
 function finished(){ state='finished'; overlayTitle.textContent='¡Carrera terminada!'; overlayMsg.innerHTML=`Completaste ${TOTAL_LAPS} vueltas.<br>Total: <b>${formatTime(raceTime)}</b>`; overlay.classList.remove('hidden'); }
 function restart(){ state='menu'; startPanel.classList.remove('hidden'); overlay.classList.add('hidden'); }
 document.getElementById('restart').onclick=restart;
-document.getElementById('btnStart').onclick=()=>openCarPanel(); // <-- abrimos selector antes de comenzar
 document.addEventListener('dblclick',restart);
 
 function input(){ if(state!=='running') return {left:false,right:false,accel:false,brake:false,handbrake:false}; return { left:keys.has('a')||keys.has('arrowleft'), right:keys.has('d')||keys.has('arrowright'), accel:keys.has('w')||keys.has('arrowup'), brake:keys.has('s')||keys.has('arrowdown'), handbrake:keys.has(' ') }; }
@@ -477,11 +493,11 @@ requestAnimationFrame(loop);
 })();
 
 /* ====== Panel de coche (usa PNG + aplica sprite al player) ====== */
-const CAR_DATA=[
-  {name:'Sumaru Impressa GTI', sprite:'blue',   color:'#2b72ff', stripes:0, desc:'Tracción total afinada para drift estable y recuperaciones rápidas.', stats:{acc:.75,trq:.70,vmax:.82,mass:.75}, tune:{engine:1.10, lat:0.95, hand:0.85, drag:0.98, mass:0.95}},
-  {name:'Chevriolette C´Maro V8', sprite:'red', color:'#ff3b3b', stripes:2, desc:'Muscle car pesado y con mucho par. Derrapa si abusas del gas.',         stats:{acc:.68,trq:1.00,vmax:.86,mass:1.20}, tune:{engine:1.20, lat:0.90, hand:0.80, drag:1.02, mass:1.15}},
-  {name:'Mclauren F1', sprite:'yellow',         color:'#ffd93b', stripes:0, desc:'Muy veloz y estable. Gran aceleración y agarre en alta.',               stats:{acc:.90,trq:.82,vmax:1.00,mass:.92}, tune:{engine:1.25, lat:1.05, hand:0.90, drag:0.95, mass:0.92}},
-  {name:'Toiota Corona 1990', sprite:'gray',    color:'#9aa0a6', stripes:0, desc:'City car ágil y noble. Ligero, fácil de llevar.',                        stats:{acc:.60,trq:.55,vmax:.70,mass:.95}, tune:{engine:0.95, lat:1.00, hand:1.00, drag:1.05, mass:0.95}},
+const CAR_DATA = [
+  {name:'Sumaru Impressa GTI', sprite:'blue',   color:'#2b72ff', stripes:0, desc:'Drift estable y recuperaciones rápidas.', stats:{acc:.75,trq:.70,vmax:.82,mass:.75}, tune:{engine:1.10,lat:.95,hand:.85,drag:.98,mass:.95}},
+  {name:'Chevriolette C´Maro V8', sprite:'red', color:'#ff3b3b', stripes:2, desc:'Muscle car pesado con mucho par.',       stats:{acc:.68,trq:1.00,vmax:.86,mass:1.20}, tune:{engine:1.20,lat:.90,hand:.80,drag:1.02,mass:1.15}},
+  {name:'Mclauren F1', sprite:'yellow',         color:'#ffd93b', stripes:0, desc:'Muy veloz y estable.',                   stats:{acc:.90,trq:.82,vmax:1.00,mass:.92}, tune:{engine:1.25,lat:1.05,hand:.90,drag:.95,mass:.92}},
+  {name:'Toiota Corona 1990', sprite:'gray',    color:'#9aa0a6', stripes:0, desc:'City car ágil y noble.',                 stats:{acc:.60,trq:.55,vmax:.70,mass:.95}, tune:{engine:.95,lat:1.00,hand:1.00,drag:1.05,mass:.95}},
 ];
 let carIdx=0, chosen=CAR_DATA[0];
 
@@ -515,43 +531,38 @@ document.getElementById('carPrev').onclick=()=>{ carIdx=(carIdx+CAR_DATA.length-
 document.getElementById('carNext').onclick=()=>{ carIdx=(carIdx+1)%CAR_DATA.length; updatePanel(); };
 document.getElementById('btnBackToGame').onclick=closeCarPanel;
 
-// aplica el coche elegido (sin tocar tu física)
-function applyChosenToPlayer(){
+// aplica la selección al coche generado
+function applyChosen(){
   if(!player) return;
-  player.color=chosen.color;
-  player.sprite = CAR_IMG[chosen.sprite] || null; // <<<< usar PNG
-  player._stripes = chosen.stripes?2:0;           // rayas opcionales
-  // pequeños ajustes opcionales de tune (idéntico a antes)
-  player.engineForce*=chosen.tune.engine;
-  player.baseLatFriction*=chosen.tune.lat;
-  player.handLatFriction*=chosen.tune.hand;
-  player.dragLinear*=chosen.tune.drag;
-  player.mass*=chosen.tune.mass;
+  player.color  = chosen.color;
+  player.sprite = CAR_IMG[chosen.sprite] || null;
+
+  // Ajustes de “tune” sin tocar físicas base
+  player.engineForce     *= chosen.tune.engine;
+  player.baseLatFriction *= chosen.tune.lat;
+  player.handLatFriction *= chosen.tune.hand;
+  player.dragLinear      *= chosen.tune.drag;
+  player.mass            *= chosen.tune.mass;
+
+  // Franjas decorativas opcionales (no cambian HUD)
+  player._stripes = chosen.stripes ? 2 : 0;
 }
 
-document.getElementById('btnChooseStart').addEventListener('click',()=>{
-  closeCarPanel();
-  // arrancar carrera como siempre
-  startCountdown();
-  // aplicar sprite/tune al player ya creado
-  applyChosenToPlayer();
-});
-
-// botón “Volver al juego” dentro del startCard (no toca tu HTML)
-(function injectBackButton(){
-  const btn=document.createElement('button');
-  btn.textContent='Volver al juego'; btn.className='btn gray';
-  btn.style.position='absolute'; btn.style.right='16px'; btn.style.bottom='14px';
-  document.getElementById('startCard').appendChild(btn);
-  btn.addEventListener('click',()=>document.getElementById('startPanel').classList.add('hidden'));
+// Hook del botón Start → Selector
+(function hookStart(){
+  const b = document.getElementById('btnStart');
+  if(!b) return;
+  b.onclick = null;
+  b.addEventListener('click', ()=>{
+    if (b.disabled) return;
+    openCarPanel();
+  });
+  document.getElementById('btnChooseStart').addEventListener('click', ()=>{
+    closeCarPanel();
+    startCountdown();  // esta función ya crea 'player'
+    applyChosen();     // aplicar sprite y tune al coche ya creado
+  });
 })();
-// ESC abre/cierra el panel de dibujo
-addEventListener('keydown',e=>{
-  if(e.key!=='Escape') return;
-  const sp=document.getElementById('startPanel');
-  if (!sp) return;
-  if(sp.classList.contains('hidden')) sp.classList.remove('hidden'); else sp.classList.add('hidden');
-  e.preventDefault();
-});
+
 </script>
 </body></html>
