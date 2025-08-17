@@ -163,14 +163,14 @@ const elScore=$('#score'), elSpeed=$('#speed'), elLives=$('#lives'), elMulti=$('
 const PH2=['¡Buen drift!','¡Limpio!','Nice Slide!','Good Drift!','¡Suave!','Clean lines!'];
 const PH3=['¡Increíble!','¡Brutal!','Insane Drift!','¡Dominio total!','Legendary!','¡Bestia!'];
 
-/* ===== SPRITES PNG (pon tus enlaces de Drive) ===== */
+/* ===== SPRITES PNG (Drive) ===== */
 const drive = id => `https://drive.google.com/uc?export=view&id=${id}`;
-// TODO: Reemplaza DRIVE_ID_* por los tuyos:
+
 const CAR_IMG = {
-  blue:  makeImage(drive('DRIVE_ID_BLUE')),   // Subaru / azul
-  red:   makeImage(drive('DRIVE_ID_RED')),    // Camaro / rojo
-  yellow:makeImage(drive('DRIVE_ID_YELLOW')), // McLaren / amarillo
-  gray:  makeImage(drive('DRIVE_ID_GRAY')),   // Corolla / gris
+  blue:   makeImage(drive('1J9E1h92ar_NzyM-SEN09fQ9VBJdz4JXW')), // Subaru / azul
+  red:    makeImage(drive('1YAP2ZnXLKbrXoHqChtHgF1Jyz7AS6FdO')), // Camaro / rojo
+  yellow: makeImage(drive('1Ba6Nf5jAAozWvy6odSvTXauXfT1SzOE5')), // McLaren / amarillo
+  gray:   makeImage(drive('1AxB6W4C7V7nEGlU4m9XH9W3qG7s7v4Yr')), // Corolla / gris
 };
 function makeImage(src){ const img=new Image(); img.crossOrigin='anonymous'; img.src=src; return img; }
 
