@@ -102,6 +102,31 @@
 
   /* Asegurar z-index del startPanel por debajo del menú principal */
   #startPanel{ z-index:50; }
+
+  /* ===== Controles táctiles ===== */
+  #touchHUD{position:fixed;inset:0;pointer-events:none;z-index:70;display:none}
+  #touchHUD.show{display:block}
+  .touch-wrap{position:absolute;bottom:20px}
+  #stickZone{left:20px;width:180px;height:180px;border-radius:16px;background:rgba(0,0,0,.35);border:1px solid #fff2;pointer-events:auto;touch-action:none}
+  #stick{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:120px;height:120px;border-radius:999px;background:rgba(255,255,255,.06);
+    border:1px solid #fff2;box-shadow:0 8px 24px #0006;
+  }
+  #knob{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:56px;height:56px;border-radius:999px;background:#2b72ff;border:2px solid #fff3;
+    box-shadow:0 6px 16px rgba(43,114,255,.5);
+  }
+  #gasZone{right:20px;width:220px;height:220px;border-radius:16px;background:rgba(0,0,0,.25);border:1px solid #fff2;pointer-events:auto;touch-action:none}
+  #btnGas{
+    position:absolute;right:34px;bottom:34px;width:150px;height:150px;border-radius:999px;
+    background:#00b341;border:none;box-shadow:0 10px 30px rgba(0,179,65,.45);pointer-events:auto;touch-action:none;
+    font-weight:800;color:#fff;font-size:18px;
+  }
+
+  /* Evitar scroll/zoom accidental en móvil */
+  html, body, canvas, #touchHUD, #stickZone, #gasZone { touch-action: none; }
 </style>
 </head>
 <body>
@@ -244,6 +269,18 @@
     <button id="copyCode">Copiar</button>
   </div>
 
+  <!-- ===== HUD táctil ===== -->
+  <div id="touchHUD">
+    <div class="touch-wrap" id="stickZone">
+      <div id="stick">
+        <div id="knob"></div>
+      </div>
+    </div>
+    <div class="touch-wrap" id="gasZone">
+      <button id="btnGas">GAS</button>
+    </div>
+  </div>
+
 <script>
 "use strict";
 /* ===== Util ===== */
@@ -278,6 +315,84 @@ const elScore=$('#score'), elSpeed=$('#speed'), elLives=$('#lives'), elMulti=$('
 const startPanel=document.getElementById('startPanel');
 const PH2=['¡Buen drift!','¡Limpio!','Nice Slide!','Good Drift!','¡Suave!','Clean lines!'];
 const PH3=['¡Increíble!','¡Brutal!','Insane Drift!','¡Dominio total!','Legendary!','¡Bestia!'];
+
+/* ===== Touch Input ===== */
+const touchHUD = document.getElementById('touchHUD');
+const stickZone = document.getElementById('stickZone');
+const stick = document.getElementById('stick');
+const knob = document.getElementById('knob');
+const btnGas = document.getElementById('btnGas');
+
+const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+const touch = { steerAxis: 0, accel: false };
+if(isTouchDevice){ touchHUD.classList.add('show'); }
+
+function setKnob(dx, dy){
+  knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+}
+function resetKnob(){ setKnob(0,0); touch.steerAxis = 0; }
+
+/* Joystick: solo eje X controla dirección */
+(function initJoystick(){
+  if(!stickZone) return;
+  const rectToLocal = (clientX, clientY)=>{
+    const r = stick.getBoundingClientRect();
+    const cx = r.left + r.width/2, cy = r.top + r.height/2;
+    return { x: clientX - cx, y: clientY - cy, R: Math.min(r.width, r.height)*0.5 - 18 };
+  };
+  const onMove = (clientX, clientY, active)=>{
+    const {x,y,R} = rectToLocal(clientX, clientY);
+    const len = Math.hypot(x,y) || 1;
+    const rx = Math.max(-R, Math.min(R, x));
+    const ry = Math.max(-R, Math.min(R, y));
+    setKnob(rx, ry);
+    // Normalizado
+    const nx = rx / R; // [-1,1]
+    touch.steerAxis = active ? Math.max(-1, Math.min(1, nx)) : 0;
+  };
+  let active = false;
+
+  const start = e=>{
+    active = true;
+    const t = e.touches ? e.touches[0] : e;
+    onMove(t.clientX, t.clientY, true);
+    e.preventDefault();
+  };
+  const move = e=>{
+    if(!active) return;
+    const t = e.touches ? e.touches[0] : e;
+    onMove(t.clientX, t.clientY, true);
+    e.preventDefault();
+  };
+  const end = e=>{
+    active = false; resetKnob();
+    e.preventDefault();
+  };
+
+  stickZone.addEventListener('touchstart', start, {passive:false});
+  stickZone.addEventListener('touchmove',  move,  {passive:false});
+  stickZone.addEventListener('touchend',   end,   {passive:false});
+  stickZone.addEventListener('mousedown',  start);
+  window.addEventListener('mousemove',     move);
+  window.addEventListener('mouseup',       end);
+})();
+
+/* Botón GAS */
+(function initGas(){
+  if(!btnGas) return;
+  const set = v => touch.accel = v;
+
+  const down = e=>{ set(true); e.preventDefault(); };
+  const up   = e=>{ set(false); e.preventDefault(); };
+
+  btnGas.addEventListener('touchstart', down, {passive:false});
+  btnGas.addEventListener('touchend',   up,   {passive:false});
+  btnGas.addEventListener('touchcancel',up,   {passive:false});
+  btnGas.addEventListener('mousedown',  down);
+  window.addEventListener('mouseup',    up);
+})();
+
+let uiAccum=0, UI_DT=1/10; // ~10 Hz
 
 /* ===== SPRITES LOCALES (reemplazar todo lo anterior de Drive/Imgur) ==== */
 function mkLocal(path){
@@ -535,7 +650,11 @@ class Car{
     return s;
   }
   update(dt,input,track){
-    const steer=(input.left?-1:0)+(input.right?1:0), thr=input.accel?1:0, br=input.brake?1:0; this.handbrake=!!input.handbrake;
+    // Soporta eje analógico si existe, si no cae a binario
+    const steer = (typeof input.steerAxis === 'number')
+      ? clamp(input.steerAxis, -1, 1)
+      : ( (input.left?-1:0) + (input.right?1:0) );
+    const thr=input.accel?1:0, br=input.brake?1:0; this.handbrake=!!input.handbrake;
     this._physStep(dt,steer,thr,br);
     const f={x:C(this.angle),y:S(this.angle)}, r={x:-S(this.angle),y:C(this.angle)};
     const vlong=this.vel.x*f.x+this.vel.y*f.y, vlat=this.vel.x*r.x+this.vel.y*r.y, kmh=this.worldSpeed()*3.6;
@@ -551,15 +670,15 @@ class Car{
       else if(kmh < down && this.gear > 1){ this.gear--; this.shiftTimer=this.shiftDur; }
     }
     this.updateSmoke(dt,f,r,0,kmh,vlat); if(this.invuln>0) this.invuln-=dt;
-    elScore.textContent=this.score.toFixed(0); elSpeed.textContent=(kmh).toFixed(0); elLives.textContent=this.lives; elMulti.textContent=this.mult.toFixed(0);
     if(this.trailOn) this.spawnTrails(f,r,dt,Math.min(.9,.35+Math.abs(vlat))); this._lastTrailOn=this.trailOn;
     return {sIndex:s.i, tang:s.tang};
   }
   hit(track,s){ this.invuln=1; this.best=Math.max(this.best,this.score|0); this.score=0; this.comboState=0; this.driftTime=0; this.comboBreak=.8; this.pos.x=s.cx; this.pos.y=s.cy; this.vel.x*=-.25; this.vel.y*=.4; this.gear=Math.max(1,this.gear-1); camera.shake(8,280); }
-  spawnTrails(f,r,dt,int){ const ro=-this.length*.5, rc={x:this.pos.x+f.x*ro,y:this.pos.y+f.y*ro}, ht=.9, lw={x:rc.x-r.x*ht,y:rc.y-r.y*ht}, rw={x:rc.x+r.x*ht,y:rc.y+r.y*ht}, a=clamp(.18+(int||0)*.1,.18,.9); this.tireTrails.push({x1:lw.x,y1:lw.y,x2:rw.x,y2:rw.y,a}); if(this.tireTrails.length>4000) this.tireTrails.splice(0,this.tireTrails.length-4000); }
+  spawnTrails(f,r,dt,int){ const ro=-this.length*.5, rc={x:this.pos.x+f.x*ro,y:this.pos.y+f.y*ro}, ht=.9, lw={x:rc.x-r.x*ht,y:rc.y-r.y*ht}, rw={x:rc.x+r.x*ht,y:rc.y+r.y*ht}, a=clamp(.18+(int||0)*.1,.18,.9); this.tireTrails.push({x1:lw.x,y1:lw.y,x2:rw.x,y2:rw.y,a}); const MAX_TR=isTouchDevice?2500:4000; if(this.tireTrails.length>MAX_TR) this.tireTrails.splice(0,this.tireTrails.length-MAX_TR); }
   updateSmoke(dt,f,r,slip,kmh,vlat){
     const nearRed1=(this.gear===1&&this.throttleSm>0.6&&kmh>this.gearMax[0]*0.9);
     const rate=(this.trailOn||nearRed1)?(40+220*clamp(Math.max(0,slip-.18)/.6,0,1)*clamp(kmh/120,0,1))*(nearRed1?1.4:1):0; this.smokeAcc+=rate*dt;
+    if(dt>0.022) this.smokeAcc*=0.9;
     const ro=-this.length*.5, rc={x:this.pos.x+f.x*ro,y:this.pos.y+f.y*ro}, wo=.9;
     while(this.smokeAcc>=1){
       this.smokeAcc-=1;
@@ -570,7 +689,8 @@ class Car{
     }
     const drag=.92;
     for(let i=this.smoke.length-1;i>=0;i--){ const p=this.smoke[i]; p.life+=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vx*=drag; p.vy*=drag; p.r+=p.grow*dt; p.a*=.98; if(p.life>1.2||p.a<.03) this.smoke.splice(i,1); }
-    if(this.smoke.length>1200) this.smoke.splice(0,this.smoke.length-1200);
+    const MAX_SM=isTouchDevice?900:1200;
+    if(this.smoke.length>MAX_SM) this.smoke.splice(0,this.smoke.length-MAX_SM);
   }
   draw(g,cam){
     g.save(); g.translate(cam.tx,cam.ty); g.scale(cam.s,cam.s);
@@ -739,13 +859,49 @@ function restart(){ state='menu'; startPanel.classList.remove('hidden'); overlay
 document.getElementById('restart').onclick=restart;
 document.addEventListener('dblclick',restart);
 
-function input(){ if(state!=='running') return {left:false,right:false,accel:false,brake:false,handbrake:false}; return { left:keys.has('a')||keys.has('arrowleft'), right:keys.has('d')||keys.has('arrowright'), accel:keys.has('w')||keys.has('arrowup'), brake:keys.has('s')||keys.has('arrowdown'), handbrake:keys.has(' ') }; }
+function input(){
+  // Si no estamos corriendo, no reportar inputs
+  if(state!=='running') return {left:false,right:false,accel:false,brake:false,handbrake:false,steerAxis:0};
+
+  // Teclado
+  const kLeft  = keys.has('a') || keys.has('arrowleft');
+  const kRight = keys.has('d') || keys.has('arrowright');
+  const kAccel = keys.has('w') || keys.has('arrowup');
+  const kBrake = keys.has('s') || keys.has('arrowdown');
+  const kHand  = keys.has(' ');
+
+  // Táctil (si existe)
+  const steerAxis = isTouchDevice ? touch.steerAxis : 0;
+  const accel     = (isTouchDevice ? touch.accel : false) || kAccel;
+
+  return {
+    left: kLeft,
+    right: kRight,
+    accel,
+    brake: kBrake,
+    handbrake: kHand,
+    steerAxis
+  };
+}
 function computeDeltaIndex(p,c,L){ let d=c-p; if(d<-L/2) d+=L; if(d>L/2) d-=L; return d; }
 function drawComboOverlay(){ if(!player) return; if(player.comboBreak>0){ const t=player.comboBreak, a=clamp(t/.8,0,1); ctx.save(); ctx.globalAlpha=a; ctx.fillStyle='#ff5050'; ctx.font='bold 64px system-ui'; ctx.textAlign='center'; ctx.fillText('COMBO BREAK!',cvs.width/2,cvs.height*.24); ctx.restore(); player.comboBreak-=dt; return; } if(player.comboState<2) return; const cx=cvs.width/2, cy=cvs.height*.22, color=player.comboState===2?'#2eff88':'#ff4444', pulse=player.comboState===3?1+.08*Math.sin(perfNow*10):1, flash=player.comboFlashTime>0?.35*(player.comboFlashTime/.5):0, scale=pulse+flash; ctx.save(); ctx.translate(cx,cy); ctx.scale(scale,scale); ctx.textAlign='center'; ctx.font='bold 72px system-ui'; ctx.shadowColor=color; ctx.shadowBlur=30; ctx.fillStyle=color; ctx.fillText('X'+player.comboState,0,0); ctx.shadowBlur=0; ctx.font='bold 26px system-ui'; ctx.fillStyle='rgba(255,255,255,.95)'; ctx.fillText(player.comboPhrase||(player.comboState===2?'Good Drift!':'Insane Drift!'),0,34); ctx.font='bold 36px system-ui'; ctx.fillStyle='#fff'; ctx.fillText('+'+Math.floor(player.comboPoints).toLocaleString(),0,74); ctx.restore(); }
   function drawWarnings(){ const warn=$('#cWarn'), hint=$('#countHint'); if(!player) return; warn.style.display='none'; hint.style.display='none'; if(player.offTimer>0){ const left=clamp(5-player.offTimer,0,5); if(left>0){ warn.style.display='block'; warn.textContent=`Vuelve a la pista: ${left.toFixed(1)}s`; } else { player.lives--; elLives.textContent=player.lives; player.offTimer=0; const s=track.sample(player.pos.x,player.pos.y), t=track.tangentAt(s.i); player.pos.x=s.cx; player.pos.y=s.cy; player.angle=t; if(player.lives<=0) gameOver(); } } if(wrongTimer>0){ const left=clamp(4-wrongTimer,0,4); if(left>0){ hint.style.display='block'; hint.textContent=`Dirección contraria: ${left.toFixed(1)}s`; } else { player.lives--; elLives.textContent=player.lives; wrongTimer=0; if(player.lives<=0) gameOver(); } } }
 function drawSpeedHud(){ drawMiniMap(ctx,track,player); drawSpeedometer(ctx,player.worldSpeed()*3.6); drawGearPanel(ctx, player.gear||1, player.redBlink); }
 function formatTime(t){ const m=Math.floor(t/60), s=Math.floor(t%60), ms=Math.floor((t*1000)%1000).toString().padStart(3,'0'); return `${m}:${s.toString().padStart(2,'0')}.${ms}`; }
 function onLap(){ lapList.insertAdjacentHTML('beforeend',`<li>Lap ${lap}: ${formatTime(lapTime)}</li>`); lap++; lapTime=0; if(lap>TOTAL_LAPS) finished(); }
+
+function updateHUD(dt){
+  uiAccum += dt;
+  if(uiAccum < UI_DT) return;
+  uiAccum = 0;
+  if(player){
+    elScore.textContent = player.score.toFixed(0);
+    elSpeed.textContent = (player.worldSpeed()*3.6).toFixed(0);
+    elLives.textContent = player.lives;
+    elMulti.textContent = player.mult.toFixed(0);
+    elLap.textContent   = `${Math.min(lap,TOTAL_LAPS)}/${TOTAL_LAPS}`;
+  }
+}
 
 /* ===== Loop ===== */
 let lastTS=performance.now()/1000;
@@ -762,9 +918,10 @@ function loop(ms){
   camera.update(player||{pos:{x:0,y:0}});
   ctx.setTransform(1,0,0,1,0,0); ctx.fillStyle=bgPat; ctx.fillRect(0,0,cvs.width,cvs.height);
   if(track) track.draw(ctx,camera);
-  if(player){ player.draw(ctx,camera); drawSpeedHud(); elLap.textContent=`${Math.min(lap,TOTAL_LAPS)}/${TOTAL_LAPS}`; }
+  if(player){ player.draw(ctx,camera); drawSpeedHud(); }
   if(state==='countdown'){ ctx.save(); ctx.fillStyle='rgba(0,0,0,.45)'; ctx.fillRect(0,0,cvs.width,cvs.height); ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.font='bold 72px system-ui'; ctx.fillText(countdown>0?String(countdown):'GO!', cvs.width/2, cvs.height/2-20); ctx.restore(); }
   drawComboOverlay(); drawWarnings(); raceNow.textContent=formatTime(raceTime); lapNow.textContent=formatTime(lapTime);
+  updateHUD(dt);
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
@@ -830,6 +987,7 @@ function drawCarPreview(){
     pv.save();
     const ih=h*0.62;
     const iw=ih*((img.naturalWidth||img.width)/Math.max(1,(img.naturalHeight||img.height)));
+    pv.rotate(-Math.PI/2); // trompa hacia arriba (vertical)
     pv.drawImage(img,-iw/2,-ih/2,iw,ih);
     pv.restore();
     pv.restore();
@@ -902,6 +1060,13 @@ function applyChosen(){
 startPanel.classList.add('hidden');
 mainMenu.classList.remove('hidden');
 shareBox.style.display='none';
+
+if(isTouchDevice){
+  document.body.classList.add('is-touch');
+  touchHUD.classList.add('show');
+} else {
+  touchHUD.classList.remove('show');
+}
 
 </script>
 </body></html>
