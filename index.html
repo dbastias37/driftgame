@@ -67,7 +67,7 @@
   /* Asegura buen contraste en el modal */
   #carPanel .card{color:#fff;}
 
-  /* ====== Menús y share ====== */
+  /* ====== Menús ====== */
   #mainMenu, #challengeMenu{
     position:fixed; inset:0; display:grid; place-items:center;
     background:rgba(0,0,0,.75); z-index:120; color:#fff;
@@ -80,15 +80,6 @@
   .menu-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .menu-card h1{ margin:0 0 8px; }
   .menu-card .muted{ opacity:.85; margin-top:6px; }
-
-  #shareBox{
-    position:fixed; left:50%; bottom:14px; transform:translateX(-50%);
-    display:none; gap:10px; align-items:center; z-index:110;
-    background:rgba(0,0,0,.7); border:1px solid #fff2; color:#fff;
-    padding:8px 10px; border-radius:10px; font:13px system-ui;
-  }
-  #shareBox code{ font-family:ui-monospace, SFMono-Regular, Menlo, monospace; white-space:nowrap; }
-  #shareBox .sm{ font-size:12px; opacity:.9; }
 
   /* En challenge: cards simples */
   .challenge-list{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
@@ -126,6 +117,23 @@
   }
   /* Evitar scroll/zoom accidental en móvil */
   html, body, canvas, #touchHUD, #stickZone, #gasZone { touch-action: none; }
+
+  /* Botón único para activar HUD táctil */
+  #btnTouchHUD{
+    position:fixed; right:14px; bottom:14px; z-index:120;
+    border:none; border-radius:999px; padding:12px 14px; font-weight:800;
+    background:#2b72ff; color:#fff; box-shadow:0 10px 30px rgba(43,114,255,.45);
+  }
+  #btnTouchHUD.on{ background:#00b341; }
+
+  /* Fila “El ID de tu pista” dentro del Start Panel */
+  #trackIdRow{
+    display:none; gap:8px; align-items:center; margin-top:12px;
+  }
+  #trackId{
+    flex:1; padding:10px; border-radius:10px; border:1px solid #fff2;
+    background:#0b0e12; color:#fff; font-family:ui-monospace,monospace;
+  }
 </style>
 </head>
 <body>
@@ -184,6 +192,12 @@
           <div id="bMsg" class="muted">Traza la pista…</div>
         </div>
       </div>
+      <div id="trackIdRow">
+        <div class="muted" style="min-width:130px"><b>El ID de tu pista:</b></div>
+        <input id="trackId" readonly value="—" />
+        <button id="copyTrackId">Copiar</button>
+      </div>
+      <div class="muted" style="margin-top:6px">Cópialo y compártelo con tus amigos.</div>
     </div>
   </div>
 
@@ -261,12 +275,6 @@
     </div>
   </div>
 
-  <!-- ===== Share box (código pista) ===== -->
-  <div id="shareBox">
-    <span class="sm">Código de pista:</span>
-    <code id="shareCode">—</code>
-    <button id="copyCode">Copiar</button>
-  </div>
   <!-- ===== HUD táctil ===== -->
   <div id="touchHUD">
     <div class="touch-wrap" id="stickZone">
@@ -278,6 +286,7 @@
       <button id="btnGas">GAS</button>
     </div>
   </div>
+  <button id="btnTouchHUD" style="display:none">TÁCTIL</button>
 
 <script>
 "use strict";
@@ -314,7 +323,7 @@ const startPanel=document.getElementById('startPanel');
 const PH2=['¡Buen drift!','¡Limpio!','Nice Slide!','Good Drift!','¡Suave!','Clean lines!'];
 const PH3=['¡Increíble!','¡Brutal!','Insane Drift!','¡Dominio total!','Legendary!','¡Bestia!'];
 
-/* ===== Touch Input (CLEAN) ===== */
+/* ===== Touch Input (UNICO) ===== */
 const touchHUD = document.getElementById('touchHUD');
 const stickZone = document.getElementById('stickZone');
 const stick = document.getElementById('stick');
@@ -367,6 +376,20 @@ function resetKnob(){ setKnob(0,0); touch.steerAxis = 0; }
   btnGas.addEventListener('mousedown',  down);
   window.addEventListener('mouseup',    up);
 })();
+
+// Mostrar botón solo si el dispositivo soporta touch
+const btnTouchHUD = document.getElementById('btnTouchHUD');
+if(isTouchDevice && btnTouchHUD){
+  btnTouchHUD.style.display = 'inline-block';
+  touchHUD.classList.remove('show');
+  btnTouchHUD.addEventListener('click', ()=>{
+    const on = !touchHUD.classList.contains('show');
+    touchHUD.classList.toggle('show', on);
+    btnTouchHUD.classList.toggle('on', on);
+    btnTouchHUD.textContent = on ? 'TÁCTIL ON' : 'TÁCTIL';
+    if(!on){ touch.accel=false; resetKnob(); }
+  });
+}
 
 
 /* ===== SPRITES LOCALES (reemplazar todo lo anterior de Drive/Imgur) ==== */
@@ -447,20 +470,26 @@ function decodeTrack(code){
   }catch(e){ return null; }
 }
 
-// Share box
-const shareBox = document.getElementById('shareBox');
-const shareCodeEl = document.getElementById('shareCode');
-const copyCodeBtn = document.getElementById('copyCode');
-function showShareFromTrack(tr){
+// ====== TRACK ID helpers (reutiliza encodeTrack/decodeTrack existentes) ======
+function updateTrackIdUI(tr){
+  const row = document.getElementById('trackIdRow');
+  const input = document.getElementById('trackId');
+  if(!row || !input) return;
+  if(!tr){ row.style.display='none'; return; }
   const code = encodeTrack(tr.points);
-  shareCodeEl.textContent = code;
-  shareBox.style.display = 'flex';
-  try{ history.replaceState(null,'', '#t='+code); }catch(_){}
+  input.value = code;
+  row.style.display = 'flex';
 }
-copyCodeBtn?.addEventListener('click', ()=>{
-  const c = shareCodeEl.textContent || '';
-  navigator.clipboard?.writeText(c);
-});
+(function wireCopyId(){
+  const btn = document.getElementById('copyTrackId');
+  const input = document.getElementById('trackId');
+  btn?.addEventListener('click', ()=>{
+    if(!input?.value) return;
+    navigator.clipboard?.writeText(input.value);
+    btn.textContent = 'Copiado';
+    setTimeout(()=>btn.textContent='Copiar', 900);
+  });
+})();
 
 // Menús
 const mainMenu = document.getElementById('mainMenu');
@@ -484,8 +513,8 @@ document.getElementById('btnLoadCode')?.addEventListener('click', ()=>{
   const tr = decodeTrack(val);
   if(!tr){ alert('Código inválido'); return; }
   pendingTrackFactory = ()=>tr;
+  updateTrackIdUI(tr);
   openCarPanel();
-  mainMenu.classList.add('hidden');
 });
 
 /* ===== Pistas predefinidas (Challenge) ===== */
@@ -530,8 +559,7 @@ document.querySelectorAll('.btnPickChallenge').forEach(btn=>{
     const tr = decodeTrack('TRK.'+m[1].replace(/^TRK\./,''));
     if(tr){
       pendingTrackFactory = ()=>tr;
-      // mostrar menú y esperar selección de coche
-      mainMenu.classList.add('hidden');
+      updateTrackIdUI(tr);
       openCarPanel();
     }
   }
@@ -798,31 +826,17 @@ function makeTrackFromBoard(){
   const smooth=chaikinClosed(closed,9), uni=resampleClosed(smooth,4), world=toWorld(uni);
   return new Track(world);
 }
-function startCountdown(){
-  track=makeTrackFromBoard();
-  if(!track){
-    alert('Dibuja un circuito válido (cerrado, 600–8000 px).');
-    return;
-  }
-  player=new Car(track,'#2b72ff');
-  state='countdown'; countdown=3; countdownTimer=0;
-  overlay.classList.add('hidden');
-  startPanel.classList.add('hidden');
-  lap=1; progress=0;
-  lastIdx=track.nearestIndex(player.pos.x,player.pos.y);
-  raceTime=0; lapTime=0; lapList.innerHTML='';
-  camera.s=camera.targetS=22;
-}
-
-function startRaceWithTrack(t){
-  track = t;
+function startWithTrack(tr){
+  if(!tr){ alert('Pista inválida.'); return; }
+  track = tr;
   player = new Car(track,'#2b72ff');
+  try{ applyChosen?.(); }catch(_){ }
   state='countdown'; countdown=3; countdownTimer=0;
   overlay.classList.add('hidden');
   startPanel.classList.add('hidden');
-  mainMenu.classList.add('hidden');
-  challengeMenu.classList.add('hidden');
-  closeCarPanel();
+  document.getElementById('mainMenu')?.classList.add('hidden');
+  document.getElementById('challengeMenu')?.classList.add('hidden');
+  try{ closeCarPanel?.(); }catch(_){ }
   lap=1; progress=0;
   lastIdx=track.nearestIndex(player.pos.x,player.pos.y);
   raceTime=0; lapTime=0; lapList.innerHTML='';
@@ -837,14 +851,12 @@ document.addEventListener('dblclick',restart);
 function input(){
   if(state!=='running') return {left:false,right:false,accel:false,brake:false,handbrake:false,steerAxis:0};
 
-  // Teclado
   const kLeft  = keys.has('a') || keys.has('arrowleft');
   const kRight = keys.has('d') || keys.has('arrowright');
   const kAccel = keys.has('w') || keys.has('arrowup');
   const kBrake = keys.has('s') || keys.has('arrowdown');
   const kHand  = keys.has(' ');
 
-  // Táctil
   const steerAxis = isTouchDevice ? touch.steerAxis : 0;
   const accel     = (isTouchDevice ? touch.accel : false) || kAccel;
 
@@ -1010,15 +1022,10 @@ function applyChosen(){
   });
 
   document.getElementById('btnChooseStart').addEventListener('click', ()=>{
-    if(!pendingTrackFactory){
-      // fallback anterior (compat)
-      pendingTrackFactory = ()=>makeTrackFromBoard();
-    }
-    const tr = pendingTrackFactory();
-    if(!tr){ alert('Pista inválida. Dibuja un circuito válido o elige otra.'); return; }
-    startRaceWithTrack(tr);    // iniciar con la pista ya creada
-    applyChosen();             // aplicar coche + transmisión
-    showShareFromTrack(tr);    // mostrar código
+    const tr = pendingTrackFactory ? pendingTrackFactory() : makeTrackFromBoard();
+    if(!tr){ alert('Pista inválida. Dibuja o elige otra.'); return; }
+    updateTrackIdUI(tr);
+    startWithTrack(tr);
     pendingTrackFactory = null;
   });
 })();
@@ -1026,13 +1033,6 @@ function applyChosen(){
 // Al inicio, ocultar pizarra y mostrar menú principal
 startPanel.classList.add('hidden');
 mainMenu.classList.remove('hidden');
-shareBox.style.display='none';
-
-if(isTouchDevice){
-  touchHUD.classList.add('show');
-}else{
-  touchHUD.classList.remove('show');
-}
 
 </script>
 </body></html>
