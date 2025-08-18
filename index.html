@@ -324,6 +324,10 @@ const startPanel=document.getElementById('startPanel');
 const PH2=['¡Buen drift!','¡Limpio!','Nice Slide!','Good Drift!','¡Suave!','Clean lines!'];
 const PH3=['¡Increíble!','¡Brutal!','Insane Drift!','¡Dominio total!','Legendary!','¡Bestia!'];
 
+// Frecuencia del HUD (~10 Hz)
+let uiAccum = 0;
+const UI_DT = 1/10;
+
 /* ===== Touch Input (UNICO) ===== */
 const touchHUD = document.getElementById('touchHUD');
 const stickZone = document.getElementById('stickZone');
