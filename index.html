@@ -124,11 +124,6 @@
     background:#00b341;border:none;box-shadow:0 10px 30px rgba(0,179,65,.45);pointer-events:auto;touch-action:none;
     font-weight:800;color:#fff;font-size:18px;
   }
-
-codex/refactor-hud-y-corregir-angulo-del-coche-nhzgec
-  #btnToggleTouch{position:fixed;bottom:12px;right:12px;z-index:80;display:none}
-  #btnToggleTouch.on{background:#00b341}
-main
   /* Evitar scroll/zoom accidental en móvil */
   html, body, canvas, #touchHUD, #stickZone, #gasZone { touch-action: none; }
 </style>
@@ -272,11 +267,6 @@ main
     <code id="shareCode">—</code>
     <button id="copyCode">Copiar</button>
   </div>
-
-codex/refactor-hud-y-corregir-angulo-del-coche-nhzgec
-  <button id="btnToggleTouch">Activar táctil</button>
-
- main
   <!-- ===== HUD táctil ===== -->
   <div id="touchHUD">
     <div class="touch-wrap" id="stickZone">
@@ -324,86 +314,39 @@ const startPanel=document.getElementById('startPanel');
 const PH2=['¡Buen drift!','¡Limpio!','Nice Slide!','Good Drift!','¡Suave!','Clean lines!'];
 const PH3=['¡Increíble!','¡Brutal!','Insane Drift!','¡Dominio total!','Legendary!','¡Bestia!'];
 
-/* ===== Touch Input ===== */
+/* ===== Touch Input (CLEAN) ===== */
 const touchHUD = document.getElementById('touchHUD');
 const stickZone = document.getElementById('stickZone');
 const stick = document.getElementById('stick');
 const knob = document.getElementById('knob');
 const btnGas = document.getElementById('btnGas');
- codex/refactor-hud-y-corregir-angulo-del-coche-nhzgec
-const btnToggleTouch = document.getElementById('btnToggleTouch');
 
 const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 const touch = { steerAxis: 0, accel: false };
-let touchEnabled = false;
-if(isTouchDevice){ btnToggleTouch.style.display='block'; }
-
-
-const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-const touch = { steerAxis: 0, accel: false };
-if(isTouchDevice){ touchHUD.classList.add('show'); }
- main
 
 function setKnob(dx, dy){
   knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
 }
 function resetKnob(){ setKnob(0,0); touch.steerAxis = 0; }
 
- codex/refactor-hud-y-corregir-angulo-del-coche-nhzgec
-if(btnToggleTouch){
-  btnToggleTouch.addEventListener('click',()=>{
-    touchEnabled = !touchEnabled;
-    btnToggleTouch.textContent = touchEnabled ? 'Desactivar táctil' : 'Activar táctil';
-    btnToggleTouch.classList.toggle('on', touchEnabled);
-    touchHUD.classList.toggle('show', touchEnabled);
-    if(!touchEnabled){ touch.accel=false; resetKnob(); }
-  });
-}
-
- main
-/* Joystick: solo eje X controla dirección */
+/* Joystick: eje X controla la dirección */
 (function initJoystick(){
   if(!stickZone) return;
-  const rectToLocal = (clientX, clientY)=>{
+  const center = ()=>{
     const r = stick.getBoundingClientRect();
-    const cx = r.left + r.width/2, cy = r.top + r.height/2;
-    return { x: clientX - cx, y: clientY - cy, R: Math.min(r.width, r.height)*0.5 - 18 };
+    return { cx: r.left + r.width/2, cy: r.top + r.height/2, R: Math.min(r.width, r.height)*0.5 - 18 };
   };
-  const onMove = (clientX, clientY, active)=>{
-    const {x,y,R} = rectToLocal(clientX, clientY);
-    const len = Math.hypot(x,y) || 1;
-    const rx = Math.max(-R, Math.min(R, x));
-    const ry = Math.max(-R, Math.min(R, y));
+  const moveTo = (clientX, clientY, active)=>{
+    const {cx, cy, R} = center();
+    const x = clientX - cx, y = clientY - cy;
+    const rx = clamp(x, -R, R), ry = clamp(y, -R, R);
     setKnob(rx, ry);
-    // Normalizado
-    const nx = rx / R; // [-1,1]
-    touch.steerAxis = active ? Math.max(-1, Math.min(1, nx)) : 0;
+    touch.steerAxis = active ? clamp(rx / R, -1, 1) : 0;
   };
   let active = false;
-
-  const start = e=>{
- codex/refactor-hud-y-corregir-angulo-del-coche-nhzgec
-    if(!touchEnabled) return;
- main
-    active = true;
-    const t = e.touches ? e.touches[0] : e;
-    onMove(t.clientX, t.clientY, true);
-    e.preventDefault();
-  };
-  const move = e=>{
- codex/refactor-hud-y-corregir-angulo-del-coche-nhzgec
-    if(!active || !touchEnabled) return;
-
-    if(!active) return;
- main
-    const t = e.touches ? e.touches[0] : e;
-    onMove(t.clientX, t.clientY, true);
-    e.preventDefault();
-  };
-  const end = e=>{
-    active = false; resetKnob();
-    e.preventDefault();
-  };
+  const start = e=>{ active = true; const t = e.touches? e.touches[0] : e; moveTo(t.clientX, t.clientY, true); e.preventDefault(); };
+  const move  = e=>{ if(!active) return; const t = e.touches? e.touches[0] : e; moveTo(t.clientX, t.clientY, true); e.preventDefault(); };
+  const end   = e=>{ active = false; resetKnob(); e.preventDefault(); };
 
   stickZone.addEventListener('touchstart', start, {passive:false});
   stickZone.addEventListener('touchmove',  move,  {passive:false});
@@ -416,16 +359,8 @@ if(btnToggleTouch){
 /* Botón GAS */
 (function initGas(){
   if(!btnGas) return;
-  const set = v => touch.accel = v;
-
-codex/refactor-hud-y-corregir-angulo-del-coche-nhzgec
-  const down = e=>{ if(!touchEnabled) return; set(true); e.preventDefault(); };
-  const up   = e=>{ if(!touchEnabled) return; set(false); e.preventDefault(); };
-
-  const down = e=>{ set(true); e.preventDefault(); };
-  const up   = e=>{ set(false); e.preventDefault(); };
- main
-
+  const down = e=>{ touch.accel = true; e.preventDefault(); };
+  const up   = e=>{ touch.accel = false; e.preventDefault(); };
   btnGas.addEventListener('touchstart', down, {passive:false});
   btnGas.addEventListener('touchend',   up,   {passive:false});
   btnGas.addEventListener('touchcancel',up,   {passive:false});
@@ -433,7 +368,6 @@ codex/refactor-hud-y-corregir-angulo-del-coche-nhzgec
   window.addEventListener('mouseup',    up);
 })();
 
-let uiAccum=0, UI_DT=1/10; // ~10 Hz
 
 /* ===== SPRITES LOCALES (reemplazar todo lo anterior de Drive/Imgur) ==== */
 function mkLocal(path){
@@ -901,7 +835,6 @@ document.getElementById('restart').onclick=restart;
 document.addEventListener('dblclick',restart);
 
 function input(){
-  // Si no estamos corriendo, no reportar inputs
   if(state!=='running') return {left:false,right:false,accel:false,brake:false,handbrake:false,steerAxis:0};
 
   // Teclado
@@ -911,24 +844,11 @@ function input(){
   const kBrake = keys.has('s') || keys.has('arrowdown');
   const kHand  = keys.has(' ');
 
- codex/refactor-hud-y-corregir-angulo-del-coche-nhzgec
-  // Táctil (si está habilitado)
-  const steerAxis = (isTouchDevice && touchEnabled) ? touch.steerAxis : 0;
-  const accel     = ((isTouchDevice && touchEnabled) ? touch.accel : false) || kAccel;
-
-  // Táctil (si existe)
+  // Táctil
   const steerAxis = isTouchDevice ? touch.steerAxis : 0;
   const accel     = (isTouchDevice ? touch.accel : false) || kAccel;
- main
 
-  return {
-    left: kLeft,
-    right: kRight,
-    accel,
-    brake: kBrake,
-    handbrake: kHand,
-    steerAxis
-  };
+  return { left:kLeft, right:kRight, accel, brake:kBrake, handbrake:kHand, steerAxis };
 }
 function computeDeltaIndex(p,c,L){ let d=c-p; if(d<-L/2) d+=L; if(d>L/2) d-=L; return d; }
 function drawComboOverlay(){ if(!player) return; if(player.comboBreak>0){ const t=player.comboBreak, a=clamp(t/.8,0,1); ctx.save(); ctx.globalAlpha=a; ctx.fillStyle='#ff5050'; ctx.font='bold 64px system-ui'; ctx.textAlign='center'; ctx.fillText('COMBO BREAK!',cvs.width/2,cvs.height*.24); ctx.restore(); player.comboBreak-=dt; return; } if(player.comboState<2) return; const cx=cvs.width/2, cy=cvs.height*.22, color=player.comboState===2?'#2eff88':'#ff4444', pulse=player.comboState===3?1+.08*Math.sin(perfNow*10):1, flash=player.comboFlashTime>0?.35*(player.comboFlashTime/.5):0, scale=pulse+flash; ctx.save(); ctx.translate(cx,cy); ctx.scale(scale,scale); ctx.textAlign='center'; ctx.font='bold 72px system-ui'; ctx.shadowColor=color; ctx.shadowBlur=30; ctx.fillStyle=color; ctx.fillText('X'+player.comboState,0,0); ctx.shadowBlur=0; ctx.font='bold 26px system-ui'; ctx.fillStyle='rgba(255,255,255,.95)'; ctx.fillText(player.comboPhrase||(player.comboState===2?'Good Drift!':'Insane Drift!'),0,34); ctx.font='bold 36px system-ui'; ctx.fillStyle='#fff'; ctx.fillText('+'+Math.floor(player.comboPoints).toLocaleString(),0,74); ctx.restore(); }
@@ -1109,17 +1029,9 @@ mainMenu.classList.remove('hidden');
 shareBox.style.display='none';
 
 if(isTouchDevice){
-  document.body.classList.add('is-touch');
- codex/refactor-hud-y-corregir-angulo-del-coche-nhzgec
-  btnToggleTouch.style.display='block';
-} else {
-  touchHUD.classList.remove('show');
-  btnToggleTouch.style.display='none';
-
   touchHUD.classList.add('show');
-} else {
+}else{
   touchHUD.classList.remove('show');
- main
 }
 
 </script>
