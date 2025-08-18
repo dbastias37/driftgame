@@ -2,8 +2,12 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Top-Down Drift Racer — Pista Dibujada</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+<base href="./">
 <style>
-  html,body{height:100%;margin:0;background:#0b0b0b;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Arial}
+  :root{--bg:#0b0b0b;--ink:#e6f1ff;}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Arial}
   button{cursor:pointer;background:#2b72ff;border:none;color:#fff;padding:10px 16px;border-radius:10px;font-weight:700;box-shadow:0 6px 20px rgba(43,114,255,.3)}
   canvas{display:block;width:100vw;height:100vh}
   #ui{position:fixed;top:12px;left:12px;color:#e6f1ff;z-index:10;user-select:none}
@@ -41,6 +45,27 @@
   .bar>i{display:block;height:100%;background:linear-gradient(90deg,#3b82f6,#22d3ee);width:0%}
   #carPreview{width:min(640px,72vw);height:300px;background:#0b0e12;border:1px solid #fff2;border-radius:10px}
   .btn.gray{background:#374151}
+
+  /* Glow azul suave para textos principales */
+  .glow{
+    color:#fff;
+    text-shadow:0 0 10px #3b82f6,0 0 18px #22d3ee55;
+  }
+
+  /* Aplica glow a títulos/panel del selector de coche */
+  #carPanel .card h2,
+  #carPanel #carName,
+  #carPanel #carDesc{
+    color:#fff;
+    text-shadow:0 0 10px #3b82f6,0 0 18px #22d3ee55;
+  }
+
+  #ui .stat, #times h3, #times, #bSidebar, #startCard h1{
+    font-weight:600;
+  }
+
+  /* Asegura buen contraste en el modal */
+  #carPanel .card{color:#fff;}
 </style>
 </head>
 <body>
@@ -111,14 +136,14 @@
   <!-- ===== Panel de auto (con PNGs) ===== -->
   <div id="carPanel" class="modal hidden">
     <div class="card">
-      <h2 style="margin:0 0 10px">Elige tu coche</h2>
+      <h2 class="glow" style="margin:0 0 10px">Elige tu coche</h2>
       <div class="row" style="align-items:center;gap:14px">
         <button id="carPrev" class="arrow">‹</button>
         <canvas id="carPreview"></canvas>
         <button id="carNext" class="arrow">›</button>
       </div>
-      <div id="carName" style="font-weight:700;margin-top:10px">—</div>
-      <div id="carDesc" style="font-size:12px;opacity:.85">—</div>
+      <div id="carName" class="glow" style="font-weight:700;margin-top:10px">—</div>
+      <div id="carDesc" class="glow" style="font-size:12px;opacity:.95">—</div>
       <div class="row" style="margin-top:8px">
         <div style="min-width:170px">Aceleración<div class="bar"><i id="barAcc"></i></div></div>
         <div style="min-width:170px">Torque<div class="bar"><i id="barTrq"></i></div></div>
@@ -163,15 +188,20 @@ const elScore=$('#score'), elSpeed=$('#speed'), elLives=$('#lives'), elMulti=$('
 const PH2=['¡Buen drift!','¡Limpio!','Nice Slide!','Good Drift!','¡Suave!','Clean lines!'];
 const PH3=['¡Increíble!','¡Brutal!','Insane Drift!','¡Dominio total!','Legendary!','¡Bestia!'];
 
-/* ===== SPRITES PNG (Google Drive) ===== */
-function makeImage(url){ const img=new Image(); img.crossOrigin='anonymous'; img.src=url; return img; }
-const driveURL = id => `https://drive.google.com/uc?export=view&id=${id}`;
+/* ===== SPRITES LOCALES (reemplazar todo lo anterior de Drive/Imgur) ==== */
+function mkLocal(path){
+  const img=new Image();
+  img.decoding='async';
+  img.loading='eager';
+  img.src=`./${path}`; // respeta <base href="./">
+  return img;
+}
 
-const CAR_IMG = {
-  blue:   makeImage(driveURL('1mYuoZ3rokmmorvabmY6DeGP44tT4bG6N')), // Azul
-  red:    makeImage(driveURL('1ay0UuzWcx5Abkk499VMygNq_g5ee0gkR')), // Rojo
-  yellow: makeImage(driveURL('104g6rlHm7sti5lEszTgAuWOKGG5orLfC')), // Amarillo
-  gray:   makeImage(driveURL('1i7PPHtSUg9iPC3EshvDPMJTmxkCiLKB7')), // Gris
+const CAR_IMG={
+  blue:   mkLocal('assets/cars/blue.png'),
+  red:    mkLocal('assets/cars/red.png'),
+  yellow: mkLocal('assets/cars/yellow.png'),
+  gray:   mkLocal('assets/cars/gray.png'),
 };
 
 /* ===== Track ===== */
@@ -502,18 +532,44 @@ const CAR_DATA = [
 let carIdx=0, chosen=CAR_DATA[0];
 
 const carPanel=document.getElementById('carPanel');
-const carPv=document.getElementById('carPreview'), pv=carPv.getContext('2d');
+const carPv=document.getElementById('carPreview');
+const pv=carPv.getContext('2d');
 
 function drawCarPreview(){
-  const d=devicePixelRatio||1, cw=carPv.clientWidth||640, ch=carPv.clientHeight||300;
-  carPv.width=Math.max(1,cw*d); carPv.height=Math.max(1,ch*d);
-  const w=carPv.width,h=carPv.height; pv.setTransform(1,0,0,1,0,0); pv.clearRect(0,0,w,h);
-  pv.save(); pv.translate(w/2,h/2);
-  pv.fillStyle='rgba(0,0,0,.35)'; pv.beginPath(); pv.ellipse(0,h*.12,w*.22,h*.04,0,0,Math.PI*2); pv.fill();
-  const img=CAR_IMG[CAR_DATA[carIdx].sprite];
-  const draw=()=>{ pv.save(); pv.rotate(-.06); const ih=h*.62, iw=ih*((img.naturalWidth||img.width)/((img.naturalHeight||img.height)||1)); pv.drawImage(img,-iw/2,-ih/2,iw,ih); pv.restore(); };
-  if(img && (img.complete && (img.naturalWidth||img.width))) draw(); else if(img) img.onload=draw;
-  pv.restore();
+  const dpr=window.devicePixelRatio||1;
+  const cw=carPv.clientWidth||640;
+  const ch=carPv.clientHeight||300;
+  carPv.width=Math.max(1,cw*dpr);
+  carPv.height=Math.max(1,ch*dpr);
+
+  const w=carPv.width,h=carPv.height;
+  pv.setTransform(1,0,0,1,0,0);
+  pv.clearRect(0,0,w,h);
+
+  // sombra
+  pv.save();
+  pv.translate(w/2,h/2);
+  pv.fillStyle='rgba(0,0,0,.35)';
+  pv.beginPath();
+  pv.ellipse(0,h*0.12,w*0.22,h*0.04,0,0,Math.PI*2);
+  pv.fill();
+
+  // sprite
+  const spriteKey=CAR_DATA[carIdx].sprite;
+  const img=CAR_IMG[spriteKey];
+
+  function render(){
+    pv.save();
+    pv.rotate(-0.06);
+    const ih=h*0.62;
+    const iw=ih*((img.naturalWidth||img.width)/Math.max(1,(img.naturalHeight||img.height)));
+    pv.drawImage(img,-iw/2,-ih/2,iw,ih);
+    pv.restore();
+    pv.restore();
+  }
+
+  if(img.complete && (img.naturalWidth||img.width)) render();
+  else img.onload=render;
 }
 function updatePanel(){
   chosen=CAR_DATA[carIdx];
@@ -534,18 +590,16 @@ document.getElementById('btnBackToGame').onclick=closeCarPanel;
 // aplica la selección al coche generado
 function applyChosen(){
   if(!player) return;
-  player.color  = chosen.color;
-  player.sprite = CAR_IMG[chosen.sprite] || null;
+  player.color   = chosen.color;
+  player.sprite  = CAR_IMG[chosen.sprite] || null; // <- garantiza local
+  player._stripes= chosen.stripes?2:0;
 
-  // Ajustes de “tune” sin tocar físicas base
+  // tunning (como ya estaba)
   player.engineForce     *= chosen.tune.engine;
   player.baseLatFriction *= chosen.tune.lat;
   player.handLatFriction *= chosen.tune.hand;
   player.dragLinear      *= chosen.tune.drag;
   player.mass            *= chosen.tune.mass;
-
-  // Franjas decorativas opcionales (no cambian HUD)
-  player._stripes = chosen.stripes ? 2 : 0;
 }
 
 // Hook del botón Start → Selector
