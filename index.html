@@ -135,6 +135,30 @@
     flex:1; padding:10px; border-radius:10px; border:1px solid #fff2;
     background:#0b0e12; color:#fff; font-family:ui-monospace,monospace;
   }
+  /* ==== Radio bar (radiodrift) ==== */
+  #radioBar{
+    position:fixed; left:50%; bottom:16px; transform:translateX(-50%);
+    display:flex; align-items:center; gap:10px;
+    background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.18);
+    color:#fff; padding:8px 12px; border-radius:12px; z-index:200;
+    box-shadow:0 10px 30px rgba(0,0,0,.35); backdrop-filter:blur(6px);
+    max-width:min(92vw,760px);
+  }
+  #radioBar .rb{ cursor:pointer; background:#2b72ff; color:#fff; border:none;
+    border-radius:10px; padding:8px 12px; font-weight:800; }
+  #radioBar .rb.sm{ padding:6px 10px; background:#374151; }
+  #radioBar .rb:active{ transform:translateY(1px); }
+  #radioBar .text{
+    display:flex; flex-wrap:wrap; gap:6px; align-items:center;
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);
+    padding:6px 10px; border-radius:10px; font:12px/1.2 system-ui;
+  }
+  #radioBar.flash{ animation:rbFlash 4s ease 1; }
+  @keyframes rbFlash{
+    0%{ box-shadow:0 0 0 rgba(43,114,255,.0); }
+    10%{ box-shadow:0 0 24px rgba(43,114,255,.55); }
+    100%{ box-shadow:0 0 0 rgba(43,114,255,.0); }
+  }
 </style>
 </head>
 <body>
@@ -1041,10 +1065,186 @@ function applyChosen(){
 })();
 
 // Mostrar menú principal por defecto (si no vino hash)
-startPanel.classList.add('hidden');
-if(!pendingTrackFactory){
-  document.getElementById('mainMenu')?.classList.remove('hidden');
-}
+  startPanel.classList.add('hidden');
+  if(!pendingTrackFactory){
+    document.getElementById('mainMenu')?.classList.remove('hidden');
+  }
+
+/* =====================  RADIODRIFT (no tocar)  ===================== */
+(function initRadiodrift(){
+  // Evitar doble inyección
+  if (window.__radiodriftInit) return; window.__radiodriftInit = true;
+
+  // Crear barra y <audio> solo si no existen
+  function ensureRadioNodes(){
+    let bar = document.getElementById('radioBar');
+    if(!bar){
+      bar = document.createElement('div');
+      bar.id = 'radioBar';
+      bar.innerHTML = `
+        <button id="radioPrev" class="rb sm" title="Anterior">‹</button>
+        <button id="radioPlay" class="rb" aria-label="Play/Pausa">▶</button>
+        <div class="rb text"><b>radiodrift</b> <span id="radioNow">Cargando emisora…</span></div>
+        <button id="radioNext" class="rb sm" title="Siguiente">›</button>
+      `;
+      document.body.appendChild(bar);
+    }
+    let audio = document.getElementById('radio');
+    if(!audio){
+      audio = document.createElement('audio');
+      audio.id = 'radio';
+      audio.preload = 'none';
+      audio.crossOrigin = 'anonymous';
+      document.body.appendChild(audio);
+    }
+  }
+  ensureRadioNodes();
+
+  // Estaciones con fallbacks HTTPS públicos
+  const RADIO_STATIONS = [
+    {
+      label: 'Record Hardbass (RU)',
+      query: 'Record Hardbass',
+      fallback: ['https://radiorecord.hostingradio.ru/hbass96.aacp']
+    },
+    {
+      label: 'Record Pirate Station DnB (RU)',
+      query: 'Record Pirate Station',
+      fallback: [
+        'https://radiorecord.hostingradio.ru/ps96.aacp',
+        'https://radiorecord.hostingradio.ru/piratefm96.aacp'
+      ]
+    },
+    {
+      label: 'Bassdrive (DNB)',
+      query: 'Bassdrive',
+      fallback: ['https://stream.bassdrive.com/;stream.mp3']
+    },
+    {
+      label: 'Nightwave Plaza (Drift/Synth)',
+      query: 'Nightwave Plaza',
+      fallback: ['https://radio.plaza.one/mp3']
+    }
+  ];
+
+  // Refs
+  const rAudio = document.getElementById('radio');
+  const rBar   = document.getElementById('radioBar');
+  const rPlay  = document.getElementById('radioPlay');
+  const rPrev  = document.getElementById('radioPrev');
+  const rNext  = document.getElementById('radioNext');
+  const rNow   = document.getElementById('radioNow');
+
+  let rIndex = 0;
+  let rResolved = new Array(RADIO_STATIONS.length).fill(null);
+  let rHintTimer = 0;
+
+  function radioFlash(txt){
+    rNow.textContent = txt;
+    rBar.classList.remove('flash');
+    void rBar.offsetWidth; // reflow
+    rBar.classList.add('flash');
+    clearTimeout(rHintTimer);
+    rHintTimer = setTimeout(()=> rBar.classList.remove('flash'), 4000);
+  }
+
+  async function resolveStation(i){
+    if(rResolved[i]) return rResolved[i];
+    const st = RADIO_STATIONS[i];
+    const mirrors = [
+      'https://de1.api.radio-browser.info',
+      'https://nl1.api.radio-browser.info',
+      'https://fr1.api.radio-browser.info'
+    ];
+    for(const host of mirrors){
+      try{
+        const url = `${host}/json/stations/search?limit=8&hidebroken=true&name=${encodeURIComponent(st.query)}`;
+        const res = await fetch(url, {mode:'cors'});
+        if(!res.ok) continue;
+        const list = await res.json();
+        const pick = list.find(s => s.url_resolved?.startsWith('https://'));
+        if(pick){ rResolved[i] = pick.url_resolved; return rResolved[i]; }
+      }catch(_){ }
+    }
+    rResolved[i] = st.fallback?.[0] || null;
+    return rResolved[i];
+  }
+
+  async function tryIcecastTitle(streamUrl, label){
+    try{
+      const u = new URL(streamUrl);
+      const base = `${u.protocol}//${u.hostname}${u.port?':'+u.port:''}`;
+      const statusUrl = `${base}/status-json.xsl`;
+      const res = await fetch(statusUrl, {mode:'cors'});
+      if(!res.ok) return;
+      const js = await res.json();
+      const mounts = js.icestats?.source ? (Array.isArray(js.icestats.source)?js.icestats.source:[js.icestats.source]) : [];
+      const m = mounts[0];
+      const title = m?.title || (m?.artist && m?.title ? `${m.artist} — ${m.title}` : null);
+      if(title) radioFlash(`${label} — ${title}`);
+    }catch(_){ }
+  }
+
+  async function radioLoad(i=rIndex){
+    rIndex = (i + RADIO_STATIONS.length) % RADIO_STATIONS.length;
+    const st = RADIO_STATIONS[rIndex];
+    rNow.textContent = `Cargando ${st.label}…`;
+    const src = await resolveStation(rIndex);
+    if(!src){ radioFlash(`No se pudo resolver ${st.label}`); return; }
+
+    if(rAudio.src !== src){
+      try{ rAudio.pause(); }catch(_){ }
+      rAudio.src = src;
+    }
+    if(isFinite(rAudio.volume)) rAudio.volume = 0.35;
+
+    try{
+      await rAudio.play();
+      rPlay.textContent = 'Ⅱ';
+      radioFlash(`${st.label}`);
+    }catch(_){
+      rPlay.textContent = '▶';
+      radioFlash(`${st.label} (toca ▶ para reproducir)`);
+    }
+    tryIcecastTitle(src, st.label);
+  }
+
+  // Controles
+  rPlay.addEventListener('click', async ()=>{
+    if(rAudio.paused){
+      try{ await rAudio.play(); rPlay.textContent='Ⅱ'; }catch(_){ }
+    }else{
+      rAudio.pause(); rPlay.textContent='▶';
+    }
+  });
+  rPrev.addEventListener('click', ()=> radioLoad(rIndex-1));
+  rNext.addEventListener('click', ()=> radioLoad(rIndex+1));
+
+  // Autoplay: armar reanudación al primer gesto si fue bloqueado
+  let radioArmed = false;
+  function armRadioOnGesture(){
+    if(radioArmed) return; radioArmed = true;
+    const resume = async ()=>{
+      if(rAudio.paused){
+        try{ await rAudio.play(); rPlay.textContent='Ⅱ'; }catch(_){ }
+      }
+      window.removeEventListener('pointerdown', resume);
+      window.removeEventListener('keydown', resume);
+      document.removeEventListener('touchstart', resume, {passive:true});
+    };
+    window.addEventListener('pointerdown', resume);
+    window.addEventListener('keydown', resume);
+    document.addEventListener('touchstart', resume, {passive:true});
+  }
+
+  // Iniciar
+  radioLoad(0).then(armRadioOnGesture);
+
+  // Cuando se inicia la carrera tras elegir coche, forzar play (sin romper nada)
+  document.getElementById('btnChooseStart')?.addEventListener('click', ()=>{
+    setTimeout(()=>{ rAudio.play().catch(()=>{}); rPlay.textContent='Ⅱ'; }, 50);
+  });
+})();
 
 </script>
 </body></html>
