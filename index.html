@@ -319,11 +319,13 @@
   </div>
   <button id="btnTouchHUD">TÁCTIL</button>
 
-  <div id="pausePanel" class="modal hidden">
+  <div id="pauseMenu" class="modal hidden">
     <div class="card">
       <h2>Pausa</h2>
       <div class="row" style="gap:8px;margin-top:10px">
-        <button id="btnResume">Reanudar</button>
+        <button id="btnResume">Seguir</button>
+        <button id="btnRestart">Reiniciar</button>
+        <button id="btnTrack">Seleccionar pista</button>
         <button id="btnQuit" class="gray">Salir al menú</button>
       </div>
     </div>
@@ -331,6 +333,7 @@
 
 <script>
 "use strict";
+const DEV=false;
 /* ===== Util ===== */
 const clamp=(v,a,b)=>v<a?a:v>b?b:v, lerp=(a,b,t)=>a+(b-a)*t,
       S=Math.sin, C=Math.cos, A=Math.atan2, H=Math.hypot, PI=Math.PI,
@@ -347,7 +350,7 @@ addEventListener('keydown',e=>{
   const k=e.key.toLowerCase();
   keys.add(k);
   if(k==='r'){
-    if(['running','tt','paused','countdown'].includes(state)){
+    if(state==='running' || state==='countdown'){
       loseLifeAndRespawn();
     }
   }
@@ -381,30 +384,46 @@ const startPanel=document.getElementById('startPanel');
 const PH2=['¡Buen drift!','¡Limpio!','Nice Slide!','Good Drift!','¡Suave!','Clean lines!'];
 const PH3=['¡Increíble!','¡Brutal!','Insane Drift!','¡Dominio total!','Legendary!','¡Bestia!'];
 
-const pausePanel = document.getElementById('pausePanel');
+const pauseMenu = document.getElementById('pauseMenu');
 const btnResume  = document.getElementById('btnResume');
+const btnRestart = document.getElementById('btnRestart');
+const btnTrack   = document.getElementById('btnTrack');
 const btnQuit    = document.getElementById('btnQuit');
 
+let pausedState='menu';
 function setPaused(v){
   if(v){
-    if(state==='running' || state==='tt' || state==='countdown'){
-      prevState = state;
+    if(state==='running' || state==='countdown'){
+      pausedState = state;
       state='paused';
-      pausePanel?.classList.remove('hidden');
+      pauseMenu?.classList.remove('hidden');
     }
   }else{
     if(state==='paused'){
-      pausePanel?.classList.add('hidden');
-      state = prevState==='tt' ? 'tt' : (prevState==='countdown' ? 'countdown' : 'running');
+      pauseMenu?.classList.add('hidden');
+      state = pausedState;
     }
   }
 }
 
 btnResume?.addEventListener('click', ()=> setPaused(false));
+btnRestart?.addEventListener('click', ()=>{ setPaused(false); restartRaceSameTrack(); });
+btnTrack?.addEventListener('click', ()=>{
+  setPaused(false);
+  state='menu';
+  if(mode==='tt'){
+    startPanel.classList.add('hidden');
+    document.getElementById('challengeMenu')?.classList.add('hidden');
+    document.getElementById('mainMenu')?.classList.remove('hidden');
+  }else{
+    startPanel.classList.add('hidden');
+    document.getElementById('mainMenu')?.classList.add('hidden');
+    document.getElementById('challengeMenu')?.classList.remove('hidden');
+  }
+});
 btnQuit?.addEventListener('click', ()=>{
-  // volver al menú principal
   state='menu'; mode='race';
-  pausePanel?.classList.add('hidden');
+  pauseMenu?.classList.add('hidden');
   startPanel.classList.add('hidden');
   document.getElementById('challengeMenu')?.classList.add('hidden');
   document.getElementById('mainMenu')?.classList.remove('hidden');
@@ -588,6 +607,11 @@ function saveTT(type, trackId, obj){
 }
 function loadTT(type, trackId){
   try{ const s = localStorage.getItem(`tt:${type}:${trackId}`); return s?JSON.parse(s):null; }catch(_){ return null; }
+}
+function startTTRecording(){
+  ghostSamples=[]; ghostAcc=0;
+  document.getElementById('bestTT').textContent='—';
+  document.getElementById('lastTT').textContent='—';
 }
 
 // Menús
@@ -987,8 +1011,9 @@ function startWithTrack(tr, m='race'){
 function gameOver(){ state='gameover'; overlayTitle.textContent='¡Game Over!'; overlayMsg.innerHTML='Pulsa <b>R</b> para reiniciar'; overlay.classList.remove('hidden'); }
 function finished(){ state='finished'; overlayTitle.textContent='¡Carrera terminada!'; overlayMsg.innerHTML=`Completaste ${TOTAL_LAPS} vueltas.<br>Total: <b>${formatTime(raceTime)}</b>`; overlay.classList.remove('hidden'); }
 function restart(){ state='menu'; mode='race'; ghost=null; startPanel.classList.remove('hidden'); overlay.classList.add('hidden'); }
+function restartRaceSameTrack(){ if(track) startWithTrack(track, mode); }
 document.getElementById('restart').onclick=restart;
-document.addEventListener('dblclick',restart);
+if(typeof DEV!=='undefined' && DEV) document.addEventListener('dblclick',restart);
 
 function respawnAtNearestCenter() {
   if (!track || !player) return;
@@ -1012,7 +1037,7 @@ function loseLifeAndRespawn() {
 }
 
 function input(){
-  if(state!=='running' && state!=='tt') return {left:false,right:false,accel:false,brake:false,handbrake:false,steerAxis:0};
+  if(state!=='running') return {left:false,right:false,accel:false,brake:false,handbrake:false,steerAxis:0};
 
   const kLeft  = keys.has('a') || keys.has('arrowleft');
   const kRight = keys.has('d') || keys.has('arrowright');
@@ -1020,11 +1045,11 @@ function input(){
   const kBrake = keys.has('s') || keys.has('arrowdown');
   const kHand  = keys.has(' ');
 
-  // Usa eje analógico SOLO si el HUD táctil está visible y el eje se mueve
-  const hudOn = !!document.getElementById('touchHUD')?.classList.contains('show');
-  const useAnalog = isTouchDevice && hudOn && Math.abs(touch.steerAxis) > 0.001;
-  const steerAxis = useAnalog ? touch.steerAxis : null;
-  const accel     = (useAnalog ? touch.accel : false) || kAccel;
+  const hudOn = touchHUD.classList.contains('show');
+  const steerAxisTouch = (isTouchDevice && hudOn) ? touch.steerAxis : 0;
+  const steerDigital = (kLeft?-1:0) + (kRight?1:0);
+  const steerAxis = Math.abs(steerDigital) > 0 ? steerDigital : steerAxisTouch;
+  const accel     = ((isTouchDevice && hudOn) ? touch.accel : false) || kAccel;
 
   return { left:kLeft, right:kRight, accel, brake:kBrake, handbrake:kHand, steerAxis };
 }
@@ -1048,8 +1073,8 @@ function drawComboOverlay(){ if(!player) return; if(player.comboBreak>0){ const 
       }
     }
 
-    // Sentido contrario: usar wrongTimer como cuenta regresiva de 4s
-    const WRONG_LIMIT = 4;
+    // Sentido contrario: usar wrongTimer como cuenta regresiva de 5s
+    const WRONG_LIMIT = 5;
     if(wrongTimer>0){
       const left = clamp(WRONG_LIMIT - wrongTimer, 0, WRONG_LIMIT);
       if(left>0){
@@ -1063,7 +1088,7 @@ function drawComboOverlay(){ if(!player) return; if(player.comboBreak>0){ const 
 function drawSpeedHud(){ drawMiniMap(ctx,track,player); drawSpeedometer(ctx,player.worldSpeed()*3.6); drawGearPanel(ctx, player.gear||1, player.redBlink); }
 function formatTime(t){ const m=Math.floor(t/60), s=Math.floor(t%60), ms=Math.floor((t*1000)%1000).toString().padStart(3,'0'); return `${m}:${s.toString().padStart(2,'0')}.${ms}`; }
 function onLap(){
-  if(state==='tt'){
+  if(mode==='tt'){
     const ttData={time:lapTime, hz:30, samples:ghostSamples.slice()};
     saveTT('last', currentTrackId, ttData);
     const best = loadTT('best', currentTrackId);
@@ -1098,20 +1123,26 @@ function loop(ms){
   if(state==='countdown'){
     countdownTimer+=dt;
     if(countdownTimer>=1&&countdown>0){ countdown--; countdownTimer=0; }
-    if(countdown<=0) state = (mode==='tt') ? 'tt' : 'running';
+    if(countdown<=0) state='running';
   }
-  else if(state==='running' || state==='tt'){
+  else if(state==='running'){
     const prevIdx=track.sample(player.pos.x,player.pos.y).i; const ret=player.update(dt,input(),track);
     const L=track.points.length; const di=computeDeltaIndex(prevIdx,ret.sIndex,L);
     wrongTimer = di<-0.5 ? wrongTimer+dt : Math.max(0,wrongTimer-dt*2);
     progress+=Math.max(0,di); while(progress>=L){ progress-=L; onLap(); }
-    if(state==='tt'){
+    if(mode==='tt'){
       ghostAcc += dt;
       if(ghostAcc >= 1/30){ ghostAcc -= 1/30; ghostSamples.push({x:player.pos.x,y:player.pos.y,angle:player.angle}); }
       ghost?.update(dt);
     }
   }
-  if(state!=='paused'){
+  if(prevState==='countdown' && state==='running'){
+    raceTime = 0; lapTime = 0;
+    if(ghost) ghost.reset();
+    if(mode==='tt') startTTRecording();
+  }
+  prevState = state;
+  if(state==='running'){
     raceTime+=dt; lapTime+=dt;
   }
   camera.update(player||{pos:{x:0,y:0}});
@@ -1278,28 +1309,19 @@ function applyChosen(){
   }
   ensureRadioNodes();
 
-  // Estaciones con URL directa
+  // Estaciones con lista de fallbacks
   const RADIO_STATIONS = [
-    {
-      label: 'HardBass FM',
-      src: 'http://hkradio.live:8000/hardbass'
-    },
-    {
-      label: 'DnB Radio',
-      src: 'https://dnbradio.com/streams/dnb256k.pls'
-    },
-    {
-      label: 'Radio Record Hard Bass',
-      src: 'http://air.radiorecord.ru:8102/hbass_320'
-    },
-    {
-      label: 'Nightride FM (synthwave)',
-      src: 'https://stream.nightride.fm/nightride.mp3'
-    },
-    {
-      label: 'Tokyo Drift Radio (Eurobeat)',
-      src: 'https://stream.laut.fm/eurobeat'
-    }
+    { label: 'HardBass FM', fallback: ['http://hkradio.live:8000/hardbass'] },
+    { label: 'DnB Radio', fallback: ['https://dnbradio.com/streams/dnb256k.pls'] },
+    { label: 'Radio Record Hard Bass', fallback: ['http://air.radiorecord.ru:8102/hbass_320'] },
+    { label: 'Tokyo Drift Radio (Eurobeat)', fallback: ['https://stream.laut.fm/eurobeat'] },
+    { label: 'Record Hardbass (RU)', fallback: ['https://radiorecord.hostingradio.ru/hbass96.aacp'] },
+    { label: 'Record Pirate Station DnB (RU)', fallback: ['https://radiorecord.hostingradio.ru/ps96.aacp','https://radiorecord.hostingradio.ru/piratefm96.aacp'] },
+    { label: 'Nightride FM (Synth/Drift)', fallback: ['https://stream.nightride.fm/nightride.m4a','https://stream.nightride.fm/nightride.mp3'] },
+    { label: 'Jungletrain (Jungle)', fallback: ['http://stream.jungletrain.net:8000/jungletrain.mp3','http://stream2.jungletrain.net:8000/jungletrain.mp3'] },
+    { label: 'Kool London (Jungle)', fallback: ['http://stream.coollondon.co.uk:8000/stream','http://streamer.radio.co/s98e7a5b0e/listen'] },
+    { label: 'DNBRadio (DnB)', fallback: ['http://www.dnbradio.com:8000/dnbradio_main.mp3','http://www.dnbradio.com:8000/dnbradio_main_low.mp3'] },
+    { label: 'SLAM! Hardstyle DnB (DnB)', fallback: ['https://21223.live.streamtheworld.com/WEB11_MP3_SC','https://playerservices.streamtheworld.com/api/livestream-redirect/WEB11_MP3_SC'] }
   ];
 
   // Refs
@@ -1323,24 +1345,6 @@ function applyChosen(){
     rHintTimer = setTimeout(()=> rBar.classList.remove('flash'), 4000);
   }
 
-  async function resolveStation(i){
-    if(rResolved[i]) return rResolved[i];
-    const st = RADIO_STATIONS[i];
-    let src = st.src;
-    if(src.endsWith('.pls')){
-      try{
-        const res = await fetch(src);
-        if(res.ok){
-          const txt = await res.text();
-          const m = txt.match(/^File\d+=(.+)$/m);
-          if(m) src = m[1].trim();
-        }
-      }catch(_){ }
-    }
-    rResolved[i] = src;
-    return rResolved[i];
-  }
-
   async function tryIcecastTitle(streamUrl, label){
     try{
       const u = new URL(streamUrl);
@@ -1360,24 +1364,23 @@ function applyChosen(){
     rIndex = (i + RADIO_STATIONS.length) % RADIO_STATIONS.length;
     const st = RADIO_STATIONS[rIndex];
     rNow.textContent = `Cargando ${st.label}…`;
-    const src = await resolveStation(rIndex);
-    if(!src){ radioFlash(`No se pudo resolver ${st.label}`); return; }
-
-    if(rAudio.src !== src){
+    const list = rResolved[rIndex] ? [rResolved[rIndex]] : st.fallback;
+    for(const src of list){
       try{ rAudio.pause(); }catch(_){ }
       rAudio.src = src;
+      if(isFinite(rAudio.volume)) rAudio.volume = 0.35;
+      try{
+        await rAudio.play();
+        rPlay.textContent = 'Ⅱ';
+        radioFlash(`${st.label}`);
+        tryIcecastTitle(src, st.label);
+        rResolved[rIndex] = src;
+        return;
+      }catch(_){ }
     }
-    if(isFinite(rAudio.volume)) rAudio.volume = 0.35;
-
-    try{
-      await rAudio.play();
-      rPlay.textContent = 'Ⅱ';
-      radioFlash(`${st.label}`);
-    }catch(_){
-      rPlay.textContent = '▶';
-      radioFlash(`${st.label} (toca ▶ para reproducir)`);
-    }
-    tryIcecastTitle(src, st.label);
+    rResolved[rIndex] = null;
+    rPlay.textContent = '▶';
+    radioFlash(`No se pudo reproducir ${st.label}`);
   }
 
   // Controles
