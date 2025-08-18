@@ -1208,8 +1208,12 @@ function drawCarPreview(){
 
   function render(){
     pv.save();
-    const ih=h*0.62;
-    const iw=ih*((img.naturalWidth||img.width)/Math.max(1,(img.naturalHeight||img.height)));
+    const imgW = img.naturalWidth||img.width;
+    const imgH = img.naturalHeight||img.height;
+    const scale = Math.min(w/imgH, h/imgW)*0.62;
+    const iw = imgW*scale;
+    const ih = imgH*scale;
+    pv.translate(w/2,h/2);
     pv.rotate(-Math.PI/2); // trompa hacia arriba (vertical)
     pv.drawImage(img,-iw/2,-ih/2,iw,ih);
     pv.restore();
