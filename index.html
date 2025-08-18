@@ -659,10 +659,11 @@ class Car{
     return s;
   }
   update(dt,input,track){
-    // Soporta eje analógico si existe, si no cae a binario
-    const steer = (typeof input.steerAxis === 'number')
+    // Prioriza analógico SOLO si está realmente activo; si no, usa teclado
+    const hasAxis = (typeof input.steerAxis === 'number') && Math.abs(input.steerAxis) > 0.001;
+    const steer = hasAxis
       ? clamp(input.steerAxis, -1, 1)
-      : ( (input.left?-1:0) + (input.right?1:0) );
+      : ((input.left ? -1 : 0) + (input.right ? 1 : 0));
     const thr=input.accel?1:0, br=input.brake?1:0; this.handbrake=!!input.handbrake;
     this._physStep(dt,steer,thr,br);
     const f={x:C(this.angle),y:S(this.angle)}, r={x:-S(this.angle),y:C(this.angle)};
@@ -863,8 +864,11 @@ function input(){
   const kBrake = keys.has('s') || keys.has('arrowdown');
   const kHand  = keys.has(' ');
 
-  const steerAxis = isTouchDevice ? touch.steerAxis : 0;
-  const accel     = (isTouchDevice ? touch.accel : false) || kAccel;
+  // Usa eje analógico SOLO si el HUD táctil está visible y el eje se mueve
+  const hudOn = !!document.getElementById('touchHUD')?.classList.contains('show');
+  const useAnalog = isTouchDevice && hudOn && Math.abs(touch.steerAxis) > 0.001;
+  const steerAxis = useAnalog ? touch.steerAxis : null;
+  const accel     = (useAnalog ? touch.accel : false) || kAccel;
 
   return { left:kLeft, right:kRight, accel, brake:kBrake, handbrake:kHand, steerAxis };
 }
