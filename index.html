@@ -1203,27 +1203,27 @@ function applyChosen(){
   }
   ensureRadioNodes();
 
-  // Estaciones con fallbacks HTTPS públicos
+  // Estaciones con URL directa
   const RADIO_STATIONS = [
     {
-      label: 'Liquid DnB Radio',
-      query: 'Liquid DnB Radio',
-      fallback: ['https://stream.laut.fm/liquidflash']
+      label: 'HardBass FM',
+      src: 'http://hkradio.live:8000/hardbass'
     },
     {
-      label: 'KISSFM DnB (UA)',
-      query: 'KISSFM DnB',
-      fallback: ['https://kissfm.streamcdn.to/kissfm_dnb.aac']
+      label: 'DnB Radio',
+      src: 'https://dnbradio.com/streams/dnb256k.pls'
     },
     {
-      label: 'Drift Phonk Radio',
-      query: 'Drift Phonk Radio',
-      fallback: ['https://cast1.my-control-panel.com/proxy/pphan/stream']
+      label: 'Radio Record Hard Bass',
+      src: 'http://air.radiorecord.ru:8102/hbass_320'
     },
     {
-      label: 'Hardbass FM',
-      query: 'Hardbass FM',
-      fallback: ['https://eu9.fastcast4u.com/proxy/hardbass?mp=/stream']
+      label: 'Nightride FM (synthwave)',
+      src: 'https://stream.nightride.fm/nightride.mp3'
+    },
+    {
+      label: 'Tokyo Drift Radio (Eurobeat)',
+      src: 'https://stream.laut.fm/eurobeat'
     }
   ];
 
@@ -1251,22 +1251,18 @@ function applyChosen(){
   async function resolveStation(i){
     if(rResolved[i]) return rResolved[i];
     const st = RADIO_STATIONS[i];
-    const mirrors = [
-      'https://de1.api.radio-browser.info',
-      'https://nl1.api.radio-browser.info',
-      'https://fr1.api.radio-browser.info'
-    ];
-    for(const host of mirrors){
+    let src = st.src;
+    if(src.endsWith('.pls')){
       try{
-        const url = `${host}/json/stations/search?limit=8&hidebroken=true&name=${encodeURIComponent(st.query)}`;
-        const res = await fetch(url, {mode:'cors'});
-        if(!res.ok) continue;
-        const list = await res.json();
-        const pick = list.find(s => s.url_resolved?.startsWith('https://'));
-        if(pick){ rResolved[i] = pick.url_resolved; return rResolved[i]; }
+        const res = await fetch(src);
+        if(res.ok){
+          const txt = await res.text();
+          const m = txt.match(/^File\d+=(.+)$/m);
+          if(m) src = m[1].trim();
+        }
       }catch(_){ }
     }
-    rResolved[i] = st.fallback?.[0] || null;
+    rResolved[i] = src;
     return rResolved[i];
   }
 
