@@ -125,6 +125,10 @@
     font-weight:800;color:#fff;font-size:18px;
   }
 
+codex/refactor-hud-y-corregir-angulo-del-coche-nhzgec
+  #btnToggleTouch{position:fixed;bottom:12px;right:12px;z-index:80;display:none}
+  #btnToggleTouch.on{background:#00b341}
+main
   /* Evitar scroll/zoom accidental en móvil */
   html, body, canvas, #touchHUD, #stickZone, #gasZone { touch-action: none; }
 </style>
@@ -269,6 +273,10 @@
     <button id="copyCode">Copiar</button>
   </div>
 
+codex/refactor-hud-y-corregir-angulo-del-coche-nhzgec
+  <button id="btnToggleTouch">Activar táctil</button>
+
+ main
   <!-- ===== HUD táctil ===== -->
   <div id="touchHUD">
     <div class="touch-wrap" id="stickZone">
@@ -322,16 +330,37 @@ const stickZone = document.getElementById('stickZone');
 const stick = document.getElementById('stick');
 const knob = document.getElementById('knob');
 const btnGas = document.getElementById('btnGas');
+ codex/refactor-hud-y-corregir-angulo-del-coche-nhzgec
+const btnToggleTouch = document.getElementById('btnToggleTouch');
+
+const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+const touch = { steerAxis: 0, accel: false };
+let touchEnabled = false;
+if(isTouchDevice){ btnToggleTouch.style.display='block'; }
+
 
 const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 const touch = { steerAxis: 0, accel: false };
 if(isTouchDevice){ touchHUD.classList.add('show'); }
+ main
 
 function setKnob(dx, dy){
   knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
 }
 function resetKnob(){ setKnob(0,0); touch.steerAxis = 0; }
 
+ codex/refactor-hud-y-corregir-angulo-del-coche-nhzgec
+if(btnToggleTouch){
+  btnToggleTouch.addEventListener('click',()=>{
+    touchEnabled = !touchEnabled;
+    btnToggleTouch.textContent = touchEnabled ? 'Desactivar táctil' : 'Activar táctil';
+    btnToggleTouch.classList.toggle('on', touchEnabled);
+    touchHUD.classList.toggle('show', touchEnabled);
+    if(!touchEnabled){ touch.accel=false; resetKnob(); }
+  });
+}
+
+ main
 /* Joystick: solo eje X controla dirección */
 (function initJoystick(){
   if(!stickZone) return;
@@ -353,13 +382,20 @@ function resetKnob(){ setKnob(0,0); touch.steerAxis = 0; }
   let active = false;
 
   const start = e=>{
+ codex/refactor-hud-y-corregir-angulo-del-coche-nhzgec
+    if(!touchEnabled) return;
+ main
     active = true;
     const t = e.touches ? e.touches[0] : e;
     onMove(t.clientX, t.clientY, true);
     e.preventDefault();
   };
   const move = e=>{
+ codex/refactor-hud-y-corregir-angulo-del-coche-nhzgec
+    if(!active || !touchEnabled) return;
+
     if(!active) return;
+ main
     const t = e.touches ? e.touches[0] : e;
     onMove(t.clientX, t.clientY, true);
     e.preventDefault();
@@ -382,8 +418,13 @@ function resetKnob(){ setKnob(0,0); touch.steerAxis = 0; }
   if(!btnGas) return;
   const set = v => touch.accel = v;
 
+codex/refactor-hud-y-corregir-angulo-del-coche-nhzgec
+  const down = e=>{ if(!touchEnabled) return; set(true); e.preventDefault(); };
+  const up   = e=>{ if(!touchEnabled) return; set(false); e.preventDefault(); };
+
   const down = e=>{ set(true); e.preventDefault(); };
   const up   = e=>{ set(false); e.preventDefault(); };
+ main
 
   btnGas.addEventListener('touchstart', down, {passive:false});
   btnGas.addEventListener('touchend',   up,   {passive:false});
@@ -870,9 +911,15 @@ function input(){
   const kBrake = keys.has('s') || keys.has('arrowdown');
   const kHand  = keys.has(' ');
 
+ codex/refactor-hud-y-corregir-angulo-del-coche-nhzgec
+  // Táctil (si está habilitado)
+  const steerAxis = (isTouchDevice && touchEnabled) ? touch.steerAxis : 0;
+  const accel     = ((isTouchDevice && touchEnabled) ? touch.accel : false) || kAccel;
+
   // Táctil (si existe)
   const steerAxis = isTouchDevice ? touch.steerAxis : 0;
   const accel     = (isTouchDevice ? touch.accel : false) || kAccel;
+ main
 
   return {
     left: kLeft,
@@ -1063,9 +1110,16 @@ shareBox.style.display='none';
 
 if(isTouchDevice){
   document.body.classList.add('is-touch');
+ codex/refactor-hud-y-corregir-angulo-del-coche-nhzgec
+  btnToggleTouch.style.display='block';
+} else {
+  touchHUD.classList.remove('show');
+  btnToggleTouch.style.display='none';
+
   touchHUD.classList.add('show');
 } else {
   touchHUD.classList.remove('show');
+ main
 }
 
 </script>
