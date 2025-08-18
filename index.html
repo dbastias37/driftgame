@@ -120,9 +120,10 @@
 
   /* Botón único para activar HUD táctil */
   #btnTouchHUD{
-    position:fixed; right:14px; bottom:14px; z-index:120;
+    position:fixed; right:14px; bottom:14px; z-index:140;
     border:none; border-radius:999px; padding:12px 14px; font-weight:800;
     background:#2b72ff; color:#fff; box-shadow:0 10px 30px rgba(43,114,255,.45);
+    display:none;
   }
   #btnTouchHUD.on{ background:#00b341; }
 
@@ -286,7 +287,7 @@
       <button id="btnGas">GAS</button>
     </div>
   </div>
-  <button id="btnTouchHUD" style="display:none">TÁCTIL</button>
+  <button id="btnTouchHUD">TÁCTIL</button>
 
 <script>
 "use strict";
@@ -480,7 +481,7 @@ function updateTrackIdUI(tr){
   input.value = code;
   row.style.display = 'flex';
 }
-(function wireCopyId(){
+(function wireCopyTrackId(){
   const btn = document.getElementById('copyTrackId');
   const input = document.getElementById('trackId');
   btn?.addEventListener('click', ()=>{
@@ -514,6 +515,7 @@ document.getElementById('btnLoadCode')?.addEventListener('click', ()=>{
   if(!tr){ alert('Código inválido'); return; }
   pendingTrackFactory = ()=>tr;
   updateTrackIdUI(tr);
+  mainMenu.classList.add('hidden');
   openCarPanel();
 });
 
@@ -553,16 +555,16 @@ document.querySelectorAll('.btnPickChallenge').forEach(btn=>{
 
 // Soporte de arranque vía hash (? o #t=TRK.XXXX)
 (function tryLoadFromHash(){
-  const h = location.hash||'';
-  const m = h.match(/t=([A-Za-z0-9\-\._]+)/);
-  if(m && m[1]){
-    const tr = decodeTrack('TRK.'+m[1].replace(/^TRK\./,''));
-    if(tr){
-      pendingTrackFactory = ()=>tr;
-      updateTrackIdUI(tr);
-      openCarPanel();
-    }
-  }
+  const h = location.hash || location.search || '';
+  const m = h.match(/[?#&]t=([A-Za-z0-9\-\._]+)/);
+  if(!m) return;
+  const code = m[1].startsWith('TRK.') ? m[1] : ('TRK.'+m[1]);
+  const tr = decodeTrack(code);
+  if(!tr) return;
+  pendingTrackFactory = ()=>tr;
+  updateTrackIdUI(tr);
+  document.getElementById('mainMenu')?.classList.add('hidden');
+  openCarPanel();
 })();
 
 /* ===== Car (toda tu lógica intacta; añadimos soporte PNG) ===== */
@@ -1030,9 +1032,11 @@ function applyChosen(){
   });
 })();
 
-// Al inicio, ocultar pizarra y mostrar menú principal
+// Mostrar menú principal por defecto (si no vino hash)
 startPanel.classList.add('hidden');
-mainMenu.classList.remove('hidden');
+if(!pendingTrackFactory){
+  document.getElementById('mainMenu')?.classList.remove('hidden');
+}
 
 </script>
 </body></html>
