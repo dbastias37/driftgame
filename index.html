@@ -313,6 +313,16 @@
   </div>
   <button id="btnTouchHUD">TÁCTIL</button>
 
+  <div id="pausePanel" class="modal hidden">
+    <div class="card">
+      <h2>Pausa</h2>
+      <div class="row" style="gap:8px;margin-top:10px">
+        <button id="btnResume">Reanudar</button>
+        <button id="btnQuit" class="gray">Salir al menú</button>
+      </div>
+    </div>
+  </div>
+
 <script>
 "use strict";
 /* ===== Util ===== */
@@ -327,7 +337,21 @@ addEventListener('resize',resize); resize();
 
 /* ===== Entrada ===== */
 const keys=new Set();
-addEventListener('keydown',e=>{ const k=e.key.toLowerCase(); keys.add(k); if(k==='r') restart(); if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) e.preventDefault(); });
+addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+  keys.add(k);
+  if(k==='r'){
+    if(state==='running' || state==='paused' || state==='countdown'){
+      loseLifeAndRespawn();
+    }
+  }
+  if(k==='escape'){
+    if(state==='paused'){ setPaused(false); }
+    else { setPaused(true); }
+    e.preventDefault();
+  }
+  if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) e.preventDefault();
+});
 addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 // Manual gears: Shift up / Ctrl down
 addEventListener('keydown',e=>{
@@ -347,6 +371,34 @@ const elScore=$('#score'), elSpeed=$('#speed'), elLives=$('#lives'), elMulti=$('
 const startPanel=document.getElementById('startPanel');
 const PH2=['¡Buen drift!','¡Limpio!','Nice Slide!','Good Drift!','¡Suave!','Clean lines!'];
 const PH3=['¡Increíble!','¡Brutal!','Insane Drift!','¡Dominio total!','Legendary!','¡Bestia!'];
+
+const pausePanel = document.getElementById('pausePanel');
+const btnResume  = document.getElementById('btnResume');
+const btnQuit    = document.getElementById('btnQuit');
+
+function setPaused(v){
+  if(v){
+    if(state==='running' || state==='countdown'){
+      state='paused';
+      pausePanel?.classList.remove('hidden');
+    }
+  }else{
+    if(state==='paused'){
+      pausePanel?.classList.add('hidden');
+      state='running';
+    }
+  }
+}
+
+btnResume?.addEventListener('click', ()=> setPaused(false));
+btnQuit?.addEventListener('click', ()=>{
+  // volver al menú principal
+  state='menu';
+  pausePanel?.classList.add('hidden');
+  startPanel.classList.add('hidden');
+  document.getElementById('challengeMenu')?.classList.add('hidden');
+  document.getElementById('mainMenu')?.classList.remove('hidden');
+});
 
 // Frecuencia del HUD (~10 Hz)
 let uiAccum = 0;
@@ -653,14 +705,14 @@ class Car{
     this.offTrack=Math.abs(s.dist)>track.roadHalf; this.edgeShake=Math.max(0,this.edgeShake-dt);
     { const pen=Math.abs(s.dist)-(track.roadHalf-1); if(pen>0){ const k=clamp(pen/2,0,1);
 
-      // Penalización más suave: aplica “drag” leve en lugar de cortar la velocidad
-      const drag = 1 - (0.28 * k) * dt * 4; // era muy alto; ahora es leve
+      // Penalización más suave: permitir ~15% más de avance
+      const drag = 1 - (0.22 * k) * dt * 4;   // antes era 0.28
       this.vel.x *= drag;
       this.vel.y *= drag;
 
-      // Pequeño empuje hacia el centro para ayudar a salir
-      const push = 0.8 * k * dt; // empuje muy sutil hacia el centro de la pista
-      const nsign = (s.dist>0 ? -1 : 1); // empuja hacia dentro
+      // Empuje suave hacia el centro
+      const push = 0.65 * k * dt;             // antes 0.8
+      const nsign = (s.dist>0 ? -1 : 1);
       this.vel.x += nsign * push * C(s.tang + Math.PI/2);
       this.vel.y += nsign * push * S(s.tang + Math.PI/2);
 
@@ -695,6 +747,14 @@ class Car{
     { const red=this.gearMax[this.gear-1]||9999; if(thr>0 && kmh>=red-0.2){ const sp=this.worldSpeed(); if(sp>0.001){ const target=red/3.6; const sc=clamp(target/sp,0.94,1); this.vel.x*=sc; this.vel.y*=sc; } this.redBlink=true; } else this.redBlink=false; }
     const s=this._updateScoreAndTrail(dt,track,f,r,kmh,vlat);
     const nearRed1=(this.gear===1&&this.throttleSm>0.6&&kmh>this.gearMax[0]*0.9);
+
+    // Contador fuera de pista (12 s)
+    if (this.offTrack) {
+      this.offTimer = (this.offTimer || 0) + dt;
+    } else {
+      this.offTimer = 0;
+    }
+
     if(nearRed1) this.spawnTrails(f,r,dt,0.95);
     // Auto-shift si está en automático
     if(this.auto){
@@ -879,6 +939,27 @@ function restart(){ state='menu'; startPanel.classList.remove('hidden'); overlay
 document.getElementById('restart').onclick=restart;
 document.addEventListener('dblclick',restart);
 
+function respawnAtNearestCenter() {
+  if (!track || !player) return;
+  const s = track.sample(player.pos.x, player.pos.y);
+  player.pos.x = s.cx;
+  player.pos.y = s.cy;
+  player.angle = track.tangentAt(s.i);
+  player.vel.x *= 0.0;
+  player.vel.y *= 0.0;
+  camera.shake(6, 240);
+}
+
+function loseLifeAndRespawn() {
+  if (!player) return;
+  player.lives--;
+  elLives.textContent = player.lives;
+  respawnAtNearestCenter();
+  player.offTimer = 0;
+  wrongTimer = 0;
+  if (player.lives <= 0) gameOver();
+}
+
 function input(){
   if(state!=='running') return {left:false,right:false,accel:false,brake:false,handbrake:false,steerAxis:0};
 
@@ -898,7 +979,36 @@ function input(){
 }
 function computeDeltaIndex(p,c,L){ let d=c-p; if(d<-L/2) d+=L; if(d>L/2) d-=L; return d; }
 function drawComboOverlay(){ if(!player) return; if(player.comboBreak>0){ const t=player.comboBreak, a=clamp(t/.8,0,1); ctx.save(); ctx.globalAlpha=a; ctx.fillStyle='#ff5050'; ctx.font='bold 64px system-ui'; ctx.textAlign='center'; ctx.fillText('COMBO BREAK!',cvs.width/2,cvs.height*.24); ctx.restore(); player.comboBreak-=dt; return; } if(player.comboState<2) return; const cx=cvs.width/2, cy=cvs.height*.22, color=player.comboState===2?'#2eff88':'#ff4444', pulse=player.comboState===3?1+.08*Math.sin(perfNow*10):1, flash=player.comboFlashTime>0?.35*(player.comboFlashTime/.5):0, scale=pulse+flash; ctx.save(); ctx.translate(cx,cy); ctx.scale(scale,scale); ctx.textAlign='center'; ctx.font='bold 72px system-ui'; ctx.shadowColor=color; ctx.shadowBlur=30; ctx.fillStyle=color; ctx.fillText('X'+player.comboState,0,0); ctx.shadowBlur=0; ctx.font='bold 26px system-ui'; ctx.fillStyle='rgba(255,255,255,.95)'; ctx.fillText(player.comboPhrase||(player.comboState===2?'Good Drift!':'Insane Drift!'),0,34); ctx.font='bold 36px system-ui'; ctx.fillStyle='#fff'; ctx.fillText('+'+Math.floor(player.comboPoints).toLocaleString(),0,74); ctx.restore(); }
-  function drawWarnings(){ const warn=$('#cWarn'), hint=$('#countHint'); if(!player) return; warn.style.display='none'; hint.style.display='none'; if(player.offTimer>0){ const left=clamp(5-player.offTimer,0,5); if(left>0){ warn.style.display='block'; warn.textContent=`Vuelve a la pista: ${left.toFixed(1)}s`; } else { player.lives--; elLives.textContent=player.lives; player.offTimer=0; const s=track.sample(player.pos.x,player.pos.y), t=track.tangentAt(s.i); player.pos.x=s.cx; player.pos.y=s.cy; player.angle=t; if(player.lives<=0) gameOver(); } } if(wrongTimer>0){ const left=clamp(4-wrongTimer,0,4); if(left>0){ hint.style.display='block'; hint.textContent=`Dirección contraria: ${left.toFixed(1)}s`; } else { player.lives--; elLives.textContent=player.lives; wrongTimer=0; if(player.lives<=0) gameOver(); } } }
+  function drawWarnings(){
+    const warn=$('#cWarn'), hint=$('#countHint');
+    if(!player) return;
+    warn.style.display='none';
+    hint.style.display='none';
+
+    // Fuera de pista: 12s para volver
+    const OFF_LIMIT = 12;
+    if(player.offTimer && player.offTimer>0){
+      const left = clamp(OFF_LIMIT - player.offTimer, 0, OFF_LIMIT);
+      if(left>0){
+        warn.style.display='block';
+        warn.textContent = `Vuelve a la pista: ${left.toFixed(1)}s`;
+      } else {
+        loseLifeAndRespawn();
+      }
+    }
+
+    // Sentido contrario: usar wrongTimer como cuenta regresiva de 4s
+    const WRONG_LIMIT = 4;
+    if(wrongTimer>0){
+      const left = clamp(WRONG_LIMIT - wrongTimer, 0, WRONG_LIMIT);
+      if(left>0){
+        hint.style.display='block';
+        hint.textContent = `Dirección contraria: ${left.toFixed(1)}s`;
+      } else {
+        loseLifeAndRespawn();
+      }
+    }
+  }
 function drawSpeedHud(){ drawMiniMap(ctx,track,player); drawSpeedometer(ctx,player.worldSpeed()*3.6); drawGearPanel(ctx, player.gear||1, player.redBlink); }
 function formatTime(t){ const m=Math.floor(t/60), s=Math.floor(t%60), ms=Math.floor((t*1000)%1000).toString().padStart(3,'0'); return `${m}:${s.toString().padStart(2,'0')}.${ms}`; }
 function onLap(){ lapList.insertAdjacentHTML('beforeend',`<li>Lap ${lap}: ${formatTime(lapTime)}</li>`); lap++; lapTime=0; if(lap>TOTAL_LAPS) finished(); }
@@ -926,6 +1036,8 @@ function loop(ms){
     const L=track.points.length; const di=computeDeltaIndex(prevIdx,ret.sIndex,L);
     wrongTimer = di<-0.5 ? wrongTimer+dt : Math.max(0,wrongTimer-dt*2);
     progress+=Math.max(0,di); while(progress>=L){ progress-=L; onLap(); }
+  }
+  if(state!=='paused'){
     raceTime+=dt; lapTime+=dt;
   }
   camera.update(player||{pos:{x:0,y:0}});
@@ -984,14 +1096,6 @@ function drawCarPreview(){
   pv.setTransform(1,0,0,1,0,0);
   pv.clearRect(0,0,w,h);
 
-  // sombra
-  pv.save();
-  pv.translate(w/2,h/2);
-  pv.fillStyle='rgba(0,0,0,.35)';
-  pv.beginPath();
-  pv.ellipse(0,h*0.12,w*0.22,h*0.04,0,0,Math.PI*2);
-  pv.fill();
-
   // sprite
   const spriteKey=CAR_DATA[carIdx].sprite;
   const img=CAR_IMG[spriteKey];
@@ -1002,7 +1106,6 @@ function drawCarPreview(){
     const iw=ih*((img.naturalWidth||img.width)/Math.max(1,(img.naturalHeight||img.height)));
     pv.rotate(-Math.PI/2); // trompa hacia arriba (vertical)
     pv.drawImage(img,-iw/2,-ih/2,iw,ih);
-    pv.restore();
     pv.restore();
   }
 
@@ -1103,27 +1206,24 @@ function applyChosen(){
   // Estaciones con fallbacks HTTPS públicos
   const RADIO_STATIONS = [
     {
-      label: 'Record Hardbass (RU)',
-      query: 'Record Hardbass',
-      fallback: ['https://radiorecord.hostingradio.ru/hbass96.aacp']
+      label: 'Liquid DnB Radio',
+      query: 'Liquid DnB Radio',
+      fallback: ['https://stream.laut.fm/liquidflash']
     },
     {
-      label: 'Record Pirate Station DnB (RU)',
-      query: 'Record Pirate Station',
-      fallback: [
-        'https://radiorecord.hostingradio.ru/ps96.aacp',
-        'https://radiorecord.hostingradio.ru/piratefm96.aacp'
-      ]
+      label: 'KISSFM DnB (UA)',
+      query: 'KISSFM DnB',
+      fallback: ['https://kissfm.streamcdn.to/kissfm_dnb.aac']
     },
     {
-      label: 'Bassdrive (DNB)',
-      query: 'Bassdrive',
-      fallback: ['https://stream.bassdrive.com/;stream.mp3']
+      label: 'Drift Phonk Radio',
+      query: 'Drift Phonk Radio',
+      fallback: ['https://cast1.my-control-panel.com/proxy/pphan/stream']
     },
     {
-      label: 'Nightwave Plaza (Drift/Synth)',
-      query: 'Nightwave Plaza',
-      fallback: ['https://radio.plaza.one/mp3']
+      label: 'Hardbass FM',
+      query: 'Hardbass FM',
+      fallback: ['https://eu9.fastcast4u.com/proxy/hardbass?mp=/stream']
     }
   ];
 
