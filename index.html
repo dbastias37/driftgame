@@ -66,6 +66,42 @@
 
   /* Asegura buen contraste en el modal */
   #carPanel .card{color:#fff;}
+
+  /* ====== Menús y share ====== */
+  #mainMenu, #challengeMenu{
+    position:fixed; inset:0; display:grid; place-items:center;
+    background:rgba(0,0,0,.75); z-index:120; color:#fff;
+  }
+  #mainMenu.hidden, #challengeMenu.hidden{ display:none; }
+  .menu-card{
+    width:min(780px,92vw); background:#101215; border:1px solid #fff2;
+    border-radius:14px; padding:18px; box-shadow:0 20px 60px #0008;
+  }
+  .menu-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .menu-card h1{ margin:0 0 8px; }
+  .menu-card .muted{ opacity:.85; margin-top:6px; }
+
+  #shareBox{
+    position:fixed; left:50%; bottom:14px; transform:translateX(-50%);
+    display:none; gap:10px; align-items:center; z-index:110;
+    background:rgba(0,0,0,.7); border:1px solid #fff2; color:#fff;
+    padding:8px 10px; border-radius:10px; font:13px system-ui;
+  }
+  #shareBox code{ font-family:ui-monospace, SFMono-Regular, Menlo, monospace; white-space:nowrap; }
+  #shareBox .sm{ font-size:12px; opacity:.9; }
+
+  /* En challenge: cards simples */
+  .challenge-list{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
+  .challenge-item{ background:#0b0e12; border:1px solid #fff1; border-radius:12px; padding:10px; text-align:center; }
+  .challenge-item .tag{ font-size:12px; opacity:.85; }
+
+  /* Selector de transmisión en panel de coche */
+  .tx-select{ display:flex; gap:10px; align-items:center; margin-top:10px; }
+  .tx-select label{ display:flex; gap:6px; align-items:center; cursor:pointer; }
+  .tx-select input{ transform:scale(1.1); }
+
+  /* Asegurar z-index del startPanel por debajo del menú principal */
+  #startPanel{ z-index:50; }
 </style>
 </head>
 <body>
@@ -150,11 +186,62 @@
         <div style="min-width:170px">Vel. máx<div class="bar"><i id="barVmax"></i></div></div>
         <div style="min-width:170px">Peso<div class="bar"><i id="barMass"></i></div></div>
       </div>
+      <div class="tx-select">
+        <div><b>Transmisión:</b></div>
+        <label><input type="radio" name="tx" value="auto" checked> Automática</label>
+        <label><input type="radio" name="tx" value="manual"> Manual</label>
+      </div>
       <div class="row" style="justify-content:space-between;margin-top:12px">
         <button id="btnChooseStart" class="btn">Elegir y comenzar</button>
         <button id="btnBackToGame" class="btn gray">Volver al juego</button>
       </div>
     </div>
+  </div>
+
+  <!-- ===== Menú principal ===== -->
+  <div id="mainMenu">
+    <div class="menu-card">
+      <h1>Drift Racer — Menú</h1>
+      <p class="muted">Elige un modo para empezar.</p>
+      <div class="menu-grid" style="margin:10px 0 12px">
+        <div>
+          <button id="btnModeChallenge" style="width:100%;padding:12px 16px;font-size:16px">Modo Challenge</button>
+          <div class="muted" style="margin-top:6px">5 pistas con dificultad creciente.</div>
+        </div>
+        <div>
+          <button id="btnModeCreative" class="gray" style="width:100%;padding:12px 16px;font-size:16px">Modo Creativo (pizarra)</button>
+          <div class="muted" style="margin-top:6px">Dibuja tu circuito libremente.</div>
+        </div>
+      </div>
+      <div class="row" style="gap:8px;flex-wrap:nowrap">
+        <input id="importCode" placeholder="Pegar código de pista…" style="flex:1;padding:10px;border-radius:10px;border:1px solid #fff2;background:#0b0e12;color:#fff" />
+        <button id="btnLoadCode">Cargar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Menú challenge ===== -->
+  <div id="challengeMenu" class="hidden">
+    <div class="menu-card">
+      <h1>Selecciona pista (Challenge)</h1>
+      <div class="challenge-list" style="margin-top:10px">
+        <div class="challenge-item"><div><b>Nivel 1</b></div><div class="tag">Ovalo suave</div><button data-lvl="1" class="btnPickChallenge" style="margin-top:8px">Jugar</button></div>
+        <div class="challenge-item"><div><b>Nivel 2</b></div><div class="tag">Chicana</div><button data-lvl="2" class="btnPickChallenge" style="margin-top:8px">Jugar</button></div>
+        <div class="challenge-item"><div><b>Nivel 3</b></div><div class="tag">S enlazadas</div><button data-lvl="3" class="btnPickChallenge" style="margin-top:8px">Jugar</button></div>
+        <div class="challenge-item"><div><b>Nivel 4</b></div><div class="tag">Horquillas</div><button data-lvl="4" class="btnPickChallenge" style="margin-top:8px">Jugar</button></div>
+        <div class="challenge-item"><div><b>Nivel 5</b></div><div class="tag">Técnica</div><button data-lvl="5" class="btnPickChallenge" style="margin-top:8px">Jugar</button></div>
+      </div>
+      <div class="row" style="justify-content:flex-end;margin-top:12px">
+        <button id="btnBackMain" class="gray">Volver</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Share box (código pista) ===== -->
+  <div id="shareBox">
+    <span class="sm">Código de pista:</span>
+    <code id="shareCode">—</code>
+    <button id="copyCode">Copiar</button>
   </div>
 
 <script>
@@ -177,14 +264,18 @@ addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 addEventListener('keydown',e=>{
   const k=e.key.toLowerCase();
   if(!player || (state!=='running'&&state!=='countdown')) return;
+  if(player.auto) return; // en auto, no responder a cambios manuales
   if(k==='shift'){ if(player.gear<4){ player.gear++; player.shiftTimer=player.shiftDur; } }
   else if(k==='control'){ if(player.gear>1){ player.gear--; player.shiftTimer=player.shiftDur; } }
 });
+
+let pendingTrackFactory = null;
 
 /* ===== HUD refs ===== */
 const elScore=$('#score'), elSpeed=$('#speed'), elLives=$('#lives'), elMulti=$('#multi'), elLap=$('#lap'),
       elTests=$('#testsResult'), overlay=$('#overlay'), overlayTitle=$('#overlayTitle'), overlayMsg=$('#overlayMsg'), btnRestart=$('#restart'),
       raceNow=$('#raceNow'), lapNow=$('#lapNow'), lapList=$('#lapList'), btnHardReset=$('#btnHardReset');
+const startPanel=document.getElementById('startPanel');
 const PH2=['¡Buen drift!','¡Limpio!','Nice Slide!','Good Drift!','¡Suave!','Clean lines!'];
 const PH3=['¡Increíble!','¡Brutal!','Insane Drift!','¡Dominio total!','Legendary!','¡Bestia!'];
 
@@ -244,6 +335,117 @@ class Track{
     g.restore();
   }
 }
+
+/* ===== Share + Presets ===== */
+// Base64 URL-safe helpers
+function b64u_enc(str){ return btoa(unescape(encodeURIComponent(str))).replaceAll('+','-').replaceAll('/','_').replaceAll('=',''); }
+function b64u_dec(b64){ b64=b64.replaceAll('-','+').replaceAll('_','/'); while(b64.length%4) b64+='='; return decodeURIComponent(escape(atob(b64))); }
+
+// Encode/decode points for sharing
+function encodeTrack(points){
+  // Compact: redondea a 2 decimales para acortar
+  const compact = points.map(p=>[Number(p.x.toFixed(2)), Number(p.y.toFixed(2))]);
+  return 'TRK.'+b64u_enc(JSON.stringify(compact));
+}
+function decodeTrack(code){
+  if(!code || !code.startsWith('TRK.')) return null;
+  try{
+    const arr = JSON.parse(b64u_dec(code.slice(4)));
+    const pts = arr.map(([x,y])=>({x,y}));
+    if(pts.length<8) return null;
+    return new Track(pts);
+  }catch(e){ return null; }
+}
+
+// Share box
+const shareBox = document.getElementById('shareBox');
+const shareCodeEl = document.getElementById('shareCode');
+const copyCodeBtn = document.getElementById('copyCode');
+function showShareFromTrack(tr){
+  const code = encodeTrack(tr.points);
+  shareCodeEl.textContent = code;
+  shareBox.style.display = 'flex';
+  try{ history.replaceState(null,'', '#t='+code); }catch(_){}
+}
+copyCodeBtn?.addEventListener('click', ()=>{
+  const c = shareCodeEl.textContent || '';
+  navigator.clipboard?.writeText(c);
+});
+
+// Menús
+const mainMenu = document.getElementById('mainMenu');
+const challengeMenu = document.getElementById('challengeMenu');
+document.getElementById('btnModeCreative')?.addEventListener('click', ()=>{
+  mainMenu.classList.add('hidden');
+  startPanel.classList.remove('hidden');
+});
+document.getElementById('btnModeChallenge')?.addEventListener('click', ()=>{
+  mainMenu.classList.add('hidden');
+  challengeMenu.classList.remove('hidden');
+});
+document.getElementById('btnBackMain')?.addEventListener('click', ()=>{
+  challengeMenu.classList.add('hidden');
+  mainMenu.classList.remove('hidden');
+});
+
+// Importar por código
+document.getElementById('btnLoadCode')?.addEventListener('click', ()=>{
+  const val = (document.getElementById('importCode').value||'').trim();
+  const tr = decodeTrack(val);
+  if(!tr){ alert('Código inválido'); return; }
+  pendingTrackFactory = ()=>tr;
+  openCarPanel();
+  mainMenu.classList.add('hidden');
+});
+
+/* ===== Pistas predefinidas (Challenge) ===== */
+function genPolarTrack({R=120, amp=20, f1=2, f2=3, seed=0.0, samples=220, road=12}){
+  const pts=[];
+  for(let i=0;i<samples;i++){
+    const t = (i/samples)*Math.PI*2;
+    const r = R + amp*Math.sin(f1*t+seed) + (amp*0.45)*Math.sin(f2*t+seed*1.7);
+    pts.push({x:r*Math.cos(t), y:r*Math.sin(t)});
+  }
+  const smooth = chaikinClosed(pts,2);
+  const uni = resampleClosed(smooth,4);
+  const tr = new Track(uni);
+  tr.roadHalf = road;
+  return tr;
+}
+function presetTrack(n){
+  switch(n){
+    case 1: return genPolarTrack({R:110, amp:12, f1:2, f2:3, samples:180, road:14});
+    case 2: return genPolarTrack({R:120, amp:18, f1:3, f2:4, samples:200, road:13});
+    case 3: return genPolarTrack({R:125, amp:24, f1:4, f2:5, samples:220, road:12});
+    case 4: return genPolarTrack({R:130, amp:34, f1:5, f2:6, samples:240, road:11});
+    case 5: return genPolarTrack({R:134, amp:42, f1:6, f2:7, samples:260, road:10});
+    default: return genPolarTrack({});
+  }
+}
+// botones de challenge
+document.querySelectorAll('.btnPickChallenge').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const lvl = Number(btn.getAttribute('data-lvl')||'1');
+    pendingTrackFactory = ()=>presetTrack(lvl);
+    challengeMenu.classList.add('hidden');
+    openCarPanel();
+  });
+});
+
+// Soporte de arranque vía hash (? o #t=TRK.XXXX)
+(function tryLoadFromHash(){
+  const h = location.hash||'';
+  const m = h.match(/t=([A-Za-z0-9\-\._]+)/);
+  if(m && m[1]){
+    const tr = decodeTrack('TRK.'+m[1].replace(/^TRK\./,''));
+    if(tr){
+      pendingTrackFactory = ()=>tr;
+      // mostrar menú y esperar selección de coche
+      mainMenu.classList.add('hidden');
+      openCarPanel();
+    }
+  }
+})();
 
 /* ===== Car (toda tu lógica intacta; añadimos soporte PNG) ===== */
 class Car{
@@ -341,6 +543,13 @@ class Car{
     const s=this._updateScoreAndTrail(dt,track,f,r,kmh,vlat);
     const nearRed1=(this.gear===1&&this.throttleSm>0.6&&kmh>this.gearMax[0]*0.9);
     if(nearRed1) this.spawnTrails(f,r,dt,0.95);
+    // Auto-shift si está en automático
+    if(this.auto){
+      const up = this.shiftUp[this.gear-1] ?? 1e9;
+      const down = (this.gear>1) ? (this.gearMax[this.gear-2]*0.78) : 0;
+      if(kmh > up && this.gear < this.gearCount){ this.gear++; this.shiftTimer=this.shiftDur; }
+      else if(kmh < down && this.gear > 1){ this.gear--; this.shiftTimer=this.shiftDur; }
+    }
     this.updateSmoke(dt,f,r,0,kmh,vlat); if(this.invuln>0) this.invuln-=dt;
     elScore.textContent=this.score.toFixed(0); elSpeed.textContent=(kmh).toFixed(0); elLives.textContent=this.lives; elMulti.textContent=this.mult.toFixed(0);
     if(this.trailOn) this.spawnTrails(f,r,dt,Math.min(.9,.35+Math.abs(vlat))); this._lastTrailOn=this.trailOn;
@@ -409,7 +618,39 @@ addEventListener('wheel',e=>{ e.preventDefault(); camera.zoomBy(e.deltaY>0?.9:1.
 const GAUGE={r:110,minA:-2.35,maxA:2.35,vmax:220};
 function gaugeAngleForSpeed(k){ const t=clamp(k/GAUGE.vmax,0,1); return GAUGE.minA+(GAUGE.maxA-GAUGE.minA)*t; }
 function drawSpeedometer(g,kmh){ const w=260,h=260,pad=16,x=cvs.width-w-pad,y=cvs.height-h-pad; g.save(); g.translate(x,y); g.globalAlpha=.92; fillCard(g,0,0,w,h,16); g.save(); g.translate(w*.5,h*.58); g.strokeStyle='rgba(255,255,255,.25)'; g.lineWidth=10; g.beginPath(); g.arc(0,0,GAUGE.r,GAUGE.minA,GAUGE.maxA); g.stroke(); g.lineWidth=3; g.strokeStyle='rgba(255,255,255,.55)'; for(let v=0; v<=GAUGE.vmax; v+=20){ const a=gaugeAngleForSpeed(v), r1=GAUGE.r-6, r2=GAUGE.r-18; g.beginPath(); g.moveTo(C(a)*r1,S(a)*r1); g.lineTo(C(a)*r2,S(a)*r2); g.stroke(); } g.fillStyle='rgba(255,255,255,.85)'; g.font='bold 16px system-ui'; g.textAlign='center'; for(let v=0; v<=GAUGE.vmax; v+=40){ const a=gaugeAngleForSpeed(v), r=GAUGE.r-34; g.fillText(String(v), C(a)*r, S(a)*r+5); } const ang=gaugeAngleForSpeed(kmh); g.rotate(ang); g.fillStyle='#ff5a5a'; g.beginPath(); g.moveTo(-5,-3); g.lineTo(-5,3); g.lineTo(GAUGE.r-28,0); g.closePath(); g.fill(); g.fillStyle='rgba(255,255,255,.9)'; g.beginPath(); g.arc(0,0,7,0,PI*2); g.fill(); g.restore(); g.fillStyle='rgba(255,255,255,.95)'; g.font='bold 24px system-ui'; g.textAlign='center'; g.fillText(Math.round(kmh)+' KM/H', w*.5, h*.58+30); g.restore(); }
-function drawGearPanel(g,gear,blink=false){  const w=260,h=260,pad=16,x=cvs.width-w-pad,y=cvs.height-h-pad;  const W=80,H=120,gx=x-W-10,gy=y+h*.18;  fillCard(g,gx,gy,W,H,12);  g.save();  g.translate(gx+W/2,gy+16);  g.fillStyle='rgba(255,255,255,.85)'; g.font='bold 12px system-ui'; g.textAlign='center';  g.fillText('GEARS',0,0);  for(let i=1;i<=4;i++){    const yy=18+(i-1)*22;    g.fillStyle=i===gear?(blink?'#ff4d4d':'#2b72ff'):'rgba(255,255,255,.18)';    roundedRect(g,-22,yy,44,18,8); g.fill();    g.fillStyle=i===gear?'#fff':'rgba(255,255,255,.75)'; g.font='bold 13px system-ui';    g.fillText(String(i),0,yy+13);  } g.restore(); }
+function drawGearPanel(g,gear,blink=false){
+  if(player && player.auto){
+    const w=260,h=260,pad=16,x=cvs.width-w-pad,y=cvs.height-h-pad;
+    const W=80,H=60,gx=x-W-10,gy=y+h*.18;
+    fillCard(g,gx,gy,W,H,12);
+    g.save();
+    g.translate(gx+W/2,gy+H/2);
+    g.fillStyle='rgba(255,255,255,.92)';
+    g.font='bold 18px system-ui';
+    g.textAlign='center';
+    g.fillText('AUTO',0,6);
+    g.restore();
+    return;
+  }
+  const w=260,h=260,pad=16,x=cvs.width-w-pad,y=cvs.height-h-pad;
+  const W=80,H=120,gx=x-W-10,gy=y+h*.18;
+  fillCard(g,gx,gy,W,H,12);
+  g.save();
+  g.translate(gx+W/2,gy+16);
+  g.fillStyle='rgba(255,255,255,.85)';
+  g.font='bold 12px system-ui';
+  g.textAlign='center';
+  g.fillText('GEARS',0,0);
+  for(let i=1;i<=4;i++){
+    const yy=18+(i-1)*22;
+    g.fillStyle=i===gear?(blink?'#ff4d4d':'#2b72ff'):'rgba(255,255,255,.18)';
+    roundedRect(g,-22,yy,44,18,8); g.fill();
+    g.fillStyle=i===gear?'#fff':'rgba(255,255,255,.75)';
+    g.font='bold 13px system-ui';
+    g.fillText(String(i),0,yy+13);
+  }
+  g.restore();
+}
 function drawMiniMap(g,track,car){ const w=220,h=220,pad=16,x=pad,y=cvs.height-h-pad; g.save(); g.translate(x,y); g.globalAlpha=.92; fillCard(g,0,0,w,h,16); const b=track.bounds, s=Math.min((w-24)/b.w,(h-24)/b.h), ox=12-(b.minX+b.w/2)*s+w/2, oy=12-(b.minY+b.h/2)*s+h/2; g.save(); g.translate(ox,oy); g.scale(s,s); g.lineWidth=1/s; g.strokeStyle='rgba(255,255,255,.55)'; g.beginPath(); track.points.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); g.closePath(); g.stroke(); g.fillStyle='#ff2b2b'; g.beginPath(); g.arc(car.pos.x,car.pos.y,2.8/s,0,PI*2); g.fill(); g.restore(); g.restore(); }
 function fillCard(g,x,y,w,h,r){ g.fillStyle='rgba(0,0,0,.45)'; g.strokeStyle='rgba(255,255,255,.12)'; g.lineWidth=2; roundedRect(g,x,y,w,h,r); g.fill(); g.stroke(); }
 
@@ -419,7 +660,6 @@ const board=document.getElementById('board'),
       bClear=document.getElementById('bClear'),
       bClose=document.getElementById('bClose'),
       bMsg=document.getElementById('bMsg'),
-      startPanel=document.getElementById('startPanel'),
       btnStart=document.getElementById('btnStart');
 
 let bpts=[], drawing=false, boardValid=false, DPR=window.devicePixelRatio||1;
@@ -463,7 +703,36 @@ function makeTrackFromBoard(){
   const smooth=chaikinClosed(closed,9), uni=resampleClosed(smooth,4), world=toWorld(uni);
   return new Track(world);
 }
-function startCountdown(){ track=makeTrackFromBoard(); if(!track){ alert('Dibuja un circuito válido (cerrado, 600–8000 px).'); return; } player=new Car(track,'#2b72ff'); state='countdown'; countdown=3; countdownTimer=0; overlay.classList.add('hidden'); startPanel.classList.add('hidden'); lap=1; progress=0; lastIdx=track.nearestIndex(player.pos.x,player.pos.y); raceTime=0; lapTime=0; lapList.innerHTML=''; camera.s=camera.targetS=22; }
+function startCountdown(){
+  track=makeTrackFromBoard();
+  if(!track){
+    alert('Dibuja un circuito válido (cerrado, 600–8000 px).');
+    return;
+  }
+  player=new Car(track,'#2b72ff');
+  state='countdown'; countdown=3; countdownTimer=0;
+  overlay.classList.add('hidden');
+  startPanel.classList.add('hidden');
+  lap=1; progress=0;
+  lastIdx=track.nearestIndex(player.pos.x,player.pos.y);
+  raceTime=0; lapTime=0; lapList.innerHTML='';
+  camera.s=camera.targetS=22;
+}
+
+function startRaceWithTrack(t){
+  track = t;
+  player = new Car(track,'#2b72ff');
+  state='countdown'; countdown=3; countdownTimer=0;
+  overlay.classList.add('hidden');
+  startPanel.classList.add('hidden');
+  mainMenu.classList.add('hidden');
+  challengeMenu.classList.add('hidden');
+  closeCarPanel();
+  lap=1; progress=0;
+  lastIdx=track.nearestIndex(player.pos.x,player.pos.y);
+  raceTime=0; lapTime=0; lapList.innerHTML='';
+  camera.s=camera.targetS=22;
+}
 function gameOver(){ state='gameover'; overlayTitle.textContent='¡Game Over!'; overlayMsg.innerHTML='Pulsa <b>R</b> para reiniciar'; overlay.classList.remove('hidden'); }
 function finished(){ state='finished'; overlayTitle.textContent='¡Carrera terminada!'; overlayMsg.innerHTML=`Completaste ${TOTAL_LAPS} vueltas.<br>Total: <b>${formatTime(raceTime)}</b>`; overlay.classList.remove('hidden'); }
 function restart(){ state='menu'; startPanel.classList.remove('hidden'); overlay.classList.add('hidden'); }
@@ -531,6 +800,8 @@ let carIdx=0, chosen=CAR_DATA[0];
 const carPanel=document.getElementById('carPanel');
 const carPv=document.getElementById('carPreview');
 const pv=carPv.getContext('2d');
+const txRadios = ()=>Array.from(document.querySelectorAll('input[name="tx"]'));
+const selectedTx = ()=>{ const r=txRadios().find(x=>x.checked); return r ? r.value : 'auto'; };
 
 function drawCarPreview(){
   const dpr=window.devicePixelRatio||1;
@@ -557,7 +828,6 @@ function drawCarPreview(){
 
   function render(){
     pv.save();
-    pv.rotate(-0.06);
     const ih=h*0.62;
     const iw=ih*((img.naturalWidth||img.width)/Math.max(1,(img.naturalHeight||img.height)));
     pv.drawImage(img,-iw/2,-ih/2,iw,ih);
@@ -597,23 +867,41 @@ function applyChosen(){
   player.handLatFriction *= chosen.tune.hand;
   player.dragLinear      *= chosen.tune.drag;
   player.mass            *= chosen.tune.mass;
+
+  // transmisión
+  player.auto = (selectedTx() === 'auto');
 }
 
-// Hook del botón Start → Selector
+/* Hook: botón Start (pizarra) abre selector de coche y deja factory desde la pizarra */
 (function hookStart(){
   const b = document.getElementById('btnStart');
   if(!b) return;
   b.onclick = null;
   b.addEventListener('click', ()=>{
     if (b.disabled) return;
+    // la pista saldrá de la pizarra cuando elijas el coche
+    pendingTrackFactory = ()=>makeTrackFromBoard();
     openCarPanel();
   });
+
   document.getElementById('btnChooseStart').addEventListener('click', ()=>{
-    closeCarPanel();
-    startCountdown();  // esta función ya crea 'player'
-    applyChosen();     // aplicar sprite y tune al coche ya creado
+    if(!pendingTrackFactory){
+      // fallback anterior (compat)
+      pendingTrackFactory = ()=>makeTrackFromBoard();
+    }
+    const tr = pendingTrackFactory();
+    if(!tr){ alert('Pista inválida. Dibuja un circuito válido o elige otra.'); return; }
+    startRaceWithTrack(tr);    // iniciar con la pista ya creada
+    applyChosen();             // aplicar coche + transmisión
+    showShareFromTrack(tr);    // mostrar código
+    pendingTrackFactory = null;
   });
 })();
+
+// Al inicio, ocultar pizarra y mostrar menú principal
+startPanel.classList.add('hidden');
+mainMenu.classList.remove('hidden');
+shareBox.style.display='none';
 
 </script>
 </body></html>
