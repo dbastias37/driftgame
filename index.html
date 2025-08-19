@@ -1194,10 +1194,18 @@ const selectedTx = ()=>{ const r=txRadios().find(x=>x.checked); return r ? r.val
 
 function drawCarPreview(){
  const dpr = window.devicePixelRatio || 1;
- const cw = carPv.clientWidth || 640;
- const ch = carPv.clientHeight || 300;
- carPv.width  = Math.max(1, cw * dpr);
- carPv.height = Math.max(1, ch * dpr);
+ const rect = carPv.getBoundingClientRect();
+ const cw = Math.max(1, rect.width);
+ const ch = Math.max(1, rect.height);
+
+ // Si aún no está visible (width/height ~ 0), reintentar en el próximo frame
+ if (cw < 2 || ch < 2){
+   requestAnimationFrame(drawCarPreview);
+   return;
+ }
+
+ carPv.width  = Math.floor(cw * dpr);
+ carPv.height = Math.floor(ch * dpr);
 
  const w = carPv.width, h = carPv.height;
  pv.setTransform(1,0,0,1,0,0);
@@ -1207,23 +1215,29 @@ function drawCarPreview(){
  const img = CAR_IMG[spriteKey];
 
  function render(){
+   // limpiar y centrar SIEMPRE
    pv.setTransform(1,0,0,1,0,0);
    pv.clearRect(0,0,w,h);
 
    pv.save();
-   pv.translate(w/2, h/2);        // centro del canvas
-   pv.rotate(-Math.PI/2);         // trompa hacia arriba
+   pv.translate(w/2, h/2);      // centro exacto
+   pv.rotate(-Math.PI/2);       // trompa hacia arriba
 
    const ih = h * 0.62;
-   const iw = ih * ((img.naturalWidth || img.width) / Math.max(1,(img.naturalHeight || img.height)));
+   const ratio = (img.naturalWidth || img.width) / Math.max(1,(img.naturalHeight || img.height));
+   const iw = ih * ratio;
 
-   pv.drawImage(img, -iw/2, -ih/2, iw, ih); // pivote centrado
+   pv.drawImage(img, -iw/2, -ih/2, iw, ih); // ancla centrada
    pv.restore();
  }
 
- if (img.complete && (img.naturalWidth || img.width)) render();
+ if (img && (img.complete && (img.naturalWidth || img.width))) render();
  else img.onload = render;
 }
+
+const __carPvRO = new ResizeObserver(()=> drawCarPreview());
+__carPvRO.observe(document.getElementById('carPreview'));
+window.addEventListener('resize', drawCarPreview, {passive:true});
 function updatePanel(){
   chosen=CAR_DATA[carIdx];
   drawCarPreview();
@@ -1234,7 +1248,10 @@ function updatePanel(){
   document.getElementById('barVmax').style.width=(chosen.stats.vmax*100)+'%';
   document.getElementById('barMass').style.width=(chosen.stats.mass*100)+'%';
 }
-function openCarPanel(){ updatePanel(); carPanel.classList.remove('hidden'); }
+function openCarPanel(){
+  carPanel.classList.remove('hidden');       // mostrar primero
+  requestAnimationFrame(updatePanel);        // esperar al layout
+}
 function closeCarPanel(){ carPanel.classList.add('hidden'); }
 document.getElementById('carPrev').onclick=()=>{ carIdx=(carIdx+CAR_DATA.length-1)%CAR_DATA.length; updatePanel(); };
 document.getElementById('carNext').onclick=()=>{ carIdx=(carIdx+1)%CAR_DATA.length; updatePanel(); };
