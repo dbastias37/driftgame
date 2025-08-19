@@ -873,6 +873,7 @@ class GhostCar{
   constructor(data,spriteKey){
     this.data=data; this.sprite=CAR_IMG[spriteKey]||null; this.t=0; this.visible=true;
   }
+  reset(){ this.t = 0; }
   update(dt){ if(!this.data||!this.visible) return; this.t=Math.min(this.t+dt,this.data.time); }
   _sample(){ const s=this.data; if(!s) return {x:0,y:0,angle:0}; const hz=s.hz||30; const t=clamp(this.t,0,s.time); const idx=Math.min(Math.floor(t*hz),s.samples.length-1); const next=Math.min(idx+1,s.samples.length-1); const frac=t*hz-idx; const p0=s.samples[idx],p1=s.samples[next]; const px=lerp(p0.x,p1.x,frac), py=lerp(p0.y,p1.y,frac); let a0=p0.angle,a1=p1.angle; const dang=((a1-a0+PI*3)%(PI*2))-PI; const ang=a0+dang*frac; return {x:px,y:py,angle:ang}; }
   draw(g,cam){ if(!this.data||!this.visible||!this.sprite) return; const pose=this._sample(); g.save(); g.translate(cam.tx,cam.ty); g.scale(cam.s,cam.s); g.globalAlpha=0.45; g.translate(pose.x,pose.y); g.rotate(pose.angle+Math.PI/2); const img=this.sprite; const ih=4; const iw=ih*((img.naturalWidth||img.width)/((img.naturalHeight||img.height)||1)); g.drawImage(img,-iw/2,-ih/2,iw,ih); g.restore(); }
@@ -1192,35 +1193,36 @@ const txRadios = ()=>Array.from(document.querySelectorAll('input[name="tx"]'));
 const selectedTx = ()=>{ const r=txRadios().find(x=>x.checked); return r ? r.value : 'auto'; };
 
 function drawCarPreview(){
-  const dpr=window.devicePixelRatio||1;
-  const cw=carPv.clientWidth||640;
-  const ch=carPv.clientHeight||300;
-  carPv.width=Math.max(1,cw*dpr);
-  carPv.height=Math.max(1,ch*dpr);
+ const dpr = window.devicePixelRatio || 1;
+ const cw = carPv.clientWidth || 640;
+ const ch = carPv.clientHeight || 300;
+ carPv.width  = Math.max(1, cw * dpr);
+ carPv.height = Math.max(1, ch * dpr);
 
-  const w=carPv.width,h=carPv.height;
-  pv.setTransform(1,0,0,1,0,0);
-  pv.clearRect(0,0,w,h);
+ const w = carPv.width, h = carPv.height;
+ pv.setTransform(1,0,0,1,0,0);
+ pv.clearRect(0,0,w,h);
 
-  // sprite
-  const spriteKey=CAR_DATA[carIdx].sprite;
-  const img=CAR_IMG[spriteKey];
+ const spriteKey = CAR_DATA[carIdx].sprite;
+ const img = CAR_IMG[spriteKey];
 
-  function render(){
-    pv.save();
-    const imgW = img.naturalWidth||img.width;
-    const imgH = img.naturalHeight||img.height;
-    const scale = Math.min(w/imgH, h/imgW)*0.62;
-    const iw = imgW*scale;
-    const ih = imgH*scale;
-    pv.translate(w/2,h/2);
-    pv.rotate(-Math.PI/2); // trompa hacia arriba (vertical)
-    pv.drawImage(img,-iw/2,-ih/2,iw,ih);
-    pv.restore();
-  }
+ function render(){
+   pv.setTransform(1,0,0,1,0,0);
+   pv.clearRect(0,0,w,h);
 
-  if(img.complete && (img.naturalWidth||img.width)) render();
-  else img.onload=render;
+   pv.save();
+   pv.translate(w/2, h/2);        // centro del canvas
+   pv.rotate(-Math.PI/2);         // trompa hacia arriba
+
+   const ih = h * 0.62;
+   const iw = ih * ((img.naturalWidth || img.width) / Math.max(1,(img.naturalHeight || img.height)));
+
+   pv.drawImage(img, -iw/2, -ih/2, iw, ih); // pivote centrado
+   pv.restore();
+ }
+
+ if (img.complete && (img.naturalWidth || img.width)) render();
+ else img.onload = render;
 }
 function updatePanel(){
   chosen=CAR_DATA[carIdx];
