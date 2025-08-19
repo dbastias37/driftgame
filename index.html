@@ -532,41 +532,20 @@ if(isTouchDevice && btnTouchHUD){
   });
 }
 
-/* ===== SPRITES con fallbacks (reemplaza las imágenes PNG) ===== */
-function createCarSprite(color, width = 64, height = 128) {
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  
-  // Cuerpo principal del coche
-  ctx.fillStyle = color;
-  ctx.fillRect(width*0.2, height*0.1, width*0.6, height*0.8);
-  
-  // Parabrisas
-  ctx.fillStyle = '#333';
-  ctx.fillRect(width*0.25, height*0.15, width*0.5, height*0.2);
-  
-  // Ruedas
-  ctx.fillStyle = '#222';
-  ctx.fillRect(width*0.1, height*0.2, width*0.15, height*0.15);
-  ctx.fillRect(width*0.75, height*0.2, width*0.15, height*0.15);
-  ctx.fillRect(width*0.1, height*0.65, width*0.15, height*0.15);
-  ctx.fillRect(width*0.75, height*0.65, width*0.15, height*0.15);
-  
-  // Faros
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(width*0.3, height*0.05, width*0.1, height*0.08);
-  ctx.fillRect(width*0.6, height*0.05, width*0.1, height*0.08);
-  
-  return canvas;
+/* ===== SPRITES: cargar imágenes PNG reales ===== */
+function mkLocal(path){
+  const img=new Image();
+  img.decoding='async';
+  img.loading='eager';
+  img.src=`./${path}`;
+  return img;
 }
 
-const CAR_IMG = {
-  blue:   createCarSprite('#2b72ff'),
-  red:    createCarSprite('#ff3b3b'),
-  yellow: createCarSprite('#ffd93b'),
-  gray:   createCarSprite('#9aa0a6'),
+const CAR_IMG={
+  blue:   mkLocal('assets/cars/blue.png'),
+  red:    mkLocal('assets/cars/red.png'),
+  yellow: mkLocal('assets/cars/yellow.png'),
+  gray:   mkLocal('assets/cars/gray.png'),
 };
 
 /* ===== Track ===== */
@@ -925,9 +904,9 @@ class Car{
 
     const img = this.sprite;
     g.globalAlpha = 1;
-    if (img && (img.complete || img instanceof HTMLCanvasElement)) {
-      const ih = 4; // altura en unidades de mundo
-      const iw = ih * (img.width / Math.max(1, img.height));
+    if (img && (img.complete && (img.naturalWidth || img.width))) {
+      const ih = 4;
+      const iw = ih * ((img.naturalWidth || img.width)/((img.naturalHeight || img.height)||1));
       g.drawImage(img, -iw/2, -ih/2, iw, ih);
     } else {
       // fallback al rectángulo original
@@ -1605,17 +1584,17 @@ setTimeout(() => {
 
   // Estaciones con lista de fallbacks
   const RADIO_STATIONS = [
-    { label: 'HardBass FM', fallback: ['http://hkradio.live:8000/hardbass'] },
-    { label: 'DnB Radio', fallback: ['https://dnbradio.com/streams/dnb256k.pls'] },
-    { label: 'Radio Record Hard Bass', fallback: ['http://air.radiorecord.ru:8102/hbass_320'] },
-    { label: 'Tokyo Drift Radio (Eurobeat)', fallback: ['https://stream.laut.fm/eurobeat'] },
     { label: 'Record Hardbass (RU)', fallback: ['https://radiorecord.hostingradio.ru/hbass96.aacp'] },
     { label: 'Record Pirate Station DnB (RU)', fallback: ['https://radiorecord.hostingradio.ru/ps96.aacp','https://radiorecord.hostingradio.ru/piratefm96.aacp'] },
     { label: 'Nightride FM (Synth/Drift)', fallback: ['https://stream.nightride.fm/nightride.m4a','https://stream.nightride.fm/nightride.mp3'] },
-    { label: 'Jungletrain (Jungle)', fallback: ['http://stream.jungletrain.net:8000/jungletrain.mp3','http://stream2.jungletrain.net:8000/jungletrain.mp3'] },
-    { label: 'Kool London (Jungle)', fallback: ['http://stream.coollondon.co.uk:8000/stream','http://streamer.radio.co/s98e7a5b0e/listen'] },
-    { label: 'DNBRadio (DnB)', fallback: ['http://www.dnbradio.com:8000/dnbradio_main.mp3','http://www.dnbradio.com:8000/dnbradio_main_low.mp3'] },
-    { label: 'SLAM! Hardstyle DnB (DnB)', fallback: ['https://21223.live.streamtheworld.com/WEB11_MP3_SC','https://playerservices.streamtheworld.com/api/livestream-redirect/WEB11_MP3_SC'] }
+    { label: 'Record Trancehouse', fallback: ['https://radiorecord.hostingradio.ru/trancehouse96.aacp'] },
+    { label: 'Record Dubstep', fallback: ['https://radiorecord.hostingradio.ru/dub96.aacp'] },
+    { label: 'Record Techno', fallback: ['https://radiorecord.hostingradio.ru/techouse96.aacp'] },
+    { label: 'Record Bass House', fallback: ['https://radiorecord.hostingradio.ru/basshouse96.aacp'] },
+    { label: 'Record Future House', fallback: ['https://radiorecord.hostingradio.ru/fut96.aacp'] },
+    { label: 'Record Big Beats', fallback: ['https://radiorecord.hostingradio.ru/bigbeat96.aacp'] },
+    { label: 'Nectarine Demoscene', fallback: ['https://necta.scenestream.net:8000/stream.mp3'] },
+    { label: 'ByteFM Electronic', fallback: ['https://bytefm.cast.addradio.de/bytefm/simulcast/high/stream.mp3'] }
   ];
 
   // Refs
