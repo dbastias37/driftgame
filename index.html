@@ -87,15 +87,6 @@
   /* En challenge: cards simples */
   .challenge-list{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
   .challenge-item{ background:#0b0e12; border:1px solid #fff1; border-radius:12px; padding:10px; text-align:center; }
-  .challenge-item.locked{ opacity:.6; position:relative; }
-  .challenge-item.locked::after{
-    content:'\1F512'; /* 🔒 */
-    position:absolute; top:8px; right:10px; font-size:18px; opacity:.9;
-  }
-  .challenge-item button[disabled]{ opacity:.7; cursor:not-allowed; }
-  #challengeBadge{ display:none; }
-  #challengeBadge.show{ display:block; }
-
   .challenge-item .tag{ font-size:12px; opacity:.85; }
 
   /* Selector de transmisión en panel de coche */
@@ -177,6 +168,7 @@
 <body>
   <div id="ui">
     <div class="stat big">Puntos: <span id="score">0</span></div>
+    <div class="stat">Bonus de solera: <span id="edgeBonus">0</span></div>
     <div class="stat">Velocidad: <span id="speed">0</span> km/h</div>
     <div id="challengeBadge" class="stat">Objetivo: <b id="challengeGoal">—</b> pts • Nivel <b id="challengeLevel">—</b></div>
     <div class="row stat">
@@ -338,6 +330,19 @@
       </div>
     </div>
   </div>
+
+
+  <!-- Menú TT de selección de pista -->
+  <div id="ttMenu" class="hidden">
+    <div class="menu-card">
+      <h1>Time Trial — Selecciona pista</h1>
+      <div class="challenge-list" id="ttList" style="margin-top:10px"><!-- items dinámicos --></div>
+      <div class="row" style="justify-content:flex-end;margin-top:12px">
+        <button id="btnBackMainTT" class="gray">Volver</button>
+      </div>
+    </div>
+  </div>
+
 
   <!-- ===== Radio Bar ===== -->
   <div id="radioBar">
@@ -568,6 +573,7 @@ class Track{
   point(i){ return this.points[this._wrap(i)]; }
   nearestIndex(x,y){ let best=0, bd=Infinity, L=this.points.length; for(let i=0;i<L;i+=2){ const p=this.points[i], d=(p.x-x)*(p.x-x)+(p.y-y)*(p.y-y); if(d<bd){ bd=d; best=i; } } return best; }
   sample(x,y){ const i=this.nearestIndex(x,y), p0=this.point(i), t=this.tangentAt(i), dx=x-p0.x, dy=y-p0.y, dist=dx*S(t)-dy*C(t); return {cx:p0.x, cy:p0.y, tang:t, dist, i}; }
+  distanceToEdge(x,y){ const s=this.sample(x,y); return this.roadHalf - Math.abs(s.dist); }
   draw(g,cam){
     g.save(); g.translate(cam.tx,cam.ty); g.scale(cam.s,cam.s); g.lineJoin='round'; g.lineCap='round';
     const L=this.points.length,left=[],right=[];
@@ -677,10 +683,9 @@ safeAddListener('btnModeChallenge', 'click', ()=>{
 });
 
 safeAddListener('btnModeTT', 'click', ()=>{
-  mode='tt';
-  mainMenu?.classList.add('hidden');
-  pendingTrackFactory = ()=>presetTrack(1);
-  openCarPanel();
+  document.getElementById('mainMenu')?.classList.add('hidden');
+  document.getElementById('ttMenu')?.classList.remove('hidden');
+  buildTTMenu();
 });
 
 safeAddListener('btnBackMain', 'click', ()=>{
@@ -834,6 +839,36 @@ class Car{
     this.mult=newM;
     const base=(this.trailOn&&!this.offTrack)?(1+A(Math.abs(vlat),Math.abs(kmh/3.6)+.1)*2.4)*(1+kmh/120):0;
     this.score+=base*this.mult; if(this.trailOn&&!this.offTrack) this.comboPoints+=base*this.mult;
+    // === Edge/Tail drift bonus ===
+    if(!this.hasOwnProperty('edgeBonus')){ this.edgeBonus = 0; this.edgeCombo = 0; this.edgeActive = false; }
+    const rear = { x: this.pos.x - Math.cos(this.angle)*this.length*0.5, y: this.pos.y - Math.sin(this.angle)*this.length*0.5 };
+    if(track && typeof track.distanceToEdge === 'function'){
+      const dEdge = track.distanceToEdge(rear.x, rear.y);
+      const tailNearEdge = (dEdge >= 0) && (dEdge < Math.max(0.8, track.roadHalf*0.20));
+      const drifting = (this.trailOn && !this.offTrack);
+      if(drifting && tailNearEdge){
+        const normalScale = 0.65;
+        const bonusScale  = 1.50;
+        const addBase = base * this.mult;
+        this.score -= addBase;
+        const reduced = addBase * normalScale;
+        this.score += reduced;
+        const edgeAdd = addBase * bonusScale;
+        this.edgeBonus += edgeAdd;
+        this.edgeCombo += edgeAdd;
+        this.score += edgeAdd;
+        this.edgeActive = true;
+      }else{
+        this.edgeActive = false;
+      }
+      if(dEdge <= 0){
+        this.edgeCombo = 0;
+        this.comboPoints = 0;
+        this.comboState = 0;
+        this.mult = 1;
+        this.driftTime = 0;
+      }
+    }
     return s;
   }
   update(dt,input,track){
@@ -1028,9 +1063,9 @@ function renderBoard(){
 function pathLen(pts){ let L=0; for(let i=1;i<pts.length;i++) L+=Math.hypot(pts[i].x-pts[i-1].x,pts[i].y-pts[i-1].y); return L; }
 function closeIfNear(pts){ if(pts.length<4) return pts.slice(); const last=pts[pts.length-1]; const d=Math.hypot(pts[0].x-last.x,pts[0].y-last.y); if(d<18*DPR){ const a=pts.slice(0,-1); a.push(pts[0]); return a; } return pts.slice(); }
 function chaikin(pts,it=3){ let a=pts.slice(); for(let t=0;t<it;t++){ const n=[]; for(let i=0;i<a.length-1;i++){ const p=a[i],q=a[i+1]; n.push({x:.75*p.x+.25*q.x,y:.75*p.y+.25*q.y}); n.push({x:.25*p.x+.75*q.x,y:.25*p.y+.75*q.y}); } a=n; } return a; }
-function chaikinClosed(pts,it=3){ let a=pts.slice(); if(a.length<3) return a; for(let t=0;t<it;t++){ const n=[]; for(let i=0;i<a.length;i++){ const p=a[i], q=a[(i+1)%a.length]; n.push({x:.75*p.x+.25*q.x,y:.75*p.y+.25*q.y}); n.push({x:.25*p.x+.75*q.x,y:.25*p.y+.75*q.y}); } a=n; } return a; }
+function chaikinClosed(pts,it=3){ let a=pts.slice(); if(a.length<3) return a; for(let t=0;t<it;t++){ const n=[]; for(let i=0;i<a.length;i++){ const p=a[i], q=a[(i+1)%a.length]; n.push({x:.75*p.x+.25*q.x,y:.75*p.y+.25*q.y}); n.push({x:.25*p.x+.75*q.x,y:.25*q.y}); } a=n; } return a; }
 function resampleClosed(pts,step=4){ const P=pts.slice(); if(Math.hypot(P[0].x-P[P.length-1].x,P[0].y-P[P.length-1].y)>1e-6) P.push({x:P[0].x,y:P[0].y}); const out=[P[0]]; let acc=0; for(let i=1;i<P.length;i++){ const a=out[out.length-1], b=P[i], dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy); if(d+acc>=step){ const t=(step-acc)/d; out.push({x:a.x+dx*t,y:a.y+dy*t}); acc=0; i--; } else acc+=d; } if(out.length>1 && Math.hypot(out[0].x-out[out.length-1].x,out[0].y-out[out.length-1].y)<1e-6) out.pop(); return out; }
-function resample(pts,step=4){ const out=[pts[0]]; let acc=0; for(let i=1;i<pts.length;i++){ const a=out[out.length-1], b=pts[i], dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy); if(d+acc>=step){ const t=(step-acc)/d; out.push({x:a.x+dx*t,y:a.y+dy*t}); acc=0; i--; } else acc+=d; } return out; }
+function resample(pts,step=4){ const out=[pts[0]]; let acc=0; for(let i=1;i<pts.length;i++){ const a=out[out.length-1], b=pts[i], dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy); if(d+acc>=step){ const t=(step-acc)/d; out.push({x:a.x+dx*t,y:a.y+dy*t}); acc=0; i--; } return out; } return out; }
 function toWorld(points){ let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity; for(const p of points){ if(p.x<minX)minX=p.x; if(p.y<minY)minY=p.y; if(p.x>maxX)maxX=p.x; if(p.y>maxY)maxY=p.y; } const bw=maxX-minX, bh=maxY-minY, Sf=Math.min((cvs.width*.7)/bw,(cvs.height*.7)/bh), ox=(minX+maxX)/2, oy=(minY+maxY)/2; return points.map(p=>({x:(p.x-ox)*Sf,y:(p.y-oy)*Sf})); }
 
 // Eventos de la pizarra
@@ -1289,6 +1324,7 @@ function updateHUD(dt){
   if(uiAccum < UI_DT) return;
   uiAccum = 0;
   if(player){
+    (function(){try{ const eB=document.getElementById('edgeBonus'); if(eB && typeof player.edgeBonus==='number') eB.textContent=Math.floor(player.edgeBonus).toLocaleString('es-CL'); }catch(_){}})();
     if(elScore) elScore.textContent = player.score.toFixed(0);
     if(elSpeed) elSpeed.textContent = (player.worldSpeed()*3.6).toFixed(0);
     if(elLives) elLives.textContent = player.lives;
@@ -1866,6 +1902,43 @@ presetTrack = function(n){
         }
       }catch(_){}
     }, { once:false });
+  }
+})();
+
+
+// ===== TT: Selección de las mismas 20 pistas =====
+function buildTTMenu(){
+  const grid = document.getElementById('ttList'); if(!grid) return;
+  let htmlItems = '';
+  for(let i=1;i<=CHALLENGE_COUNT;i++){
+    htmlItems += `<div class="challenge-item"><div><b>Pista ${i}</b></div><button class="btnPickTT" data-lvl="${i}" style="margin-top:8px">Contrarreloj</button></div>`;
+  }
+  grid.innerHTML = htmlItems;
+  grid.querySelectorAll('.btnPickTT').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const lvl = Number(btn.getAttribute('data-lvl')||'1');
+      mode='tt';
+      pendingTrackFactory = ()=>presetTrack(lvl);
+      document.getElementById('ttMenu')?.classList.add('hidden');
+      openCarPanel();
+    });
+  });
+}
+(function(){
+  const btnTT = document.getElementById('btnModeTT');
+  if(btnTT){
+    btnTT.addEventListener('click', ()=>{
+      document.getElementById('mainMenu')?.classList.add('hidden');
+      document.getElementById('ttMenu')?.classList.remove('hidden');
+      buildTTMenu();
+    });
+  }
+  const backTT = document.getElementById('btnBackMainTT');
+  if(backTT){
+    backTT.addEventListener('click', ()=>{
+      document.getElementById('ttMenu')?.classList.add('hidden');
+      document.getElementById('mainMenu')?.classList.remove('hidden');
+    });
   }
 })();
 
