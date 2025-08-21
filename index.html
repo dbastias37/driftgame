@@ -87,6 +87,15 @@
   /* En challenge: cards simples */
   .challenge-list{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
   .challenge-item{ background:#0b0e12; border:1px solid #fff1; border-radius:12px; padding:10px; text-align:center; }
+  .challenge-item.locked{ opacity:.6; position:relative; }
+  .challenge-item.locked::after{
+    content:'\1F512'; /* 🔒 */
+    position:absolute; top:8px; right:10px; font-size:18px; opacity:.9;
+  }
+  .challenge-item button[disabled]{ opacity:.7; cursor:not-allowed; }
+  #challengeBadge{ display:none; }
+  #challengeBadge.show{ display:block; }
+
   .challenge-item .tag{ font-size:12px; opacity:.85; }
 
   /* Selector de transmisión en panel de coche */
@@ -169,6 +178,7 @@
   <div id="ui">
     <div class="stat big">Puntos: <span id="score">0</span></div>
     <div class="stat">Velocidad: <span id="speed">0</span> km/h</div>
+    <div id="challengeBadge" class="stat">Objetivo: <b id="challengeGoal">—</b> pts • Nivel <b id="challengeLevel">—</b></div>
     <div class="row stat">
       <div class="pill">Vidas: <span id="lives">3</span></div>
       <div class="pill">Drift x<span id="multi">1</span></div>
@@ -275,7 +285,7 @@
       <div class="menu-grid" style="margin:10px 0 12px">
         <div>
           <button id="btnModeChallenge" style="width:100%;padding:12px 16px;font-size:16px">Modo Challenge</button>
-          <div class="muted" style="margin-top:6px">5 pistas con dificultad creciente.</div>
+          <div class="muted" style="margin-top:6px">20 pistas con dificultad y metas crecientes.</div>
         </div>
         <div>
           <button id="btnModeCreative" class="gray" style="width:100%;padding:12px 16px;font-size:16px">Modo Creativo (pizarra)</button>
@@ -297,13 +307,7 @@
   <div id="challengeMenu" class="hidden">
     <div class="menu-card">
       <h1>Selecciona pista (Challenge)</h1>
-      <div class="challenge-list" style="margin-top:10px">
-        <div class="challenge-item"><div><b>Nivel 1</b></div><div class="tag">Ovalo suave</div><button data-lvl="1" class="btnPickChallenge" style="margin-top:8px">Jugar</button></div>
-        <div class="challenge-item"><div><b>Nivel 2</b></div><div class="tag">Chicana</div><button data-lvl="2" class="btnPickChallenge" style="margin-top:8px">Jugar</button></div>
-        <div class="challenge-item"><div><b>Nivel 3</b></div><div class="tag">S enlazadas</div><button data-lvl="3" class="btnPickChallenge" style="margin-top:8px">Jugar</button></div>
-        <div class="challenge-item"><div><b>Nivel 4</b></div><div class="tag">Horquillas</div><button data-lvl="4" class="btnPickChallenge" style="margin-top:8px">Jugar</button></div>
-        <div class="challenge-item"><div><b>Nivel 5</b></div><div class="tag">Técnica</div><button data-lvl="5" class="btnPickChallenge" style="margin-top:8px">Jugar</button></div>
-      </div>
+      <div class="challenge-list" style="margin-top:10px"><!-- items se generan dinámicamente por JS --></div>
       <div class="row" style="justify-content:flex-end;margin-top:12px">
         <button id="btnBackMain" class="gray">Volver</button>
       </div>
@@ -1698,6 +1702,171 @@ setTimeout(() => {
       if(rPlay) rPlay.textContent='Ⅱ'; 
     }, 50);
   });
+})();
+
+
+// ===== Sistema de Challenges (20 pistas con meta de puntos) =====
+const CHALLENGE_COUNT = 20;
+const CHALLENGE_BASE = 65000;      // Pista 1: 65.000 pts
+const CHALLENGE_GROWTH = 1.20;     // crecimiento exponencial ~20% por pista
+
+let unlockedLevel = 1;             // nivel máximo desbloqueado (1..20)
+let activeChallengeLevel = 0;      // nivel en curso (0 = ninguno)
+let activeChallengeGoal = 0;       // puntos requeridos del nivel en curso
+let challengeCompletedThisRun = false;
+
+function challengeRequiredPoints(level){
+  return Math.round(CHALLENGE_BASE * Math.pow(CHALLENGE_GROWTH, Math.max(0, level-1)));
+}
+function loadChallengeProgress(){
+  try{
+    const u = parseInt(localStorage.getItem('challenge:unlocked') || '1', 10);
+    unlockedLevel = isNaN(u) ? 1 : Math.max(1, Math.min(CHALLENGE_COUNT, u));
+  }catch(_){ unlockedLevel = 1; }
+}
+function saveChallengeProgress(){
+  try{ localStorage.setItem('challenge:unlocked', String(unlockedLevel)); }catch(_){}
+}
+function saveChallengeBest(level, score){
+  try{
+    const key = `challenge:best:${level}`;
+    const prev = parseInt(localStorage.getItem(key)||'0', 10) || 0;
+    if(score > prev) localStorage.setItem(key, String(Math.floor(score)));
+  }catch(_){}
+}
+function getChallengeBest(level){
+  try{ return parseInt(localStorage.getItem(`challenge:best:${level}`)||'0',10)||0; }catch(_){ return 0; }
+}
+
+// Construye la grilla de pistas
+function buildChallengeMenu(){
+  loadChallengeProgress();
+  const grid = document.querySelector('#challengeMenu .challenge-list');
+  if(!grid) return;
+  let htmlItems = '';
+  for(let i=1;i<=CHALLENGE_COUNT;i++){
+    const req = challengeRequiredPoints(i);
+    const best = getChallengeBest(i);
+    const locked = i > unlockedLevel;
+    htmlItems += `
+      <div class="challenge-item ${locked?'locked':''}">
+        <div><b>Pista ${i}</b></div>
+        <div class="tag">Objetivo: <b>${req.toLocaleString('es-CL')}</b> pts</div>
+        <div class="tag">Mejor: <b>${best.toLocaleString('es-CL')}</b> pts</div>
+        <button class="btnPickChallenge" data-lvl="${i}" ${locked?'disabled':''} style="margin-top:8px">${locked?'Bloqueado':'Jugar'}</button>
+      </div>`;
+  }
+  grid.innerHTML = htmlItems;
+
+  // Adjuntar listeners a botones recién creados
+  grid.querySelectorAll('.btnPickChallenge').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const lvl = Number(btn.getAttribute('data-lvl')||'1');
+      if(lvl>unlockedLevel){ return; } // no debería ocurrir por disabled
+      mode='challenge';
+      activeChallengeLevel = lvl;
+      activeChallengeGoal = challengeRequiredPoints(lvl);
+      challengeCompletedThisRun = false;
+      // Mostrar meta en el HUD
+      const cb = document.getElementById('challengeBadge');
+      const cg = document.getElementById('challengeGoal');
+      const cl = document.getElementById('challengeLevel');
+      if(cb && cg && cl){
+        cg.textContent = activeChallengeGoal.toLocaleString('es-CL');
+        cl.textContent = String(activeChallengeLevel);
+        cb.classList.add('show');
+      }
+      // Elegir la pista predefinida según nivel
+      pendingTrackFactory = ()=>presetTrack(lvl);
+      document.getElementById('challengeMenu')?.classList.add('hidden');
+      openCarPanel();
+    });
+  });
+}
+
+// Chequear si se cumplió la meta durante la carrera
+function checkChallengeProgress(){
+  if(mode!=='challenge' || !player || state!=='running') return;
+  if(challengeCompletedThisRun) return;
+  if(player.score >= activeChallengeGoal){
+    challengeCompletedThisRun = true;
+    // Guardar progreso y desbloquear siguiente
+    saveChallengeBest(activeChallengeLevel, player.score);
+    if(unlockedLevel < Math.min(CHALLENGE_COUNT, activeChallengeLevel+1)){
+      unlockedLevel = activeChallengeLevel + 1;
+      saveChallengeProgress();
+    }
+    // Mostrar overlay de éxito
+    if(overlayTitle) overlayTitle.textContent = '¡Challenge superado!';
+    if(overlayMsg) overlayMsg.innerHTML = `Pista ${activeChallengeLevel} completada.<br>Objetivo: <b>${activeChallengeGoal.toLocaleString('es-CL')}</b> pts<br>Tu puntaje: <b>${Math.floor(player.score).toLocaleString('es-CL')}</b> pts`;
+    overlay?.classList.remove('hidden');
+    const rbtn = document.getElementById('restart');
+    if(rbtn){
+      rbtn.textContent = 'Volver al selector';
+      // Remover handlers previos y añadir uno nuevo
+      const clone = rbtn.cloneNode(true);
+      rbtn.parentNode.replaceChild(clone, rbtn);
+      clone.addEventListener('click', ()=>{
+        state='menu'; mode='race';
+        overlay?.classList.add('hidden');
+        // Ocultar badge
+        document.getElementById('challengeBadge')?.classList.remove('show');
+        // Volver a menú challenge
+        document.getElementById('mainMenu')?.classList.add('hidden');
+        document.getElementById('challengeMenu')?.classList.remove('hidden');
+        buildChallengeMenu();
+      });
+    }
+  }
+}
+
+// Integrar el chequeo en el loop de HUD (10Hz es suficiente)
+const __oldUpdateHUD = updateHUD;
+updateHUD = function(dt){
+  __oldUpdateHUD(dt);
+  try{ checkChallengeProgress(); }catch(_){}
+};
+
+// Cambiar handler para abrir challenge (actualiza la UI)
+(function(){
+  const btn = document.getElementById('btnModeChallenge');
+  if(btn){
+    btn.addEventListener('click', ()=>{
+      mode='challenge';
+      document.getElementById('mainMenu')?.classList.add('hidden');
+      document.getElementById('challengeMenu')?.classList.remove('hidden');
+      buildChallengeMenu();
+    });
+  }
+})();
+
+// Ampliar el presetTrack para soportar 20 pistas de forma progresiva
+const __oldPresetTrack = presetTrack;
+presetTrack = function(n){
+  if(n>=1 && n<=5) return __oldPresetTrack(n);
+  // A partir de la 6, generamos proceduralmente con mayor complejidad y calzada algo más estrecha
+  const amp = 14 + n*2;                       // amplitud creciente
+  const f1 = 2 + Math.floor(n/2);
+  const f2 = f1 + 1;
+  const samples = 180 + n*10;
+  const road = Math.max(8, 16 - Math.floor(n/2));
+  return genPolarTrack({R:110+n*2, amp, f1, f2, samples, road});
+};
+
+// Reset duro: borrar progreso de challenges también
+(function(){
+  const btn = document.getElementById('btnHardReset');
+  if(btn){
+    btn.addEventListener('click', ()=>{
+      // el JS original ya limpia 'tt:'; acá añadimos 'challenge:'
+      try{
+        for(let i=localStorage.length-1; i>=0; i--){
+          const key = localStorage.key(i);
+          if(key && key.startsWith('challenge:')) localStorage.removeItem(key);
+        }
+      }catch(_){}
+    }, { once:false });
+  }
 })();
 
 </script>
