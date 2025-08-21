@@ -774,6 +774,8 @@ class Car{
     /* NUEVO: sprite (opcional) */
     this.sprite=null; // se establece al elegir coche
     this._stripes=0;  // rayas opcionales
+    /* NUEVO: bandera de sentido contrario */
+    this.wrongWay=false;
   }
   worldSpeed(){ return H(this.vel.x,this.vel.y); }
   _physStep(dt,steer,thr,br){
@@ -804,6 +806,12 @@ class Car{
   }
   _updateScoreAndTrail(dt,track,f,r,kmh,vlat){
     const ENTER=.21; const s=track.sample(this.pos.x,this.pos.y);
+
+    // === NUEVO: detección robusta de sentido contrario (por producto punto con tangente) ===
+    const tdir = {x:C(s.tang), y:S(s.tang)};
+    const dotFW = f.x*tdir.x + f.y*tdir.y; // <0 = al revés
+    this.wrongWay = (kmh > 12 && dotFW < -0.25);
+
     this.offTrack=Math.abs(s.dist)>track.roadHalf; this.edgeShake=Math.max(0,this.edgeShake-dt);
     { const pen=Math.abs(s.dist)-(track.roadHalf-1); if(pen>0){ const k=clamp(pen/2,0,1);
 
@@ -827,12 +835,17 @@ class Car{
     if(want){ this.trailOn=true; this.trailGrace=.185; } else if(this.trailGrace>0){ this.trailGrace-=dt; this.trailOn=true; } else this.trailOn=false;
     const harshSteer=Math.abs(this.steerVel)>2.266, harshYaw=Math.abs(this.yawRate)>2.678; if(this.trailOn&&(harshSteer||harshYaw)) this.trailOn=false,this.trailGrace=0;
     if(this.trailOn&&this.offTrack) this.trailOn=false;
+
     if(this.trailOn){ this.driftTime+=dt; this.driftBreakTimer=0; if(!this._lastTrailOn) this.comboPoints=0; }
     else { this.driftBreakTimer+=dt; if(this.driftBreakTimer>.25){ this.driftTime=0; this.comboState=0; this.comboPhrase=''; this.comboPoints=0; } }
     const newM=this.driftTime>=5?3:this.driftTime>=2?2:1;
     if(newM>this.mult){ this.comboState=newM; this.comboFlashTime=.5; this.comboPhrase=newM===2?PH2[(Math.random()*PH2.length)|0]:PH3[(Math.random()*PH3.length)|0]; this.comboPoints=0; }
     this.mult=newM;
-    const base=(this.trailOn&&!this.offTrack)?(1+A(Math.abs(vlat),Math.abs(kmh/3.6)+.1)*2.4)*(1+kmh/120):0;
+
+    // === Cambio: NO sumar puntos si va en sentido contrario ===
+    let base=(this.trailOn&&!this.offTrack)?(1+A(Math.abs(vlat),Math.abs(kmh/3.6)+.1)*2.4)*(1+kmh/120):0;
+    if(this.wrongWay) base = 0;
+
     this.score+=base*this.mult; if(this.trailOn&&!this.offTrack) this.comboPoints+=base*this.mult;
     return s;
   }
@@ -1317,7 +1330,10 @@ function loop(ms){
         const ret=player.update(dt,input(),track);
         const L=track.points.length; 
         const di=computeDeltaIndex(prevIdx,ret.sIndex,L);
-        wrongTimer = di<-0.5 ? wrongTimer+dt : Math.max(0,wrongTimer-dt*2);
+
+        // === CAMBIO: contador de "dirección contraria" basado en bandera robusta del coche ===
+        wrongTimer = player.wrongWay ? (wrongTimer + dt) : Math.max(0, wrongTimer - dt*2);
+
         progress+=Math.max(0,di); 
         while(progress>=L){ progress-=L; onLap(); }
         
