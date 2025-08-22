@@ -19,6 +19,8 @@
   #help{display:none;position:fixed;right:12px;top:12px;color:#d7e3ff;background:rgba(0,0,0,.45);padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.08);max-width:520px;line-height:1.35;z-index:10}
   #overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.6);color:#fff;font-size:20px;text-align:center;z-index:20}
   #overlay.hidden{display:none}
+  #overlay .btnrow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  #overlay .btnrow .gray{background:#374151}
   #tests{position:fixed;bottom:10px;left:12px;font:12px/1.2 system-ui;color:#cfe6ff;opacity:.9;background:rgba(0,0,0,.35);padding:6px 8px;border-radius:8px;border:1px solid rgba(255,255,255,.08);z-index:10;display:none}
   #times{position:fixed;top:12px;right:12px;width:260px;color:#e6f1ff;background:rgba(0,0,0,.45);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.08);z-index:10}
   #times h3{margin:0 0 8px;font-size:14px;opacity:.9}
@@ -49,25 +51,15 @@
   #carPreview{width:min(640px,72vw);height:300px;background:#0b0e12;border:1px solid #fff2;border-radius:10px}
   .btn.gray{background:#374151}
 
-  /* Glow azul suave para textos principales */
+  /* Glow azul suave */
   .glow{
     color:#fff;
     text-shadow:0 0 10px #3b82f6,0 0 18px #22d3ee55;
   }
-
-  /* Aplica glow a títulos/panel del selector de coche */
   #carPanel .card h2,
   #carPanel #carName,
-  #carPanel #carDesc{
-    color:#fff;
-    text-shadow:0 0 10px #3b82f6,0 0 18px #22d3ee55;
-  }
-
-  #ui .stat, #times h3, #times, #bSidebar, #startCard h1{
-    font-weight:600;
-  }
-
-  /* Asegura buen contraste en el modal */
+  #carPanel #carDesc{color:#fff;text-shadow:0 0 10px #3b82f6,0 0 18px #22d3ee55;}
+  #ui .stat, #times h3, #times, #bSidebar, #startCard h1{font-weight:600;}
   #carPanel .card{color:#fff;}
 
   /* ====== Menús ====== */
@@ -84,12 +76,11 @@
   .menu-card h1{ margin:0 0 8px; }
   .menu-card .muted{ opacity:.85; margin-top:6px; }
 
-  /* En challenge: cards simples */
   .challenge-list{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
   .challenge-item{ background:#0b0e12; border:1px solid #fff1; border-radius:12px; padding:10px; text-align:center; }
   .challenge-item.locked{ opacity:.6; position:relative; }
   .challenge-item.locked::after{
-    content:'\1F512'; /* 🔒 */
+    content:'\1F512';
     position:absolute; top:8px; right:10px; font-size:18px; opacity:.9;
   }
   .challenge-item button[disabled]{ opacity:.7; cursor:not-allowed; }
@@ -98,12 +89,10 @@
 
   .challenge-item .tag{ font-size:12px; opacity:.85; }
 
-  /* Selector de transmisión en panel de coche */
   .tx-select{ display:flex; gap:10px; align-items:center; margin-top:10px; }
   .tx-select label{ display:flex; gap:6px; align-items:center; cursor:pointer; }
   .tx-select input{ transform:scale(1.1); }
 
-  /* Asegurar z-index del startPanel por debajo del menú principal */
   #startPanel{ z-index:50; }
 
   /* ===== Controles táctiles ===== */
@@ -127,10 +116,8 @@
     background:#00b341;border:none;box-shadow:0 10px 30px rgba(0,179,65,.45);pointer-events:auto;touch-action:none;
     font-weight:800;color:#fff;font-size:18px;
   }
-  /* Evitar scroll/zoom accidental en móvil */
   html, body, canvas, #touchHUD, #stickZone, #gasZone { touch-action: none; }
 
-  /* Botón único para activar HUD táctil */
   #btnTouchHUD{
     position:fixed; right:14px; bottom:14px; z-index:140;
     border:none; border-radius:999px; padding:12px 14px; font-weight:800;
@@ -139,7 +126,6 @@
   }
   #btnTouchHUD.on{ background:#00b341; }
 
-  /* Fila "El ID de tu pista" dentro del Start Panel */
   #trackIdRow{
     display:none; gap:8px; align-items:center; margin-top:12px;
   }
@@ -148,7 +134,7 @@
     background:#0b0e12; color:#fff; font-family:ui-monospace,monospace;
   }
   
-  /* ==== Radio bar (radiodrift) ==== */
+  /* ==== Radio bar ==== */
   #radioBar{
     position:fixed; left:50%; bottom:16px; transform:translateX(-50%);
     display:flex; align-items:center; gap:10px;
@@ -203,11 +189,16 @@
     <button id="btnHardReset" style="margin-top:8px;background:#d33">Resetear todo</button>
   </div>
 
+  <!-- ===== Overlay con 3 botones ===== -->
   <div id="overlay" class="hidden">
     <div>
       <h1 id="overlayTitle" style="margin:0 0 8px">¡Game Over!</h1>
       <p id="overlayMsg" style="margin:0 0 14px">Pulsa <b>R</b> para reiniciar</p>
-      <button id="restart">Reiniciar</button>
+      <div class="btnrow" style="margin-top:8px">
+        <button id="btnOvRetry">Reintentar</button>
+        <button id="btnOvChooseCar" class="gray">Elegir coche</button>
+        <button id="btnOvChooseTrack" class="gray">Elegir pista</button>
+      </div>
     </div>
   </div>
 
@@ -413,7 +404,7 @@ let pendingTrackFactory = null;
 
 /* ===== HUD refs ===== */
 const elScore=$('#score'), elSpeed=$('#speed'), elLives=$('#lives'), elMulti=$('#multi'), elLap=$('#lap'),
-      elTests=$('#testsResult'), overlay=$('#overlay'), overlayTitle=$('#overlayTitle'), overlayMsg=$('#overlayMsg'), btnRestart=$('#restart'),
+      elTests=$('#testsResult'), overlay=$('#overlay'), overlayTitle=$('#overlayTitle'), overlayMsg=$('#overlayMsg'),
       raceNow=$('#raceNow'), lapNow=$('#lapNow'), lapList=$('#lapList'), btnHardReset=$('#btnHardReset');
 const startPanel=document.getElementById('startPanel');
 const PH2=['¡Buen drift!','¡Limpio!','Nice Slide!','Good Drift!','¡Suave!','Clean lines!'];
@@ -424,6 +415,11 @@ const btnResume  = document.getElementById('btnResume');
 const btnRestartGame = document.getElementById('btnRestart');
 const btnTrack   = document.getElementById('btnTrack');
 const btnQuit    = document.getElementById('btnQuit');
+
+/* NUEVO: botones del overlay */
+const btnOvRetry = document.getElementById('btnOvRetry');
+const btnOvChooseCar = document.getElementById('btnOvChooseCar');
+const btnOvChooseTrack = document.getElementById('btnOvChooseTrack');
 
 let pausedState='menu';
 function setPaused(v){
@@ -674,6 +670,7 @@ safeAddListener('btnModeChallenge', 'click', ()=>{
   mode='race';
   mainMenu?.classList.add('hidden');
   challengeMenu?.classList.remove('hidden');
+  buildChallengeMenu();
 });
 
 safeAddListener('btnModeTT', 'click', ()=>{
@@ -725,7 +722,7 @@ function presetTrack(n){
   }
 }
 
-// botones de challenge
+// botones de challenge (si existen estáticos)
 document.querySelectorAll('.btnPickChallenge').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     const lvl = Number(btn.getAttribute('data-lvl')||'1');
@@ -749,7 +746,7 @@ document.querySelectorAll('.btnPickChallenge').forEach(btn=>{
   openCarPanel();
 })();
 
-/* ===== Car (toda tu lógica intacta; añadimos soporte PNG) ===== */
+/* ===== Car ===== */
 class Car{
   constructor(track,color='#2b72ff'){
     this.color=color; const s=track.point(0);
@@ -771,10 +768,8 @@ class Car{
     this.tireTrails=[]; this._lastTrailOn=false; this.prevAngle=this.angle; this.prevSteerAngle=this.steerAngle; this.yawRate=0; this.steerVel=0; this.omega=0;
     this.trailOn=false; this.trailGrace=0; this.driftBreakTimer=0;
     this.smoke=[]; this.smokeAcc=0; this.offTrack=false; this.offTimer=0; this.edgeShake=0;
-    /* NUEVO: sprite (opcional) */
-    this.sprite=null; // se establece al elegir coche
-    this._stripes=0;  // rayas opcionales
-    /* NUEVO: bandera de sentido contrario */
+    this.sprite=null;
+    this._stripes=0;
     this.wrongWay=false;
   }
   worldSpeed(){ return H(this.vel.x,this.vel.y); }
@@ -784,7 +779,8 @@ class Car{
     const sp=this.worldSpeed(), sf=clamp(1/(1+sp*.08),.25,1), maxNow=this.maxSteer*sf; this.steerTarget=steer*maxNow;
     const sB=this.steerAngle, dS=clamp(this.steerTarget-this.steerAngle,-this.steerRate*dt,this.steerRate*dt); this.steerAngle+=dS; this.steerVel=(this.steerAngle-sB)/dt;
     const f={x:C(this.angle),y:S(this.angle)}, r={x:-S(this.angle),y:C(this.angle)};
-    const vlong=this.vel.x*f.x+this.vel.y*f.y, vlat=this.vel.x*r.x+this.vel.y*r.y;
+    const vlong=this.vel.x*f.x+this.vel.y*f.y, vlat=this.vel.x+r.x+this.vel.y*r.y? (this.vel.x*r.x+this.vel.y*r.y) : 0;
+    const vlat2=this.vel.x*r.x+this.vel.y*r.y;
     const gPow=this.gearPower[this.gear-1]||1, kmh=sp*3.6, maxK=this.gearMax[this.gear-1]||9999;
     const shiftScale=this.shiftTimer>0?(0.45+0.55*(1-(this.shiftTimer/this.shiftDur))):1;
     const bog=(this.gear>1 && kmh<maxK*0.38)? clamp(kmh/(maxK*0.38),0,1):1;
@@ -795,7 +791,7 @@ class Car{
     let latCoeff=this.handbrake?this.handLatFriction:this.baseLatFriction;
     const dynDrop=clamp(Math.abs(this.omega)*0.35 + Math.abs(this.steerVel)*0.15,0,0.6); latCoeff*=1-0.25*dynDrop;
     if(this.gear===1 && this.throttleSm>0.6 && kmh<32) latCoeff*=0.55;
-    const ax_local=forceLong/this.mass, ay_local=(-vlat*latCoeff)/this.mass;
+    const ax_local=forceLong/this.mass, ay_local=(-(this.vel.x*r.x+this.vel.y*r.y)*latCoeff)/this.mass;
     const ax=ax_local*f.x+ay_local*r.x, ay=ax_local*f.y+ay_local*r.y;
     this.vel.x+=ax*dt; this.vel.y+=ay*dt;
     const desired=(this.worldSpeed()/this.length)*Math.tan(this.steerAngle);
@@ -807,26 +803,20 @@ class Car{
   _updateScoreAndTrail(dt,track,f,r,kmh,vlat){
     const ENTER=.21; const s=track.sample(this.pos.x,this.pos.y);
 
-    // === NUEVO: detección robusta de sentido contrario (por producto punto con tangente) ===
+    // detección robusta sentido contrario
     const tdir = {x:C(s.tang), y:S(s.tang)};
-    const dotFW = f.x*tdir.x + f.y*tdir.y; // <0 = al revés
+    const dotFW = f.x*tdir.x + f.y*tdir.y;
     this.wrongWay = (kmh > 12 && dotFW < -0.25);
 
     this.offTrack=Math.abs(s.dist)>track.roadHalf; this.edgeShake=Math.max(0,this.edgeShake-dt);
     { const pen=Math.abs(s.dist)-(track.roadHalf-1); if(pen>0){ const k=clamp(pen/2,0,1);
-
-      // Penalización más suave: permitir ~15% más de avance
-      const drag = 1 - (0.22 * k) * dt * 4;   // antes era 0.28
+      const drag = 1 - (0.22 * k) * dt * 4;
       this.vel.x *= drag;
       this.vel.y *= drag;
-
-      // Empuje suave hacia el centro
-      const push = 0.65 * k * dt;             // antes 0.8
+      const push = 0.65 * k * dt;
       const nsign = (s.dist>0 ? -1 : 1);
       this.vel.x += nsign * push * C(s.tang + Math.PI/2);
       this.vel.y += nsign * push * S(s.tang + Math.PI/2);
-
-      // Mantener shake
       if(this.edgeShake<=0){ camera.shake(4+6*k,140); this.edgeShake=.18; }
     } }
     const slip=A(Math.abs(vlat),Math.abs(kmh/3.6)+.1);
@@ -842,7 +832,6 @@ class Car{
     if(newM>this.mult){ this.comboState=newM; this.comboFlashTime=.5; this.comboPhrase=newM===2?PH2[(Math.random()*PH2.length)|0]:PH3[(Math.random()*PH3.length)|0]; this.comboPoints=0; }
     this.mult=newM;
 
-    // === Cambio: NO sumar puntos si va en sentido contrario ===
     let base=(this.trailOn&&!this.offTrack)?(1+A(Math.abs(vlat),Math.abs(kmh/3.6)+.1)*2.4)*(1+kmh/120):0;
     if(this.wrongWay) base = 0;
 
@@ -850,7 +839,6 @@ class Car{
     return s;
   }
   update(dt,input,track){
-    // Prioriza analógico SOLO si está realmente activo; si no, usa teclado
     const hasAxis = (typeof input.steerAxis === 'number') && Math.abs(input.steerAxis) > 0.001;
     const steer = hasAxis
       ? clamp(input.steerAxis, -1, 1)
@@ -871,7 +859,6 @@ class Car{
     }
 
     if(nearRed1) this.spawnTrails(f,r,dt,0.95);
-    // Auto-shift si está en automático
     if(this.auto){
       const up = this.shiftUp[this.gear-1] ?? 1e9;
       const down = (this.gear>1) ? (this.gearMax[this.gear-2]*0.78) : 0;
@@ -904,7 +891,6 @@ class Car{
   draw(g,cam){
     g.save(); g.translate(cam.tx,cam.ty); g.scale(cam.s,cam.s);
 
-    /* --- humo y huellas: SIN CAMBIOS --- */
     g.lineWidth=.9;
     for(const t of this.tireTrails){ g.strokeStyle=`rgba(0,0,0,${t.a})`; g.beginPath(); g.moveTo(t.x1,t.y1); g.lineTo(t.x2,t.y2); g.stroke(); t.a*=.998; }
     for(const p of this.smoke){
@@ -915,7 +901,6 @@ class Car{
       g.fillStyle=gr; g.beginPath(); g.arc(p.x,p.y,p.r,0,PI*2); g.fill();
     }
 
-    /* --- cuerpo del coche: dibujar PNG o rectángulo de fallback --- */
     g.translate(this.pos.x, this.pos.y);
     g.rotate(this.angle + Math.PI/2);
 
@@ -926,7 +911,6 @@ class Car{
       const iw = ih * ((img.naturalWidth || img.width)/((img.naturalHeight || img.height)||1));
       g.drawImage(img, -iw/2, -ih/2, iw, ih);
     } else {
-      // fallback al rectángulo original
       g.fillStyle = this.color;
       g.fillRect(-1.2,-2,2.4,4);
     }
@@ -945,7 +929,7 @@ class GhostCar{
 }
 function roundedRect(g,x,y,w,h,r){ const k=Math.min(r,Math.abs(w),Math.abs(h))*.5; g.beginPath(); g.moveTo(x+k,y); g.arcTo(x+w,y,x+w,y+h,k); g.arcTo(x+w,y+h,x,y+h,k); g.arcTo(x,y+h,x,y,k); g.arcTo(x,y,x+w,y,k); g.closePath(); }
 
-/* ===== Cámara / HUD (SIN CAMBIOS a velocímetro) ===== */
+/* ===== Cámara / HUD ===== */
 const camera={ s:22, tx:0, ty:0, shakeAmp:0, shakeTime:0, minS:10, maxS:42, targetS:22,
   update(c){ const tx=-c.pos.x*this.s+cvs.width*.5, ty=-c.pos.y*this.s+cvs.height*.68; this.tx=lerp(this.tx,tx,.12); this.ty=lerp(this.ty,ty,.12); this.s=lerp(this.s,this.targetS,.025); if(this.shakeTime>0){ this.shakeTime-=dt; this.tx+=(Math.random()-.5)*this.shakeAmp; this.ty+=(Math.random()-.5)*this.shakeAmp; this.shakeAmp*=.9; } },
   zoomBy(m){ this.targetS=clamp(this.targetS*m,this.minS,this.maxS); },
@@ -953,7 +937,7 @@ const camera={ s:22, tx:0, ty:0, shakeAmp:0, shakeTime:0, minS:10, maxS:42, targ
 };
 addEventListener('wheel',e=>{ e.preventDefault(); camera.zoomBy(e.deltaY>0?.9:1.1); }, {passive:false});
 
-/* ===== Velocímetro y mini-mapa: IGUAL QUE TUYO ===== */
+/* ===== Velocímetro y mini-mapa ===== */
 const GAUGE={r:110,minA:-2.35,maxA:2.35,vmax:220};
 function gaugeAngleForSpeed(k){ const t=clamp(k/GAUGE.vmax,0,1); return GAUGE.minA+(GAUGE.maxA-GAUGE.minA)*t; }
 function drawSpeedometer(g,kmh){ const w=260,h=260,pad=16,x=cvs.width-w-pad,y=cvs.height-h-pad; g.save(); g.translate(x,y); g.globalAlpha=.92; fillCard(g,0,0,w,h,16); g.save(); g.translate(w*.5,h*.58); g.strokeStyle='rgba(255,255,255,.25)'; g.lineWidth=10; g.beginPath(); g.arc(0,0,GAUGE.r,GAUGE.minA,GAUGE.maxA); g.stroke(); g.lineWidth=3; g.strokeStyle='rgba(255,255,255,.55)'; for(let v=0; v<=GAUGE.vmax; v+=20){ const a=gaugeAngleForSpeed(v), r1=GAUGE.r-6, r2=GAUGE.r-18; g.beginPath(); g.moveTo(C(a)*r1,S(a)*r1); g.lineTo(C(a)*r2,S(a)*r2); g.stroke(); } g.fillStyle='rgba(255,255,255,.85)'; g.font='bold 16px system-ui'; g.textAlign='center'; for(let v=0; v<=GAUGE.vmax; v+=40){ const a=gaugeAngleForSpeed(v), r=GAUGE.r-34; g.fillText(String(v), C(a)*r, S(a)*r+5); } const ang=gaugeAngleForSpeed(kmh); g.rotate(ang); g.fillStyle='#ff5a5a'; g.beginPath(); g.moveTo(-5,-3); g.lineTo(-5,3); g.lineTo(GAUGE.r-28,0); g.closePath(); g.fill(); g.fillStyle='rgba(255,255,255,.9)'; g.beginPath(); g.arc(0,0,7,0,PI*2); g.fill(); g.restore(); g.fillStyle='rgba(255,255,255,.95)'; g.font='bold 24px system-ui'; g.textAlign='center'; g.fillText(Math.round(kmh)+' KM/H', w*.5, h*.58+30); g.restore(); }
@@ -993,7 +977,7 @@ function drawGearPanel(g,gear,blink=false){
 function drawMiniMap(g,track,car){ const w=220,h=220,pad=16,x=pad,y=cvs.height-h-pad; g.save(); g.translate(x,y); g.globalAlpha=.92; fillCard(g,0,0,w,h,16); const b=track.bounds, s=Math.min((w-24)/b.w,(h-24)/b.h), ox=12-(b.minX+b.w/2)*s+w/2, oy=12-(b.minY+b.h/2)*s+h/2; g.save(); g.translate(ox,oy); g.scale(s,s); g.lineWidth=1/s; g.strokeStyle='rgba(255,255,255,.55)'; g.beginPath(); track.points.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); g.closePath(); g.stroke(); g.fillStyle='#ff2b2b'; g.beginPath(); g.arc(car.pos.x,car.pos.y,2.8/s,0,PI*2); g.fill(); g.restore(); g.restore(); }
 function fillCard(g,x,y,w,h,r){ g.fillStyle='rgba(0,0,0,.45)'; g.strokeStyle='rgba(255,255,255,.12)'; g.lineWidth=2; roundedRect(g,x,y,w,h,r); g.fill(); g.stroke(); }
 
-/* ===== Pizarra (igual, con DPR) ===== */
+/* ===== Pizarra ===== */
 const board=document.getElementById('board'),
       bg=board?.getContext('2d'),
       bClear=document.getElementById('bClear'),
@@ -1122,18 +1106,35 @@ function startWithTrack(tr, m='race'){
   }
 }
 
+function showOverlay({title,msg}){
+  if(overlayTitle) overlayTitle.textContent=title||'';
+  if(overlayMsg) overlayMsg.innerHTML=msg||'';
+  overlay?.classList.remove('hidden');
+}
+
 function gameOver(){ 
-  state='gameover'; 
-  if(overlayTitle) overlayTitle.textContent='¡Game Over!'; 
-  if(overlayMsg) overlayMsg.innerHTML='Pulsa <b>R</b> para reiniciar'; 
-  overlay?.classList.remove('hidden'); 
+  if(mode==='challenge' && !challengeCompletedThisRun){
+    showOverlay({
+      title:'Inténtalo de nuevo',
+      msg:`No alcanzaste la meta de <b>${activeChallengeGoal.toLocaleString('es-CL')}</b> pts.<br>Tu puntaje: <b>${Math.floor(player?.score||0).toLocaleString('es-CL')}</b> pts`
+    });
+    return;
+  }
+  showOverlay({title:'¡Game Over!', msg:'Pulsa <b>R</b> para reiniciar'});
 }
 
 function finished(){ 
-  state='finished'; 
-  if(overlayTitle) overlayTitle.textContent='¡Carrera terminada!'; 
-  if(overlayMsg) overlayMsg.innerHTML=`Completaste ${TOTAL_LAPS} vueltas.<br>Total: <b>${formatTime(raceTime)}</b>`; 
-  overlay?.classList.remove('hidden'); 
+  if(mode==='challenge' && !challengeCompletedThisRun){
+    showOverlay({
+      title:'Inténtalo de nuevo',
+      msg:`No alcanzaste la meta de <b>${activeChallengeGoal.toLocaleString('es-CL')}</b> pts.<br>Tu puntaje: <b>${Math.floor(player?.score||0).toLocaleString('es-CL')}</b> pts`
+    });
+    return;
+  }
+  showOverlay({ 
+    title:'¡Carrera terminada!', 
+    msg:`Completaste ${TOTAL_LAPS} vueltas.<br>Total: <b>${formatTime(raceTime)}</b>` 
+  });
 }
 
 function restart(){ 
@@ -1146,7 +1147,25 @@ function restartRaceSameTrack(){
   if(track) startWithTrack(track, mode); 
 }
 
-document.getElementById('restart')?.addEventListener('click', restart);
+/* Handlers del overlay */
+btnOvRetry?.addEventListener('click', ()=>{
+  // Por defecto: reintentar misma pista
+  overlay?.classList.add('hidden');
+  restartRaceSameTrack();
+});
+btnOvChooseCar?.addEventListener('click', ()=>{
+  overlay?.classList.add('hidden');
+  pendingTrackFactory = ()=>track || presetTrack(1);
+  openCarPanel();
+});
+btnOvChooseTrack?.addEventListener('click', ()=>{
+  overlay?.classList.add('hidden');
+  state='menu';
+  document.getElementById('mainMenu')?.classList.add('hidden');
+  document.getElementById('challengeMenu')?.classList.remove('hidden');
+  buildChallengeMenu();
+});
+
 if(typeof DEV!=='undefined' && DEV) document.addEventListener('dblclick',restart);
 
 function respawnAtNearestCenter() {
@@ -1331,7 +1350,6 @@ function loop(ms){
         const L=track.points.length; 
         const di=computeDeltaIndex(prevIdx,ret.sIndex,L);
 
-        // === CAMBIO: contador de "dirección contraria" basado en bandera robusta del coche ===
         wrongTimer = player.wrongWay ? (wrongTimer + dt) : Math.max(0, wrongTimer - dt*2);
 
         progress+=Math.max(0,di); 
@@ -1460,13 +1478,13 @@ function drawCarPreview(){
     pv.clearRect(0,0,w,h);
 
     pv.save();
-    pv.translate(w/2, h/2);        // centro del canvas
-    pv.rotate(-Math.PI/2);         // trompa hacia arriba
+    pv.translate(w/2, h/2);
+    pv.rotate(-Math.PI/2);
 
     const ih = h * 0.62;
     const iw = ih * (img.width / Math.max(1, img.height));
 
-    pv.drawImage(img, -iw/2, -ih/2, iw, ih); // pivote centrado
+    pv.drawImage(img, -iw/2, -ih/2, iw, ih);
     pv.restore();
   }
 
@@ -1518,24 +1536,21 @@ function applyChosen(){
   if(!player) return;
   player.color   = chosen.color;
   player.sprite  = CAR_IMG[chosen.sprite] || null;
-  player._stripes = 0; // no dibujar rayas por código; vienen en el PNG
+  player._stripes = 0;
 
-  // tunning (como ya estaba)
   player.engineForce     *= chosen.tune.engine;
   player.baseLatFriction *= chosen.tune.lat;
   player.handLatFriction *= chosen.tune.hand;
   player.dragLinear      *= chosen.tune.drag;
   player.mass            *= chosen.tune.mass;
 
-  // transmisión
   player.auto = (selectedTx() === 'auto');
 }
 
-/* Hook: botón Start (pizarra) abre selector de coche y deja factory desde la pizarra */
+/* Hook: botón Start (pizarra) */
 safeAddListener('btnStart', 'click', ()=>{
   const b = document.getElementById('btnStart');
   if (!b || b.disabled) return;
-  // la pista saldrá de la pizarra cuando elijas el coche
   pendingTrackFactory = ()=>makeTrackFromBoard();
   openCarPanel();
 });
@@ -1556,6 +1571,11 @@ safeAddListener('btnHardReset', 'click', ()=>{
         const key = localStorage.key(i);
         if(key && key.startsWith('tt:')) localStorage.removeItem(key);
       }
+      // limpiar progreso challenge también
+      for(let i=localStorage.length-1; i>=0; i--){
+        const key = localStorage.key(i);
+        if(key && key.startsWith('challenge:')) localStorage.removeItem(key);
+      }
       location.reload();
     }catch(_){}
   }
@@ -1572,12 +1592,10 @@ setTimeout(() => {
   console.log('Drift Racer initialized successfully');
 }, 100);
 
-/* =====================  RADIODRIFT (restaurado)  ===================== */
+/* =====================  RADIODRIFT  ===================== */
 (function initRadiodrift(){
-  // Evitar doble inyección
   if (window.__radiodriftInit) return; window.__radiodriftInit = true;
 
-  // Crear barra y <audio> solo si no existen
   function ensureRadioNodes(){
     let bar = document.getElementById('radioBar');
     if(!bar){
@@ -1602,7 +1620,6 @@ setTimeout(() => {
   }
   ensureRadioNodes();
 
-  // Estaciones con lista de fallbacks
   const RADIO_STATIONS = [
     { label: 'Record Hardbass (RU)', fallback: ['https://radiorecord.hostingradio.ru/hbass96.aacp'] },
     { label: 'Record Pirate Station DnB (RU)', fallback: ['https://radiorecord.hostingradio.ru/ps96.aacp','https://radiorecord.hostingradio.ru/piratefm96.aacp'] },
@@ -1617,7 +1634,6 @@ setTimeout(() => {
     { label: 'ByteFM Electronic', fallback: ['https://bytefm.cast.addradio.de/bytefm/simulcast/high/stream.mp3'] }
   ];
 
-  // Refs
   const rAudio = document.getElementById('radio');
   const rBar   = document.getElementById('radioBar');
   const rPlay  = document.getElementById('radioPlay');
@@ -1633,7 +1649,7 @@ setTimeout(() => {
     if(rNow) rNow.textContent = txt;
     if(rBar){
       rBar.classList.remove('flash');
-      void rBar.offsetWidth; // reflow
+      void rBar.offsetWidth;
       rBar.classList.add('flash');
     }
     clearTimeout(rHintTimer);
@@ -1679,7 +1695,6 @@ setTimeout(() => {
     radioFlash(`No se pudo reproducir ${st.label}`);
   }
 
-  // Controles
   rPlay?.addEventListener('click', async ()=>{
     if(!rAudio) return;
     if(rAudio.paused){
@@ -1691,7 +1706,6 @@ setTimeout(() => {
   rPrev?.addEventListener('click', ()=> radioLoad(rIndex-1));
   rNext?.addEventListener('click', ()=> radioLoad(rIndex+1));
 
-  // Autoplay: armar reanudación al primer gesto si fue bloqueado
   let radioArmed = false;
   function armRadioOnGesture(){
     if(radioArmed) return; radioArmed = true;
@@ -1708,10 +1722,8 @@ setTimeout(() => {
     document.addEventListener('touchstart', resume, {passive:true});
   }
 
-  // Iniciar
   radioLoad(0).then(armRadioOnGesture);
 
-  // Cuando se inicia la carrera tras elegir coche, forzar play (sin romper nada)
   document.getElementById('btnChooseStart')?.addEventListener('click', ()=>{
     setTimeout(()=>{ 
       if(rAudio) rAudio.play().catch(()=>{}); 
@@ -1723,12 +1735,12 @@ setTimeout(() => {
 
 // ===== Sistema de Challenges (20 pistas con meta de puntos) =====
 const CHALLENGE_COUNT = 20;
-const CHALLENGE_BASE = 65000;      // Pista 1: 65.000 pts
-const CHALLENGE_GROWTH = 1.20;     // crecimiento exponencial ~20% por pista
+const CHALLENGE_BASE = 65000;
+const CHALLENGE_GROWTH = 1.20;
 
-let unlockedLevel = 1;             // nivel máximo desbloqueado (1..20)
-let activeChallengeLevel = 0;      // nivel en curso (0 = ninguno)
-let activeChallengeGoal = 0;       // puntos requeridos del nivel en curso
+let unlockedLevel = 1;
+let activeChallengeLevel = 0;
+let activeChallengeGoal = 0;
 let challengeCompletedThisRun = false;
 
 function challengeRequiredPoints(level){
@@ -1774,16 +1786,14 @@ function buildChallengeMenu(){
   }
   grid.innerHTML = htmlItems;
 
-  // Adjuntar listeners a botones recién creados
   grid.querySelectorAll('.btnPickChallenge').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const lvl = Number(btn.getAttribute('data-lvl')||'1');
-      if(lvl>unlockedLevel){ return; } // no debería ocurrir por disabled
+      if(lvl>unlockedLevel){ return; }
       mode='challenge';
       activeChallengeLevel = lvl;
       activeChallengeGoal = challengeRequiredPoints(lvl);
       challengeCompletedThisRun = false;
-      // Mostrar meta en el HUD
       const cb = document.getElementById('challengeBadge');
       const cg = document.getElementById('challengeGoal');
       const cl = document.getElementById('challengeLevel');
@@ -1792,7 +1802,6 @@ function buildChallengeMenu(){
         cl.textContent = String(activeChallengeLevel);
         cb.classList.add('show');
       }
-      // Elegir la pista predefinida según nivel
       pendingTrackFactory = ()=>presetTrack(lvl);
       document.getElementById('challengeMenu')?.classList.add('hidden');
       openCarPanel();
@@ -1806,37 +1815,53 @@ function checkChallengeProgress(){
   if(challengeCompletedThisRun) return;
   if(player.score >= activeChallengeGoal){
     challengeCompletedThisRun = true;
-    // Guardar progreso y desbloquear siguiente
     saveChallengeBest(activeChallengeLevel, player.score);
     if(unlockedLevel < Math.min(CHALLENGE_COUNT, activeChallengeLevel+1)){
       unlockedLevel = activeChallengeLevel + 1;
       saveChallengeProgress();
     }
-    // Mostrar overlay de éxito
+    // Mostrar overlay de éxito usando los 3 botones
     if(overlayTitle) overlayTitle.textContent = '¡Challenge superado!';
     if(overlayMsg) overlayMsg.innerHTML = `Pista ${activeChallengeLevel} completada.<br>Objetivo: <b>${activeChallengeGoal.toLocaleString('es-CL')}</b> pts<br>Tu puntaje: <b>${Math.floor(player.score).toLocaleString('es-CL')}</b> pts`;
     overlay?.classList.remove('hidden');
-    const rbtn = document.getElementById('restart');
-    if(rbtn){
-      rbtn.textContent = 'Volver al selector';
-      // Remover handlers previos y añadir uno nuevo
-      const clone = rbtn.cloneNode(true);
-      rbtn.parentNode.replaceChild(clone, rbtn);
-      clone.addEventListener('click', ()=>{
+
+    // Ajustar acciones:
+    if(btnOvRetry){
+      btnOvRetry.textContent = 'Volver al selector';
+      btnOvRetry.onclick = ()=>{
         state='menu'; mode='race';
         overlay?.classList.add('hidden');
-        // Ocultar badge
         document.getElementById('challengeBadge')?.classList.remove('show');
-        // Volver a menú challenge
         document.getElementById('mainMenu')?.classList.add('hidden');
         document.getElementById('challengeMenu')?.classList.remove('hidden');
         buildChallengeMenu();
-      });
+        // Restaurar label default
+        setTimeout(()=>{ btnOvRetry.textContent='Reintentar'; btnOvRetry.onclick = ()=>{ overlay?.classList.add('hidden'); restartRaceSameTrack(); }; }, 0);
+      };
+    }
+    if(btnOvChooseCar){
+      btnOvChooseCar.textContent = 'Reintentar';
+      btnOvChooseCar.onclick = ()=>{
+        overlay?.classList.add('hidden');
+        restartRaceSameTrack();
+        // Restaurar label
+        setTimeout(()=>{ btnOvChooseCar.textContent='Elegir coche'; btnOvChooseCar.onclick = ()=>{ overlay?.classList.add('hidden'); pendingTrackFactory=()=>track||presetTrack(1); openCarPanel(); }; }, 0);
+      };
+    }
+    if(btnOvChooseTrack){
+      btnOvChooseTrack.textContent = 'Elegir pista';
+      btnOvChooseTrack.onclick = ()=>{
+        overlay?.classList.add('hidden');
+        state='menu';
+        document.getElementById('mainMenu')?.classList.add('hidden');
+        document.getElementById('challengeMenu')?.classList.remove('hidden');
+        buildChallengeMenu();
+      };
     }
   }
 }
 
-// Integrar el chequeo en el loop de HUD (10Hz es suficiente)
+// Integrar el chequeo en el loop de HUD
 const __oldUpdateHUD = updateHUD;
 updateHUD = function(dt){
   __oldUpdateHUD(dt);
@@ -1856,34 +1881,17 @@ updateHUD = function(dt){
   }
 })();
 
-// Ampliar el presetTrack para soportar 20 pistas de forma progresiva
+// Ampliar el presetTrack para soportar 20 pistas
 const __oldPresetTrack = presetTrack;
 presetTrack = function(n){
   if(n>=1 && n<=5) return __oldPresetTrack(n);
-  // A partir de la 6, generamos proceduralmente con mayor complejidad y calzada algo más estrecha
-  const amp = 14 + n*2;                       // amplitud creciente
+  const amp = 14 + n*2;
   const f1 = 2 + Math.floor(n/2);
   const f2 = f1 + 1;
   const samples = 180 + n*10;
   const road = Math.max(8, 16 - Math.floor(n/2));
   return genPolarTrack({R:110+n*2, amp, f1, f2, samples, road});
 };
-
-// Reset duro: borrar progreso de challenges también
-(function(){
-  const btn = document.getElementById('btnHardReset');
-  if(btn){
-    btn.addEventListener('click', ()=>{
-      // el JS original ya limpia 'tt:'; acá añadimos 'challenge:'
-      try{
-        for(let i=localStorage.length-1; i>=0; i--){
-          const key = localStorage.key(i);
-          if(key && key.startsWith('challenge:')) localStorage.removeItem(key);
-        }
-      }catch(_){}
-    }, { once:false });
-  }
-})();
 
 </script>
 </body></html>
