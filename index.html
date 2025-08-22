@@ -94,6 +94,8 @@
   .tx-select input{ transform:scale(1.1); }
 
   #startPanel{ z-index:50; }
+  /* Ocultar el canvas del juego (y por ende el trazo) cuando está visible la pizarra */
+  #startPanel:not(.hidden) ~ #game { display:none; }
 
   /* ===== Controles táctiles ===== */
   #touchHUD{position:fixed;inset:0;pointer-events:none;z-index:70;display:none}
@@ -239,7 +241,7 @@
 
   <canvas id="game"></canvas>
 
-  <!-- ===== Panel de auto (con fallbacks) ===== -->
+  <!-- ===== Panel de auto (sin "Volver al juego") ===== -->
   <div id="carPanel" class="modal hidden">
     <div class="card">
       <h2 class="glow" style="margin:0 0 10px">Elige tu coche</h2>
@@ -261,9 +263,8 @@
         <label><input type="radio" name="tx" value="auto" checked> Automática</label>
         <label><input type="radio" name="tx" value="manual"> Manual</label>
       </div>
-      <div class="row" style="justify-content:space-between;margin-top:12px">
+      <div class="row" style="justify-content:flex-end;margin-top:12px">
         <button id="btnChooseStart" class="btn">Elegir y comenzar</button>
-        <button id="btnBackToGame" class="btn gray">Volver al juego</button>
       </div>
     </div>
   </div>
@@ -779,7 +780,7 @@ class Car{
     const sp=this.worldSpeed(), sf=clamp(1/(1+sp*.08),.25,1), maxNow=this.maxSteer*sf; this.steerTarget=steer*maxNow;
     const sB=this.steerAngle, dS=clamp(this.steerTarget-this.steerAngle,-this.steerRate*dt,this.steerRate*dt); this.steerAngle+=dS; this.steerVel=(this.steerAngle-sB)/dt;
     const f={x:C(this.angle),y:S(this.angle)}, r={x:-S(this.angle),y:C(this.angle)};
-    const vlong=this.vel.x*f.x+this.vel.y*f.y, vlat=this.vel.x+r.x+this.vel.y*r.y? (this.vel.x*r.x+this.vel.y*r.y) : 0;
+    const vlong=this.vel.x*f.x+this.vel.y*f.y, vlat=this.vel.x*r.x+this.vel.y*r.y? (this.vel.x*r.x+this.vel.y*r.y) : 0;
     const vlat2=this.vel.x*r.x+this.vel.y*r.y;
     const gPow=this.gearPower[this.gear-1]||1, kmh=sp*3.6, maxK=this.gearMax[this.gear-1]||9999;
     const shiftScale=this.shiftTimer>0?(0.45+0.55*(1-(this.shiftTimer/this.shiftDur))):1;
@@ -880,7 +881,7 @@ class Car{
       this.smokeAcc-=1;
       [{x:rc.x-r.x*wo,y:rc.y-r.y*wo},{x:rc.x+r.x*wo,y:rc.y+r.y*wo}].forEach(b=>{
         const rnd=()=>Math.random()-.5, lat=rnd()*.5+vlat*.15, fwd=rnd()*.2-.1;
-        this.smoke.push({x:b.x+rnd()*.15,y:b.y+rnd()*.15,vx:r.x*lat+f.x*fwd,vy:r.y*lat+f.y*fwd,r:.4+Math.random()*.35,grow:.55+Math.random()*.35,a:.45+Math.random()*.25,life:0});
+        this.smoke.push({x:b.x+rnd()*.15,y:b.y+rnd()*.15,vx:r.x*lat+f.x*fwd,vy:r.y*lat+fwd, r:.4+Math.random()*.35,grow:.55+Math.random()*.35,a:.45+Math.random()*.25,life:0});
       });
     }
     const drag=.92;
@@ -1050,6 +1051,14 @@ let track=null, player=null, state='menu', mode='race', countdown=3, countdownTi
     last=performance.now()/1000, raceTime=0, lapTime=0, wrongTimer=0,
     ghost=null, ghostSamples=[], ghostAcc=0, currentTrackId='', prevState='menu';
 
+/* NUEVO: bloqueo de controles al terminar + freno mantenido */
+let controlsLocked = false;
+function lockControlsWithBrake(){
+  controlsLocked = true;
+  if(player){ player.throttleSm = 0; }
+}
+function unlockControls(){ controlsLocked = false; }
+
 // Create pattern for asphalt
 const asphalt=document.createElement('canvas'); 
 asphalt.width=asphalt.height=64; 
@@ -1087,6 +1096,8 @@ function startWithTrack(tr, m='race'){
   if(lapList) lapList.innerHTML='';
   camera.s=camera.targetS=22;
   currentTrackId = encodeTrack(track.points);
+  unlockControls(); // NUEVO: al iniciar, reactivar controles
+
   if(mode==='tt'){
     const best = loadTT('best', currentTrackId);
     const last = loadTT('last', currentTrackId);
@@ -1110,6 +1121,7 @@ function showOverlay({title,msg}){
   if(overlayTitle) overlayTitle.textContent=title||'';
   if(overlayMsg) overlayMsg.innerHTML=msg||'';
   overlay?.classList.remove('hidden');
+  lockControlsWithBrake(); // NUEVO: al mostrar overlay (fin), bloquear y frenar
 }
 
 function gameOver(){ 
@@ -1141,6 +1153,7 @@ function restart(){
   state='menu'; mode='race'; ghost=null; 
   startPanel?.classList.remove('hidden'); 
   overlay?.classList.add('hidden'); 
+  unlockControls(); // NUEVO: liberar controles al volver
 }
 
 function restartRaceSameTrack(){ 
@@ -1149,7 +1162,6 @@ function restartRaceSameTrack(){
 
 /* Handlers del overlay */
 btnOvRetry?.addEventListener('click', ()=>{
-  // Por defecto: reintentar misma pista
   overlay?.classList.add('hidden');
   restartRaceSameTrack();
 });
@@ -1190,6 +1202,11 @@ function loseLifeAndRespawn() {
 }
 
 function input(){
+  // NUEVO: si está bloqueado, mantener freno y anular entradas
+  if(controlsLocked){
+    return {left:false,right:false,accel:false,brake:true,handbrake:false,steerAxis:0};
+  }
+
   if(state!=='running') return {left:false,right:false,accel:false,brake:false,handbrake:false,steerAxis:0};
 
   const kLeft  = keys.has('a') || keys.has('arrowleft');
@@ -1529,8 +1546,6 @@ safeAddListener('carNext', 'click', ()=>{
   updatePanel(); 
 });
 
-safeAddListener('btnBackToGame', 'click', closeCarPanel);
-
 // aplica la selección al coche generado
 function applyChosen(){
   if(!player) return;
@@ -1824,6 +1839,7 @@ function checkChallengeProgress(){
     if(overlayTitle) overlayTitle.textContent = '¡Challenge superado!';
     if(overlayMsg) overlayMsg.innerHTML = `Pista ${activeChallengeLevel} completada.<br>Objetivo: <b>${activeChallengeGoal.toLocaleString('es-CL')}</b> pts<br>Tu puntaje: <b>${Math.floor(player.score).toLocaleString('es-CL')}</b> pts`;
     overlay?.classList.remove('hidden');
+    lockControlsWithBrake(); // NUEVO: bloquear y frenar al finalizar el challenge (éxito)
 
     // Ajustar acciones:
     if(btnOvRetry){
