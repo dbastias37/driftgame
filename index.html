@@ -16,10 +16,6 @@
   #ui .big{font-size:18px;font-weight:700}
   #ui .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   #ui .pill{padding:2px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);font-weight:600}
-  /* Estados del bonus */
-  .pill[data-state="active"]{ background:rgba(16,185,129,.16); border-color:rgba(16,185,129,.45);}
-  .pill[data-state="bad"]{ background:rgba(239,68,68,.16); border-color:rgba(239,68,68,.45);}
-
   #help{display:none;position:fixed;right:12px;top:12px;color:#d7e3ff;background:rgba(0,0,0,.45);padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.08);max-width:520px;line-height:1.35;z-index:10}
   #overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.6);color:#fff;font-size:20px;text-align:center;z-index:20}
   #overlay.hidden{display:none}
@@ -98,6 +94,8 @@
   .tx-select input{ transform:scale(1.1); }
 
   #startPanel{ z-index:50; }
+  /* Ocultar el canvas del juego (y por ende el trazo) cuando está visible la pizarra */
+  #startPanel:not(.hidden) ~ #game { display:none; }
 
   /* ===== Controles táctiles ===== */
   #touchHUD{position:fixed;inset:0;pointer-events:none;z-index:70;display:none}
@@ -173,12 +171,6 @@
       <div class="pill">Vidas: <span id="lives">3</span></div>
       <div class="pill">Drift x<span id="multi">1</span></div>
       <div class="pill">Vuelta: <span id="lap">1/5</span></div>
-    </div>
-    <!-- NUEVO: indicador de bonus debajo del x1/x3 -->
-    <div class="row stat" id="bonusRow">
-      <div class="pill" id="bonusPill" data-state="">
-        Bonus: <span id="bonusVal">—</span>
-      </div>
     </div>
   </div>
 
@@ -271,7 +263,7 @@
         <label><input type="radio" name="tx" value="auto" checked> Automática</label>
         <label><input type="radio" name="tx" value="manual"> Manual</label>
       </div>
-      <div class="row" style="justify-content:space-between;margin-top:12px">
+      <div class="row" style="justify-content:flex-end;margin-top:12px">
         <button id="btnChooseStart" class="btn">Elegir y comenzar</button>
       </div>
     </div>
@@ -307,7 +299,7 @@
   <div id="challengeMenu" class="hidden">
     <div class="menu-card">
       <h1>Selecciona pista (Challenge)</h1>
-    <div class="challenge-list" style="margin-top:10px"></div>
+      <div class="challenge-list" style="margin-top:10px"><!-- items se generan dinámicamente por JS --></div>
       <div class="row" style="justify-content:flex-end;margin-top:12px">
         <button id="btnBackMain" class="gray">Volver</button>
       </div>
@@ -379,7 +371,6 @@ addEventListener('resize',resize);
 resize();
 
 /* ===== Entrada ===== */
-let controlsLocked=false; // NUEVO: bloquear controles al finalizar
 const keys=new Set();
 addEventListener('keydown',e=>{
   const k=e.key.toLowerCase();
@@ -542,7 +533,7 @@ if(isTouchDevice && btnTouchHUD){
   });
 }
 
-/* ===== SPRITES ===== */
+/* ===== SPRITES: cargar imágenes PNG reales ===== */
 function mkLocal(path){
   const img=new Image();
   img.decoding='async';
@@ -600,9 +591,13 @@ class Track{
 }
 
 /* ===== Share + Presets ===== */
+// Base64 URL-safe helpers
 function b64u_enc(str){ return btoa(unescape(encodeURIComponent(str))).replaceAll('+','-').replaceAll('/','_').replaceAll('=',''); }
 function b64u_dec(b64){ b64=b64.replaceAll('-','+').replaceAll('_','/'); while(b64.length%4) b64+='='; return decodeURIComponent(escape(atob(b64))); }
+
+// Encode/decode points for sharing
 function encodeTrack(points){
+  // Compact: redondea a 2 decimales para acortar
   const compact = points.map(p=>[Number(p.x.toFixed(2)), Number(p.y.toFixed(2))]);
   return 'TRK.'+b64u_enc(JSON.stringify(compact));
 }
@@ -615,6 +610,8 @@ function decodeTrack(code){
     return new Track(pts);
   }catch(e){ return null; }
 }
+
+// ====== TRACK ID helpers (reutiliza encodeTrack/decodeTrack existentes) ======
 function updateTrackIdUI(tr){
   const row = document.getElementById('trackIdRow');
   const input = document.getElementById('trackId');
@@ -775,13 +772,6 @@ class Car{
     this.sprite=null;
     this._stripes=0;
     this.wrongWay=false;
-
-    /* ===== NUEVO: bonus por cola al borde ===== */
-    this.edgeBonusActive=false;
-    this.edgeBonusPts=0;
-    this.driftDuringBonus=0;
-    this.totalDriftFlashTime=0;
-    this.totalDriftLast=0;
   }
   worldSpeed(){ return H(this.vel.x,this.vel.y); }
   _physStep(dt,steer,thr,br){
@@ -790,8 +780,9 @@ class Car{
     const sp=this.worldSpeed(), sf=clamp(1/(1+sp*.08),.25,1), maxNow=this.maxSteer*sf; this.steerTarget=steer*maxNow;
     const sB=this.steerAngle, dS=clamp(this.steerTarget-this.steerAngle,-this.steerRate*dt,this.steerRate*dt); this.steerAngle+=dS; this.steerVel=(this.steerAngle-sB)/dt;
     const f={x:C(this.angle),y:S(this.angle)}, r={x:-S(this.angle),y:C(this.angle)};
-    const vlong=this.vel.x*f.x+this.vel.y*f.y, vlat=this.vel.x*r.x+this.vel.y*r.y, kmh=this.worldSpeed()*3.6;
-    const gPow=this.gearPower[this.gear-1]||1, maxK=this.gearMax[this.gear-1]||9999;
+    const vlong=this.vel.x*f.x+this.vel.y*f.y, vlat=this.vel.x*r.x+this.vel.y*r.y? (this.vel.x*r.x+this.vel.y*r.y) : 0;
+    const vlat2=this.vel.x*r.x+this.vel.y*r.y;
+    const gPow=this.gearPower[this.gear-1]||1, kmh=sp*3.6, maxK=this.gearMax[this.gear-1]||9999;
     const shiftScale=this.shiftTimer>0?(0.45+0.55*(1-(this.shiftTimer/this.shiftDur))):1;
     const bog=(this.gear>1 && kmh<maxK*0.38)? clamp(kmh/(maxK*0.38),0,1):1;
     const trMin=this.tractionMin[this.gear-1]||0.85, trRamp=this.tractionRamp[this.gear-1]||40;
@@ -846,48 +837,6 @@ class Car{
     if(this.wrongWay) base = 0;
 
     this.score+=base*this.mult; if(this.trailOn&&!this.offTrack) this.comboPoints+=base*this.mult;
-
-    /* ===== NUEVO: detectar "cola" al borde y sumar bonus ===== */
-    const ro=-this.length*.5;
-    const tail={x:this.pos.x+f.x*ro,y:this.pos.y+f.y*ro};
-    const ts = track.sample(tail.x, tail.y);
-    const distTail = Math.abs(ts.dist);
-    const margin = track.roadHalf - distTail; // cuanto falta para tocar borde
-    const nearEdge = this.trailOn && !this.offTrack && margin>=0 && margin<1.2 && Math.abs(vlat)>0.2;
-
-    // Si se desactiva el bonus, mostrar Total Drift y limpiar acumuladores
-    const finalizeBonus = ()=>{
-      if(this.edgeBonusActive){
-        const total = this.edgeBonusPts + this.driftDuringBonus;
-        if(total>0){
-          this.totalDriftLast = Math.floor(total);
-          this.totalDriftFlashTime = 2.6;
-        }
-        this.edgeBonusActive=false;
-        this.edgeBonusPts=0;
-        this.driftDuringBonus=0;
-      }
-    };
-
-    if(nearEdge){
-      if(!this.edgeBonusActive){
-        this.edgeBonusActive = true;
-        this.edgeBonusPts = 0;
-        this.driftDuringBonus = 0;
-      }
-      const BONUS_FACTOR = 3.5; // mucho más rápido
-      const gainNormal = base*this.mult;
-      const gainBonus  = gainNormal*BONUS_FACTOR;
-      this.edgeBonusPts += gainBonus;
-      this.driftDuringBonus += gainNormal;
-      this.score += gainBonus; // suma al puntaje también
-    } else {
-      // pierde el estado de bonus si ya no está al borde o si sale
-      if(this.offTrack || !this.trailOn){
-        finalizeBonus();
-      }
-    }
-
     return s;
   }
   update(dt,input,track){
@@ -932,7 +881,7 @@ class Car{
       this.smokeAcc-=1;
       [{x:rc.x-r.x*wo,y:rc.y-r.y*wo},{x:rc.x+r.x*wo,y:rc.y+r.y*wo}].forEach(b=>{
         const rnd=()=>Math.random()-.5, lat=rnd()*.5+vlat*.15, fwd=rnd()*.2-.1;
-        this.smoke.push({x:b.x+rnd()*.15,y:b.y+rnd()*.15,vx:r.x*lat+f.x*fwd,vy:r.y*lat+f.y*fwd,r:.4+Math.random()*.35,grow:.55+Math.random()*.35,a:.45+Math.random()*.25,life:0});
+        this.smoke.push({x:b.x+rnd()*.15,y:b.y+rnd()*.15,vx:r.x*lat+f.x*fwd,vy:r.y*lat+fwd, r:.4+Math.random()*.35,grow:.55+Math.random()*.35,a:.45+Math.random()*.25,life:0});
       });
     }
     const drag=.92;
@@ -976,7 +925,7 @@ class GhostCar{
   }
   reset(){ this.t = 0; }
   update(dt){ if(!this.data||!this.visible) return; this.t=Math.min(this.t+dt,this.data.time); }
-  _sample(){ const s=this.data; if(!s) return {x:0,y:0,angle:0}; const hz=s.hz||30; const t=clamp(this.t,0,s.time); const idx=Math.min(Math.floor(t*hz),s.samples.length-1); const next=Math.min(idx+1,samples.length-1); const frac=t*hz-idx; const p0=s.samples[idx],p1=s.samples[next]; const px=lerp(p0.x,p1.x,frac), py=lerp(p0.y,p1.y,frac); let a0=p0.angle,a1=p1.angle; const dang=((a1-a0+PI*3)%(PI*2))-PI; const ang=a0+dang*frac; return {x:px,y:py,angle:ang}; }
+  _sample(){ const s=this.data; if(!s) return {x:0,y:0,angle:0}; const hz=s.hz||30; const t=clamp(this.t,0,s.time); const idx=Math.min(Math.floor(t*hz),s.samples.length-1); const next=Math.min(idx+1,s.samples.length-1); const frac=t*hz-idx; const p0=s.samples[idx],p1=s.samples[next]; const px=lerp(p0.x,p1.x,frac), py=lerp(p0.y,p1.y,frac); let a0=p0.angle,a1=p1.angle; const dang=((a1-a0+PI*3)%(PI*2))-PI; const ang=a0+dang*frac; return {x:px,y:py,angle:ang}; }
   draw(g,cam){ if(!this.data||!this.visible||!this.sprite) return; const pose=this._sample(); g.save(); g.translate(cam.tx,cam.ty); g.scale(cam.s,cam.s); g.globalAlpha=0.45; g.translate(pose.x,pose.y); g.rotate(pose.angle+Math.PI/2); const img=this.sprite; const ih=4; const iw=ih*(img.width/Math.max(1,img.height)); g.drawImage(img,-iw/2,-ih/2,iw,ih); g.restore(); }
 }
 function roundedRect(g,x,y,w,h,r){ const k=Math.min(r,Math.abs(w),Math.abs(h))*.5; g.beginPath(); g.moveTo(x+k,y); g.arcTo(x+w,y,x+w,y+h,k); g.arcTo(x+w,y+h,x,y+h,k); g.arcTo(x,y+h,x,y,k); g.arcTo(x,y,x+w,y,k); g.closePath(); }
@@ -1102,6 +1051,14 @@ let track=null, player=null, state='menu', mode='race', countdown=3, countdownTi
     last=performance.now()/1000, raceTime=0, lapTime=0, wrongTimer=0,
     ghost=null, ghostSamples=[], ghostAcc=0, currentTrackId='', prevState='menu';
 
+/* NUEVO: bloqueo de controles al terminar + freno mantenido */
+let controlsLocked = false;
+function lockControlsWithBrake(){
+  controlsLocked = true;
+  if(player){ player.throttleSm = 0; }
+}
+function unlockControls(){ controlsLocked = false; }
+
 // Create pattern for asphalt
 const asphalt=document.createElement('canvas'); 
 asphalt.width=asphalt.height=64; 
@@ -1129,7 +1086,6 @@ function startWithTrack(tr, m='race'){
   try{ applyChosen?.(); }catch(_){ }
   state='countdown'; countdown=3; countdownTimer=0;
   overlay?.classList.add('hidden');
-  controlsLocked=false; // desbloquear al iniciar
   startPanel?.classList.add('hidden');
   document.getElementById('mainMenu')?.classList.add('hidden');
   document.getElementById('challengeMenu')?.classList.add('hidden');
@@ -1140,6 +1096,8 @@ function startWithTrack(tr, m='race'){
   if(lapList) lapList.innerHTML='';
   camera.s=camera.targetS=22;
   currentTrackId = encodeTrack(track.points);
+  unlockControls(); // NUEVO: al iniciar, reactivar controles
+
   if(mode==='tt'){
     const best = loadTT('best', currentTrackId);
     const last = loadTT('last', currentTrackId);
@@ -1163,15 +1121,21 @@ function showOverlay({title,msg}){
   if(overlayTitle) overlayTitle.textContent=title||'';
   if(overlayMsg) overlayMsg.innerHTML=msg||'';
   overlay?.classList.remove('hidden');
+  lockControlsWithBrake(); // NUEVO: al mostrar overlay (fin), bloquear y frenar
 }
 
 function gameOver(){ 
-  controlsLocked=true; // bloquear y frenar
+  if(mode==='challenge' && !challengeCompletedThisRun){
+    showOverlay({
+      title:'Inténtalo de nuevo',
+      msg:`No alcanzaste la meta de <b>${activeChallengeGoal.toLocaleString('es-CL')}</b> pts.<br>Tu puntaje: <b>${Math.floor(player?.score||0).toLocaleString('es-CL')}</b> pts`
+    });
+    return;
+  }
   showOverlay({title:'¡Game Over!', msg:'Pulsa <b>R</b> para reiniciar'});
 }
 
 function finished(){ 
-  controlsLocked=true; // bloquear y frenar
   if(mode==='challenge' && !challengeCompletedThisRun){
     showOverlay({
       title:'Inténtalo de nuevo',
@@ -1187,13 +1151,12 @@ function finished(){
 
 function restart(){ 
   state='menu'; mode='race'; ghost=null; 
-  controlsLocked=false;
   startPanel?.classList.remove('hidden'); 
   overlay?.classList.add('hidden'); 
+  unlockControls(); // NUEVO: liberar controles al volver
 }
 
 function restartRaceSameTrack(){ 
-  controlsLocked=false;
   if(track) startWithTrack(track, mode); 
 }
 
@@ -1239,8 +1202,10 @@ function loseLifeAndRespawn() {
 }
 
 function input(){
-  // Bloqueo total + freno al terminar
-  if(controlsLocked) return {left:false,right:false,accel:false,brake:true,handbrake:false,steerAxis:0};
+  // NUEVO: si está bloqueado, mantener freno y anular entradas
+  if(controlsLocked){
+    return {left:false,right:false,accel:false,brake:true,handbrake:false,steerAxis:0};
+  }
 
   if(state!=='running') return {left:false,right:false,accel:false,brake:false,handbrake:false,steerAxis:0};
 
@@ -1301,20 +1266,6 @@ function drawComboOverlay(){
   ctx.restore(); 
 }
 
-/* ===== NUEVO: overlay "Total Drift" ===== */
-function drawTotalDriftOverlay(){
-  if(!player || player.totalDriftFlashTime<=0) return;
-  const a = clamp(player.totalDriftFlashTime/2.6, 0, 1);
-  ctx.save();
-  ctx.globalAlpha = a;
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 44px system-ui';
-  ctx.textAlign = 'center';
-  ctx.fillText('Total Drift: +' + Math.floor(player.totalDriftLast).toLocaleString('es-CL'), cvs.width/2, cvs.height*0.32);
-  ctx.restore();
-  player.totalDriftFlashTime -= dt;
-}
-
 function drawWarnings(){
   const warn=$('#cWarn'), hint=$('#countHint');
   if(!player) return;
@@ -1364,7 +1315,6 @@ function formatTime(t){
 }
 
 function onLap(){
-  controlsLocked=true; // al completar vuelta final también se bloquea si termina
   if(mode==='tt'){
     const ttData={time:lapTime, hz:30, samples:ghostSamples.slice()};
     saveTT('last', currentTrackId, ttData);
@@ -1383,9 +1333,6 @@ function onLap(){
   if(lap>TOTAL_LAPS) finished();
 }
 
-const elBonusVal = document.getElementById('bonusVal');
-const elBonusPill = document.getElementById('bonusPill');
-
 function updateHUD(dt){
   uiAccum += dt;
   if(uiAccum < UI_DT) return;
@@ -1398,20 +1345,6 @@ function updateHUD(dt){
     if(elLap){
       if(mode==='tt') elLap.textContent = `${lap}`;
       else elLap.textContent = `${Math.min(lap,TOTAL_LAPS)}/${TOTAL_LAPS}`;
-    }
-
-    // NUEVO: indicador de bonus
-    if(elBonusVal && elBonusPill){
-      if(player.offTrack){
-        elBonusPill.setAttribute('data-state','bad');
-        elBonusVal.textContent = 'OFF';
-      }else if(player.edgeBonusActive){
-        elBonusPill.setAttribute('data-state','active');
-        elBonusVal.textContent = Math.floor(player.edgeBonusPts).toLocaleString('es-CL');
-      }else{
-        elBonusPill.setAttribute('data-state','');
-        elBonusVal.textContent = '—';
-      }
     }
   }
 }
@@ -1488,7 +1421,6 @@ function loop(ms){
     }
     
     drawComboOverlay(); 
-    drawTotalDriftOverlay(); // NUEVO
     drawWarnings(); 
     
     if(raceNow) raceNow.textContent=formatTime(raceTime); 
@@ -1654,6 +1586,7 @@ safeAddListener('btnHardReset', 'click', ()=>{
         const key = localStorage.key(i);
         if(key && key.startsWith('tt:')) localStorage.removeItem(key);
       }
+      // limpiar progreso challenge también
       for(let i=localStorage.length-1; i>=0; i--){
         const key = localStorage.key(i);
         if(key && key.startsWith('challenge:')) localStorage.removeItem(key);
@@ -1902,11 +1835,11 @@ function checkChallengeProgress(){
       unlockedLevel = activeChallengeLevel + 1;
       saveChallengeProgress();
     }
-    // Mostrar overlay de éxito y bloquear controles
-    controlsLocked=true;
+    // Mostrar overlay de éxito usando los 3 botones
     if(overlayTitle) overlayTitle.textContent = '¡Challenge superado!';
     if(overlayMsg) overlayMsg.innerHTML = `Pista ${activeChallengeLevel} completada.<br>Objetivo: <b>${activeChallengeGoal.toLocaleString('es-CL')}</b> pts<br>Tu puntaje: <b>${Math.floor(player.score).toLocaleString('es-CL')}</b> pts`;
     overlay?.classList.remove('hidden');
+    lockControlsWithBrake(); // NUEVO: bloquear y frenar al finalizar el challenge (éxito)
 
     // Ajustar acciones:
     if(btnOvRetry){
@@ -1975,5 +1908,6 @@ presetTrack = function(n){
   const road = Math.max(8, 16 - Math.floor(n/2));
   return genPolarTrack({R:110+n*2, amp, f1, f2, samples, road});
 };
+
 </script>
 </body></html>
