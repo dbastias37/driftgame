@@ -1,0 +1,7 @@
+{
+  "name": "drift-racer",
+  "version": "0.2.0",
+  "private": true,
+  "scripts": { "test": "node --test tests/regression.cjs" },
+  "devDependencies": { "playwright": "1.62.1" }
+}
