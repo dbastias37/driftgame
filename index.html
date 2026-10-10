@@ -2,13 +2,17 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Drift Racer 0.2</title>
-<meta name="application-version" content="0.2.0">
+<meta name="application-version" content="0.2.1">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#0b0b0b;--ink:#e6f1ff;}
   html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Arial}
   button{cursor:pointer;background:#2b72ff;border:none;color:#fff;padding:10px 16px;border-radius:10px;font-weight:700;box-shadow:0 6px 20px rgba(43,114,255,.3)}
+  /* Los controles táctiles no seleccionan etiquetas ni abren el menú de texto de iOS. */
+  button,button *,#touchHUD,#touchHUD *,.tx-select label{
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
   button:hover{background:#1f5fd4;}
   button:disabled{opacity:0.5;cursor:not-allowed;}
   canvas{display:block;width:100vw;height:100vh}

@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.2.1 — Texto de controles táctiles
+
+- Los botones y el mando táctil no seleccionan texto al tocar, mantener pulsado o tocar repetidamente. Se incluye la regla específica de Safari/iOS para evitar el menú de texto.
+- Los campos de códigos de pistas mantienen su selección y copia normales.
+
 ## 0.2.0 — Estabilidad y controles
 
 - La simulación usa pasos de tiempo fijos; la puntuación depende del tiempo de derrape y ya no aumenta con el auto detenido.
