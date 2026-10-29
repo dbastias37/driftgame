@@ -11,7 +11,7 @@ function harness(){
   const math=Object.create(Math);let seed=42;math.random=()=>((seed=(1664525*seed+1013904223)>>>0)/4294967296);
   const document={body:el('body'),hidden:false,getElementById:el,querySelector:q=>q.startsWith('#')?el(q.slice(1)):el('tx'),querySelectorAll:q=>q==='input[name="tx"]'?[el('tx')]:[],createElement:()=>el('generated'+elements.size),addEventListener(){}};
   const scope={document,Math:math,console:{log(){},warn(){},error(){}},performance:{now:()=>1000},innerWidth:1366,innerHeight:768,devicePixelRatio:1,navigator:{maxTouchPoints:0},location:{hash:'',search:''},Image:class{constructor(){this.complete=true;this.width=this.naturalWidth=400;this.height=this.naturalHeight=800}},HTMLCanvasElement:class{},addEventListener(){},requestAnimationFrame(){},setTimeout(){},clearTimeout(){},matchMedia:()=>({matches:false}),localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,String(v)),removeItem:k=>storage.delete(k)},atob:s=>Buffer.from(s,'base64').toString('binary'),btoa:s=>Buffer.from(s,'binary').toString('base64'),TextEncoder,TextDecoder,Uint8Array,URL,alert(){},confirm:()=>false};
-  scope.window=scope;const context=vm.createContext(scope);vm.runInContext(source,context);
+  scope.window=scope;const context=vm.createContext(scope);vm.runInContext(fs.readFileSync(path.join(root,'js/circuit-layouts.js'),'utf8'),context);vm.runInContext(fs.readFileSync(path.join(root,'js/road-contact.js'),'utf8'),context);vm.runInContext(source,context);
   const experience=fs.readFileSync(path.join(root,'js/experience.js'),'utf8').split("import('./view3d.js')")[0];vm.runInContext(experience,context);
   return code=>JSON.parse(JSON.stringify(vm.runInContext(code,context))??'null');
 }

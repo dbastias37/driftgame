@@ -2,7 +2,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Drift Racer — 2D + 3D</title>
-<meta name="application-version" content="0.3.2">
+<meta name="application-version" content="0.3.3">
 <meta name="theme-color" content="#111719">
 <style>
   :root{--bg:#0b0b0b;--ink:#e6f1ff;}
@@ -422,6 +422,8 @@
   
   <audio id="radio" preload="none" crossorigin="anonymous"></audio>
 
+<script src="js/circuit-layouts.js"></script>
+<script src="js/road-contact.js"></script>
 <script>
 "use strict";
 
@@ -758,28 +760,12 @@ safeAddListener('btnLoadCode', 'click', ()=>{
 });
 
 /* ===== Pistas predefinidas (Challenge) ===== */
-function genPolarTrack({R=120, amp=20, f1=2, f2=3, seed=0.0, samples=220, road=12}){
-  const pts=[];
-  for(let i=0;i<samples;i++){
-    const t = (i/samples)*Math.PI*2;
-    const r = R + amp*Math.sin(f1*t+seed) + (amp*0.45)*Math.sin(f2*t+seed*1.7);
-    pts.push({x:r*Math.cos(t), y:r*Math.sin(t)});
-  }
-  const smooth = chaikinClosed(pts,2);
-  const uni = resampleClosed(smooth,4);
-  const tr = new Track(uni);
-  tr.roadHalf = road;
-  return tr;
-}
 function presetTrack(n){
-  switch(n){
-    case 1: return genPolarTrack({R:110, amp:12, f1:2, f2:3, samples:180, road:14});
-    case 2: return genPolarTrack({R:120, amp:18, f1:3, f2:4, samples:200, road:13});
-    case 3: return genPolarTrack({R:125, amp:24, f1:4, f2:5, samples:220, road:12});
-    case 4: return genPolarTrack({R:130, amp:34, f1:5, f2:6, samples:240, road:11});
-    case 5: return genPolarTrack({R:134, amp:42, f1:6, f2:7, samples:260, road:10});
-    default: return genPolarTrack({});
-  }
+  const layout=CircuitLayouts.build(n);
+  const tr=new Track(layout.points.map(p=>({x:p.x,y:p.y})));
+  tr.roadHalf=layout.roadHalf;
+  tr.layout={name:layout.name,level:layout.level,length:layout.length,corners:layout.corners,stage:layout.stage};
+  return tr;
 }
 
 // botones de challenge (si existen estáticos)
@@ -1140,6 +1126,7 @@ function startWithTrack(tr, m='race'){
   track = tr;
   player = new Car(track,'#2b72ff');
   try{ applyChosen?.(); }catch(_){ }
+  DriftRoadContact.reset(track,player,chosen.sprite);
   state='countdown'; countdown=3; countdownTimer=0;
   prevState='countdown';lastTS=performance.now()/1000;simAccumulator=0;wrongTimer=0;nextGate=1;
   challengeCompletedThisRun=false;clearInputs();
@@ -1246,6 +1233,7 @@ function respawnAtNearestCenter() {
   player.angle = track.tangentAt(s.i);
   player.vel.x=0;player.vel.y=0;player.omega=0;player.throttleSm=0;player.gear=1;
   player.steerAngle=0;player.driftTime=0;player.mult=1;player.comboState=0;
+  DriftRoadContact.reset(track,player,chosen.sprite);
   camera.shake(6, 240);
 }
 
@@ -1434,6 +1422,7 @@ function simulate(step){
   raceTime+=step;lapTime+=step;
   const prevIdx=track.sample(player.pos.x,player.pos.y).i;
   const ret=player.update(step,input(),track);
+  DriftRoadContact.update(track,player,step,chosen.sprite);
   wrongTimer=player.wrongWay?wrongTimer+step:Math.max(0,wrongTimer-step*2);
   if(mode==='tt'){
     ghostAcc+=step;
@@ -1850,9 +1839,11 @@ function buildChallengeMenu(){
     const req = challengeRequiredPoints(i);
     const best = getChallengeBest(i);
     const locked = i > unlockedLevel;
+    const circuit = CircuitLayouts.info(i);
     htmlItems += `
       <div class="challenge-item ${locked?'locked':''}">
-        <span class="circuit-num">${String(i).padStart(2,'0')}</span><canvas class="track-thumb" data-track="${i}" aria-label="Trazado del circuito ${i}"></canvas><div><b>Circuito ${i}</b></div>
+        <span class="circuit-num">${String(i).padStart(2,'0')}</span><canvas class="track-thumb" data-track="${i}" aria-label="Circuito ${i}: ${circuit.name}"></canvas><div><b>${circuit.name}</b></div>
+        <div class="tag">${circuit.stage} · ${(circuit.length/1000).toFixed(2)} km</div>
         <div class="tag">Objetivo: <b>${req.toLocaleString('es-CL')}</b> pts</div>
         <div class="tag">Mejor: <b>${best.toLocaleString('es-CL')}</b> pts</div>
         <button class="btnPickChallenge" data-lvl="${i}" ${locked?'disabled':''} style="margin-top:8px">${locked?'Bloqueado':'Jugar'}</button>
@@ -1899,18 +1890,6 @@ function checkChallengeProgress(){
     showOverlay({title:'¡Challenge superado!',msg:`Pista ${activeChallengeLevel} completada.<br>Objetivo: <b>${activeChallengeGoal.toLocaleString('es-CL')}</b> pts<br>Tu puntaje: <b>${Math.floor(player.score).toLocaleString('es-CL')}</b> pts`});
   }
 }
-
-// Ampliar el presetTrack para soportar 20 pistas
-const __oldPresetTrack = presetTrack;
-presetTrack = function(n){
-  if(n>=1 && n<=5) return __oldPresetTrack(n);
-  const amp = 14 + n*2;
-  const f1 = 2 + Math.floor(n/2);
-  const f2 = f1 + 1;
-  const samples = 180 + n*10;
-  const road = Math.max(8, 16 - Math.floor(n/2));
-  return genPolarTrack({R:110+n*2, amp, f1, f2, samples, road});
-};
 
 // Soporte de arranque vía hash (? o #t=TRK.XXXX)
 (function tryLoadFromHash(){

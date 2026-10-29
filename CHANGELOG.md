@@ -1,3 +1,13 @@
+# 0.3.3 — Trazados progresivos y bordes con relieve
+
+- Se reemplazan las ondulaciones radiales por veinte circuitos originales con rectas, arcos tangentes, horquillas y sectores enlazados. Cinco etapas, de 720 a 2550 m y de 5 a 22 curvas.
+- Cada trazado tiene una silueta propia, salida sobre una recta y muestreo uniforme de toda la vuelta. Se conserva el ancho de cada nivel y no se cambian colores ni elementos del escenario.
+- Nombres, etapa y distancia visibles en la selección de circuitos y desafíos; se mantienen metas, desbloqueos y puntajes históricos.
+- Piano redondeado continuo de 14 cm de alto sobre la franja naranja/blanca existente. Las bandas de geometría unidas evitan piezas separadas, solapes y huecos en curvas.
+- Contacto independiente de las cuatro ruedas y respuesta vertical amortiguada de la carrocería. Los cruces rápidos se muestrean entre pasos; física horizontal, controles y derrape permanecen intactos.
+- La altura se calcula en la simulación compartida: alternar 2D/3D no modifica la respuesta; pausa, reintento y reaparición mantienen un estado coherente.
+- Regresión geométrica de los veinte circuitos y pistas importadas, progresión, radios, separación, suspensión y visualización del RX-7.
+
 # 0.3.2 — RX-7 FD RedSuns
 
 - El auto amarillo utiliza el GLB proporcionado, sus texturas originales y cuatro ruedas independientes.

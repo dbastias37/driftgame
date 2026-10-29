@@ -4,7 +4,7 @@ const {harness}=require('./harness.cjs');
 const fs=require('node:fs'),path=require('node:path');
 
 async function checkFootprint(track,label){
-  const {trackSurface,surfaceGeometry}=await import('../js/track-surface.js');
+  const {trackSurface,surfaceGeometry,raisedCurbGeometry}=await import('../js/track-surface.js');
   const {default:C}=await import('../vendor/clipper.module.js');
   const before=JSON.stringify(track),surface=trackSurface(track);
   const paths=tree=>C.Clipper.PolyTreeToPaths(tree);
@@ -12,7 +12,7 @@ async function checkFootprint(track,label){
   const regions=Object.entries(surface.regions);
   let total=0;
   for(const [name,tree] of regions){
-    const geometry=surfaceGeometry(tree,name==='curb'?surface.curbContours:null),p=geometry.attributes.position,uv=geometry.attributes.uv,idx=geometry.index;
+    const geometry=name==='curb'?raisedCurbGeometry(track,surface.curbContours):surfaceGeometry(tree),p=geometry.attributes.position,uv=geometry.attributes.uv,idx=geometry.index;
     assert.ok(Array.from(p.array).every(Number.isFinite),`${label}/${name}: finite geometry`);
     assert.ok(Array.from(uv.array).every(Number.isFinite),`${label}/${name}: finite UVs`);
     let trianglesArea=0;
@@ -59,8 +59,10 @@ test('custom hairpins, crossings, reversed loops and duplicate points remain wat
   for(let i=0;i<tracks.length;i++)await checkFootprint(tracks[i],`custom ${i}`);
 });
 
-test('physics sampling and original track generators are unchanged',()=>{
+test('physics sampling and creative-editor helpers remain unchanged',()=>{
   const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
   const original=JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures/track-sampling-v0.3.json'),'utf8'));
-  for(const code of original)assert.ok(html.includes(code),'Track physics must not be fixed by changing the route or sampling');
+  // Preset routes intentionally changed in 0.3.3; physics queries and the
+  // creative editor's legacy sampling are still held to their original code.
+  for(const code of original.slice(0,4))assert.ok(html.includes(code),'Track queries and creative sampling must remain unchanged');
 });

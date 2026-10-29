@@ -58,6 +58,12 @@ test('live RX-7 follows existing movement and body roll, steering and rolling on
   view.render({track,player,skin:'yellow',dt:1/60});
   for(const w of view.car.wheels){close(w.spin.rotation.z,0);close(w.steer.rotation.y,w.front?.35:0);}
   const pose=JSON.stringify(player);view.setSkin('blue');view.setSkin('yellow');assert.ok(view.car.imported);assert.equal(JSON.stringify(player),pose);
+  const supportTrack={...track,points:[{x:-100,y:0},{x:100,y:0},{x:100,y:100},{x:-100,y:100}],point(i){return this.points[(i+4)%4]},tangentAt(){return 0},normalAt(){return {x:0,y:1}}};
+  player.pos={x:0,y:14.51-.768966};player.angle=0;
+  globalThis.DriftRoadContact.reset(supportTrack,player,'yellow');
+  const supported=JSON.stringify(player);view.render({track:supportTrack,player,skin:'yellow',motion:'reduced',dt:0});
+  assert.equal(JSON.stringify(player),supported);close(view.car.body.position.y,.07);assert.ok(view.car.body.rotation.x<-.08);
+  for(const wheel of view.car.wheels)close(wheel.steer.position.y-wheel.baseY,wheel.steer.position.z>0?.14:0);
   view.dispose();
 });
 

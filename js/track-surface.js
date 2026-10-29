@@ -1,5 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
 import C from '../vendor/clipper.module.js';
+import './road-contact.js';
 
 // Visual footprint only. Never resample or replace the simulation's track.points.
 // Integer clipping removes folds in tight bends before triangulation, including
@@ -110,14 +111,14 @@ function project(x,z,contour){
   return best;
 }
 
-export function surfaceGeometry(tree,curbContours=null){
+export function surfaceGeometry(tree,curbContours=null,height=()=>HEIGHT){
   const vertices=[],uv=[],indices=[];
   function visit(node){
     if(!node.IsHole()&&node.Contour().length>=3){
       const convert=ring=>ring.map(p=>new T.Vector2(Math.fround(p.X/SCALE),Math.fround(p.Y/SCALE)));
       const outer=convert(node.Contour()),holes=node.Childs().filter(n=>n.IsHole()).map(n=>convert(n.Contour()));
       const faces=T.ShapeUtils.triangulateShape(outer,holes),points=outer.concat(...holes),base=vertices.length/3;
-      if(!curbContours)for(const p of points){vertices.push(p.x,HEIGHT,p.y);uv.push(p.x/9,p.y/9);}
+      if(!curbContours)for(const p of points){vertices.push(p.x,height(p.x,p.y),p.y);uv.push(p.x/9,p.y/9);}
       for(let [a,b,c] of faces){
         const p=points[a],q=points[b],r=points[c],area=(q.x-p.x)*(r.y-p.y)-(q.y-p.y)*(r.x-p.x);
         if(Math.abs(area)<1e-10)continue;
@@ -132,7 +133,7 @@ export function surfaceGeometry(tree,curbContours=null){
           for(let i=0;i<3;i++)if(distances[i]<contour.length/2)distances[i]+=contour.length;
         }
         for(let i=0;i<3;i++){
-          indices.push(vertices.length/3);vertices.push(tri[i].x,HEIGHT,tri[i].y);
+          indices.push(vertices.length/3);vertices.push(tri[i].x,height(tri[i].x,tri[i].y),tri[i].y);
           uv.push(distances[i]/contour.period,.5);
         }
       }
@@ -145,4 +146,40 @@ export function surfaceGeometry(tree,curbContours=null){
   geometry.setAttribute('uv',new T.Float32BufferAttribute(uv,2));
   geometry.setIndex(indices);geometry.computeVertexNormals();
   return geometry;
+}
+
+// Nested offset bands retain the unioned footprint even at custom crossings.
+// A shared height query joins every strip without vertical steps or end caps.
+export function raisedCurbGeometry(track,curbContours=trackSurface(track).curbContours){
+  const {curb,terrain}=globalThis.DriftRoadContact,ground=terrain(track);
+  const center=C.Clipper.CleanPolygon(track.points.map(point),.03*SCALE),vertices=[],uv=[],indices=[];
+  let inner=stroke([center],track.roadHalf+curb.start);
+  for(let band=1;band<=curb.bands;band++){
+    const outer=stroke([center],track.roadHalf+curb.start+curb.width*band/curb.bands);
+    const g=surfaceGeometry(subtract(outer,inner),curbContours,(x,z)=>HEIGHT+ground.height(x,z)),base=vertices.length/3;
+    for(const value of g.attributes.position.array)vertices.push(value);
+    for(const value of g.attributes.uv.array)uv.push(value);
+    for(const index of g.index.array)indices.push(base+index);
+    g.dispose();inner=outer;
+  }
+  const geometry=new T.BufferGeometry();
+  geometry.setAttribute('position',new T.Float32BufferAttribute(vertices,3));
+  geometry.setAttribute('uv',new T.Float32BufferAttribute(uv,2));
+  geometry.setIndex(indices);geometry.computeVertexNormals();
+  return geometry;
+}
+
+// A long circuit need not transform every curb vertex for a close-up camera.
+// Spatial tiles preserve every triangle/UV, while both renderers can cull them.
+export function surfaceTiles(geometry,size=48){
+  const tiles=new Map(),p=geometry.attributes.position,uv=geometry.attributes.uv,n=geometry.attributes.normal,index=geometry.index;
+  for(let i=0;i<index.count;i+=3){
+    const ids=[index.getX(i),index.getX(i+1),index.getX(i+2)];
+    const x=ids.reduce((s,j)=>s+p.getX(j),0)/3,z=ids.reduce((s,j)=>s+p.getZ(j),0)/3,key=Math.floor(x/size)+','+Math.floor(z/size);
+    if(!tiles.has(key))tiles.set(key,{positions:[],uvs:[],normals:[]});const tile=tiles.get(key);
+    for(const j of ids){tile.positions.push(p.getX(j),p.getY(j),p.getZ(j));tile.uvs.push(uv.getX(j),uv.getY(j));tile.normals.push(n.getX(j),n.getY(j),n.getZ(j));}
+  }
+  return [...tiles.values()].map(tile=>{
+    const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(tile.positions,3));g.setAttribute('uv',new T.Float32BufferAttribute(tile.uvs,2));g.setAttribute('normal',new T.Float32BufferAttribute(tile.normals,3));g.computeBoundingSphere();return g;
+  });
 }

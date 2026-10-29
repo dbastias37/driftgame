@@ -1,11 +1,11 @@
 {
   "name": "drift-racer",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "private": true,
   "scripts": {
-    "test": "node --test tests/simulation.cjs tests/rendering.cjs tests/track-surface.cjs tests/rx7-model.cjs tests/regression.cjs",
+    "test": "node --test tests/simulation.cjs tests/rendering.cjs tests/track-surface.cjs tests/circuit-layouts.cjs tests/road-contact.cjs tests/rx7-model.cjs tests/regression.cjs",
     "test:simulation": "node --test tests/simulation.cjs",
-    "test:core": "node --test tests/simulation.cjs tests/rendering.cjs tests/track-surface.cjs tests/rx7-model.cjs"
+    "test:core": "node --test tests/simulation.cjs tests/rendering.cjs tests/track-surface.cjs tests/circuit-layouts.cjs tests/road-contact.cjs tests/rx7-model.cjs"
   },
   "devDependencies": {
     "playwright": "1.62.1"
