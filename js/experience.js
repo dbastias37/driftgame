@@ -100,7 +100,10 @@ import('./view3d.js').then(({DriftView3D})=>{
 function showCircuitMenu(){
   hidePanels();garageOrigin='circuits';$('#circuitMenu').classList.remove('hidden');
   $('#circuitTitle').textContent=mode==='tt'?'Contrarreloj · Selecciona circuito':'Carrera · Selecciona circuito';
-  const root=$('#circuitList');root.innerHTML=Array.from({length:20},(_,i)=>`<div class="challenge-item"><span class="circuit-num">${String(i+1).padStart(2,'0')}</span><canvas class="track-thumb" data-track="${i+1}" aria-label="Circuito ${i+1}"></canvas><button data-circuit="${i+1}">Circuito ${i+1} ↗</button></div>`).join('');
+  const root=$('#circuitList');root.innerHTML=Array.from({length:CircuitLayouts.count},(_,i)=>{
+    const c=CircuitLayouts.info(i+1);
+    return `<div class="challenge-item"><span class="circuit-num">${String(i+1).padStart(2,'0')}</span><canvas class="track-thumb" data-track="${i+1}" aria-label="Circuito ${i+1}: ${c.name}"></canvas><div><b>${c.name}</b></div><div class="tag">${c.stage} · ${(c.length/1000).toFixed(2)} km</div><button data-circuit="${i+1}">Circuito ${i+1} ↗</button></div>`;
+  }).join('');
   drawTrackThumbnails(root);root.querySelectorAll('[data-circuit]').forEach(btn=>btn.addEventListener('click',()=>{const n=Number(btn.dataset.circuit);pendingTrackFactory=()=>presetTrack(n);openCarPanel();}));
 }
 $('#btnGarageTrack').addEventListener('click',showTrackSelection);

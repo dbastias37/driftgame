@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
 import {SoftwareRenderer} from './software-renderer.js';
-import {trackSurface,surfaceGeometry} from './track-surface.js';
+import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles} from './track-surface.js';
 import {loadRX7,createRX7} from './rx7-model.js';
 const TAU=Math.PI*2;
 const SKINS={blue:{color:0x276bdb,roof:1.28,length:4.2,spoiler:true},red:{color:0xd54232,roof:1.16,length:4.5,stripes:true},yellow:{color:0xe6b52b,roof:.95,length:4.45,spoiler:true},gray:{color:0x85979a,roof:1.35,length:3.85}};
@@ -100,12 +100,14 @@ export class DriftView3D{
       edge:mat(0xdde0d3),curb:mat(0xffffff,{map:kerbTexture}),
       runoff:mat(0x7a8074),centerLine:mat(0xcfc8a3),
     };
-    // Adjacent, non-overlapping regions share a single height. The curb is a
-    // continuous painted strip, not floating boxes laid over another ribbon.
+    // Adjacent regions retain their footprint; only the curb has a rounded
+    // height profile, shared with the four-wheel terrain contact simulation.
     const layout=trackSurface(track);
     for(const [name,region] of Object.entries(layout.regions)){
-      const surface=mesh(surfaceGeometry(region,name==='curb'?layout.curbContours:null),materials[name],this.world);
-      surface.name='track-'+name;surface.renderOrder=-90;
+      const geometry=name==='curb'?raisedCurbGeometry(track,layout.curbContours):surfaceGeometry(region);
+      const pieces=name==='curb'?surfaceTiles(geometry):[geometry];
+      if(name==='curb')geometry.dispose();
+      for(const piece of pieces){const surface=mesh(piece,materials[name],this.world);surface.name='track-'+name;surface.renderOrder=-90;}
     }
     const o=new T.Object3D();
     // Start gantry and checkers follow the same start normal as the 2D circuit.
@@ -137,6 +139,17 @@ export class DriftView3D{
     this.ghostCar=key==='yellow'&&this.rx7Template?createRX7(this.rx7Template,true):createCar(key,true);
     this.scene.add(this.car.root,this.ghostCar.root);this.key=key;
   }
+  placeOnRoad(model,pose,skin,ride=null){
+    const contact=ride||globalThis.DriftRoadContact.contacts(this.track,pose,skin);
+    model.body.position.y=contact.height;
+    model.body.rotation.x=contact.roll;model.body.rotation.z=contact.pitch;
+    for(const wheel of model.wheels){
+      wheel.baseY??=wheel.steer.position.y;
+      const support=contact.wheels.find(p=>(p.x>0)===wheel.front&&(p.z>0)===(wheel.steer.position.z>0));
+      wheel.steer.position.y=wheel.baseY+(support?.height||0);
+    }
+    return contact;
+  }
   effects(player){
     const particles=player.smoke||[],count=Math.min(particles.length,this.low?140:450),stride=Math.max(1,Math.floor(particles.length/Math.max(1,count)));
     for(let i=0;i<count;i++){const p=particles[i*stride];this.smokePos[i*3]=p.x;this.smokePos[i*3+1]=.4+p.life*.75;this.smokePos[i*3+2]=p.y;}
@@ -152,7 +165,8 @@ export class DriftView3D{
     if(!track||!player)return;if(this.track!==track){this.build(track);this.resetCamera();}this.setSkin(skin);
     const w=innerWidth,h=innerHeight;if(this.width!==w||this.height!==h){this.width=w;this.height=h;this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();}
     const p=player.pos,a=player.angle,speed=player.worldSpeed();this.car.root.position.set(p.x,0,p.y);this.car.root.rotation.y=-a;
-    this.car.body.rotation.x=motion==='reduced'?0:clamp(player.omega*speed*.002,-.055,.055);
+    const ride=this.placeOnRoad(this.car,player,skin,player.ride);
+    this.car.body.rotation.x+=motion==='reduced'?0:clamp(player.omega*speed*.002,-.055,.055);
     for(const wheel of this.car.wheels){
       wheel.steer.rotation.y=wheel.front?-player.steerAngle:0;
       const rollingSpeed=this.car.imported&&player.vel?player.vel.x*Math.cos(a)+player.vel.y*Math.sin(a):speed;
@@ -160,14 +174,14 @@ export class DriftView3D{
     }
     if(this.car.tailmat)this.car.tailmat.emissiveIntensity=player.handbrake?2:.65;
     this.ghostCar.root.visible=!!(ghost?.visible&&ghost.data?.samples?.length&&!inMenu);
-    if(this.ghostCar.root.visible){const gp=ghost._sample();this.ghostCar.root.position.set(gp.x,.015,gp.y);this.ghostCar.root.rotation.y=-gp.angle;}
+    if(this.ghostCar.root.visible){const gp=ghost._sample();this.ghostCar.root.position.set(gp.x,0,gp.y);this.ghostCar.root.rotation.y=-gp.angle;this.placeOnRoad(this.ghostCar,{pos:gp,angle:gp.angle},skin);}
     this.effects(player);this.car.root.visible=camera!=='hood'||inMenu;
     const desired=new T.Vector3(),target=new T.Vector3(),alpha=1-Math.exp(-Math.min(dt,.1)*5),angleDelta=Math.atan2(Math.sin(a-(this.yaw??a)),Math.cos(a-(this.yaw??a)));
     this.yaw=this.cameraReady?(this.yaw+angleDelta*(motion==='reduced'?1:alpha)):a;
     const yaw=this.yaw,f=new T.Vector3(Math.cos(yaw),0,Math.sin(yaw)),right=new T.Vector3(-f.z,0,f.x);
     if(inMenu){const orbit=motion==='reduced'?0:Math.sin(time*.12)*.18;const ma=a-1.05+orbit;desired.set(p.x-Math.cos(ma)*10,4.1,p.y-Math.sin(ma)*10);target.set(p.x,0.6,p.y);const offset=w>600?2.9:0;const screenRight=new T.Vector3().subVectors(target,desired).cross(new T.Vector3(0,1,0)).normalize();target.addScaledVector(screenRight,-offset);this.camera.fov=43;}
     else if(camera==='aerial'){desired.set(p.x-22*this.distance,38*this.distance,p.y+24*this.distance);target.set(p.x+f.x*4,0,p.y+f.z*4);this.camera.fov=52;}
-    else if(camera==='hood'){desired.set(p.x+Math.cos(a)*.65,1.35,p.y+Math.sin(a)*.65);target.set(p.x+Math.cos(a)*30,1.1,p.y+Math.sin(a)*30);this.camera.fov=76;}
+    else if(camera==='hood'){desired.set(p.x+Math.cos(a)*.65,1.35+ride.height,p.y+Math.sin(a)*.65);target.set(p.x+Math.cos(a)*30,1.1+ride.height,p.y+Math.sin(a)*30);this.camera.fov=76;}
     else{const d=(12.5+Math.min(speed,45)*.075)*this.distance;desired.set(p.x-f.x*d,6.5*this.distance,p.y-f.z*d);target.set(p.x+f.x*7,0.6,p.y+f.z*7);this.camera.fov=58+(motion==='reduced'?0:Math.min(speed*.12,7));}
     if(!this.cameraReady||inMenu||camera==='hood'||motion==='reduced')this.camera.position.copy(desired);else this.camera.position.lerp(desired,alpha);
     if(!this.look)this.look=target.clone();if(!this.cameraReady||inMenu||camera==='hood'||motion==='reduced')this.look.copy(target);else this.look.lerp(target,alpha);

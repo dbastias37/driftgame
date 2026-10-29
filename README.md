@@ -1,4 +1,4 @@
-# Drift Racer 0.3 — 2D + 3D
+# Drift Racer 0.3.3 — 2D + 3D
 
 Juego de drift estático para navegador, con dos vistas intercambiables de **una misma simulación**. Mantiene cuatro autos, veinte desafíos, editor de circuitos, transmisión manual/automática y contrarreloj con fantasma local.
 
@@ -43,19 +43,21 @@ La ayuda pausa la conducción. Cambiar de pestaña o perder foco también pausa 
 
 `Car`, el paso fijo de 1/60 s, las reglas de puntuación, los cambios, las penalizaciones de salida y las puertas de vueltas se conservan. La vista 3D lee `player`, `track` y el fantasma; no integra otra física ni reinicia carreras al cambiar de vista. La escena genera el asfalto a partir de los mismos puntos y ancho del circuito, incluidas las pistas dibujadas/importadas.
 
+- `js/circuit-layouts.js`: veinte trazados originales con rectas, arcos tangentes, horquillas y enlaces; progresión de 720 a 2550 m en cinco etapas. El generador usa recetas de sectores y muestreo por distancia, sin ondulaciones radiales.
+- `js/road-contact.js`: perfil redondeado del borde (14 cm × 70 cm) y respuesta vertical por rueda, calculada con el mismo paso fijo en 2D y 3D. Agrega altura, inclinación y amortiguación; no altera dirección, tracción, frenado ni puntuación.
 - `js/view3d.js`: Three.js r170, modelos de los cuatro autos, ruedas orientables, humo, huellas, cámaras y entorno. La decoración no añade colisiones a las reglas originales.
 - `js/rx7-model.js`: adaptación del RX-7 FD RedSuns suministrado para el auto amarillo; conserva cuatro ruedas independientes, texturas y movimiento del juego. Créditos y procedencia en `assets/models/README.md`.
-- `js/track-surface.js`: une el área del circuito antes de triangular. Asfalto, línea de borde, piano y escapatoria son regiones contiguas sin superposición; las franjas siguen la distancia real del borde. No modifica puntos, ancho ni muestreo de físicas.
+- `js/track-surface.js`: une el área del circuito antes de triangular. Asfalto, línea de borde, piano y escapatoria son regiones contiguas sin superposición. El piano se eleva con seis bandas unidas y conserva sus franjas naranjas/blancas; utiliza el mismo campo de alturas que las ruedas. Se divide en sectores para descartar geometría fuera de cámara. No modifica puntos, ancho ni muestreo de físicas.
 - `js/software-renderer.js`: proyección 3D con búfer de profundidad sobre Canvas para equipos sin WebGL. Reduce resolución y detalle; es más lenta que WebGL y se recomienda 2D si no resulta fluida.
 - `js/experience.js`: navegación, configuración, preferencias y HUD.
 - `css/experience.css`: interfaz adaptable y estilo visual.
 - `vendor/`: Three.js (MIT) y Clipper 6.4.2 (Boost Software License 1.0, con aviso del subconjunto JSBN) distribuidos localmente. El juego no depende de una CDN para el 3D.
 
-Las geometrías, materiales y texturas de la pista anterior se liberan al cambiar de circuito. La calidad limita la resolución y la cantidad de árboles. El auto amarillo usa el GLB aportado; los otros tres mantienen sus modelos geométricos. Se conserva el balanceo visual original, sin añadir otra simulación de suspensión.
+Las geometrías, materiales y texturas de la pista anterior se liberan al cambiar de circuito. La calidad limita la resolución y la cantidad de árboles. El auto amarillo usa el GLB aportado; los otros tres mantienen sus modelos geométricos. Se conserva el balanceo visual original y se suma una suspensión vertical amortiguada al cruzar el piano. Las ruedas siguen el relieve de forma independiente; la carrocería responde al apoyo de los cuatro neumáticos. No se añaden paredes ni bloqueos laterales.
 
 ## Datos guardados
 
-Se mantienen las claves `tt:*` y `challenge:*` y el formato de los fantasmas existentes. Las preferencias nuevas usan `drift:preferences:v3`. Los datos pertenecen al navegador y dominio actuales: mantener `driftgame.onrender.com` evita cambiar ese origen. Borrar datos del sitio elimina el progreso.
+Se mantienen las claves `tt:*` y `challenge:*` y el formato de los fantasmas existentes. Las preferencias nuevas usan `drift:preferences:v3`. Los nuevos trazados tienen IDs distintos: los récords y fantasmas anteriores permanecen guardados, pero no se mezclan con los de rutas diferentes. Se conservan los desafíos desbloqueados y los mejores puntos históricos. Los datos pertenecen al navegador y dominio actuales: mantener `driftgame.onrender.com` evita cambiar ese origen. Borrar datos del sitio elimina el progreso.
 
 ## Pruebas
 
@@ -78,6 +80,13 @@ npm test
 Usar `CHROMIUM_EXECUTABLE=/ruta/a/chromium` para un Chromium instalado. La suite bloquea servicios externos y controla el RAF cuando necesita pasos deterministas.
 
 ### Validación de esta entrega
+
+0.3.3: 28 pruebas de núcleo, con inspección de las veinte siluetas y render real de compatibilidad del RX-7 apoyado en el piano. Comprueba separación de tramos, ausencia de cruces y solapes, radios internos, continuidad de meta, progresión, identidad entre puntos del juego y miniaturas, superficies elevadas, contacto independiente, amortiguación, cruces rápidos/marcha atrás, pausa y reinicio. `Car` continúa idéntica a 0.2; la nueva respuesta vertical vive fuera de esa clase. La vista 2D sigue siendo cenital y plana, pero calcula el mismo contacto. WebGL en GPU real y una prueba de conducción manual en teléfono siguen pendientes.
+
+Referencias de forma y criterios: [guía oficial de Tsukuba](https://www.tsukuba-circuit.jp/guide/course-spec.html) (rectas, eses y radios compuestos), [cursos de Ebisu](https://www.ebisu-circuit.com/course.html) y [plano del North Course](https://www.ebisu-circuit.com/c-images/kita.pdf), además de las referencias visuales del usuario. Son trazados originales para el juego; no réplicas ni circuitos homologados. El resalto continuo adopta la sección redondeada de la referencia aportada, con los materiales existentes.
+
+![Veinte trazados progresivos](docs/challenge-layouts-0.3.3.jpg)
+![RX-7 sobre el borde elevado](docs/raised-curb-0.3.3.jpg)
 
 0.3.2: pruebas del GLB real, escala y orientación, cuatro pivotes, dirección y rodadura, balanceo sin desplazar ruedas, clonación de recursos, carga tardía/fallida y máscaras/orientación de textura en el render compatible. Revisión visual frontal, lateral, trasera y superior con ese renderer. WebGL en GPU real sigue pendiente.
 
