@@ -1,7 +1,14 @@
 {
   "name": "drift-racer",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": true,
-  "scripts": { "test": "node --test tests/regression.cjs" },
-  "devDependencies": { "playwright": "1.62.1" }
+  "scripts": {
+    "test": "node --test tests/simulation.cjs tests/rendering.cjs tests/regression.cjs",
+    "test:simulation": "node --test tests/simulation.cjs",
+    "test:core": "node --test tests/simulation.cjs tests/rendering.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  },
+  "type": "module"
 }
