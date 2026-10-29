@@ -49,13 +49,14 @@ export class SoftwareRenderer{
       const vertices=Array.from({length:pos.count},(_,i)=>{const v=new T.Vector3().fromBufferAttribute(pos,i).applyMatrix4(view);v.u=uv?uv.getX(i):0;v.v=uv?uv.getY(i):0;return v;});
       for(let k=start;k<start+count;k+=3){
         const vi=[0,1,2].map(n=>idx?idx.getX(k+n):k+n);if(vi.some(i=>i>=pos.count))break;
-        let v=vi.map(i=>vertices[i]);if(v.every(p=>p.z>-.2)||v.every(p=>p.z< -750))continue;
+        let v=vi.map(i=>vertices[i]);if(v.every(p=>p.z>-.2)||v.every(p=>p.z< -camera.far))continue;
         const normal=new T.Vector3().fromBufferAttribute(pos,vi[1]).sub(new T.Vector3().fromBufferAttribute(pos,vi[0])).cross(new T.Vector3().fromBufferAttribute(pos,vi[2]).sub(new T.Vector3().fromBufferAttribute(pos,vi[0]))).normalize().applyMatrix3(normalMatrix).normalize();
         const depth=-(v[0].z+v[1].z+v[2].z)/3;v=clip(v);if(v.length<3)continue;const pts=v.map(project);
         if(pts.every(p=>p.x<0)||pts.every(p=>p.x>w)||pts.every(p=>p.y<0)||pts.every(p=>p.y>h))continue;
         const area=(pts[1].x-pts[0].x)*(pts[2].y-pts[0].y)-(pts[1].y-pts[0].y)*(pts[2].x-pts[0].x);if(material.side!==T.DoubleSide&&area>0)continue;
         let light=material.isMeshBasicMaterial?1:.72+.32*Math.max(0,normal.dot(this.sun));if(material.emissive)light+=material.emissiveIntensity*.12;
-        const fog=clamp((depth-160)/540,0,1),rgb=[col.r,col.g,col.b].map((c,i)=>Math.round(255*(clamp(c*light,0,1)*(1-fog)+[.624,.706,.714][i]*fog)));
+        const fog=scene.fog?clamp((depth-scene.fog.near)/(scene.fog.far-scene.fog.near),0,1):0,fogColor=scene.fog?.color.clone().convertLinearToSRGB();
+        const rgb=[col.r,col.g,col.b].map((c,i)=>Math.round(255*(clamp(c*light,0,1)*(1-fog)+(fogColor?[fogColor.r,fogColor.g,fogColor.b][i]:0)*fog)));
         for(let i=1;i<pts.length-1;i++){const args=[pts[0],pts[i],pts[i+1],rgb,material.opacity,material.depthWrite,tex,material.alphaTest||0];if(material.transparent)transparent.push({args,depth});else raster(...args);}
       }
     };

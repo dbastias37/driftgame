@@ -65,21 +65,19 @@ function drawTrackThumbnails(root){
 document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setRenderView(b.dataset.view)));
 $('#btnView').addEventListener('click',()=>setRenderView(renderPrefs.view==='3d'?'2d':'3d'));
 $('#btnCamera').addEventListener('click',cycleCamera);
-$('#btnQuickRace').addEventListener('click',()=>{hidePanels();garageOrigin='main';mode='race';pendingTrackFactory=()=>presetTrack(1);openCarPanel();});
+$('#btnQuickRace').addEventListener('click',()=>{mode='race';showCircuitMenu();});
 $('#btnSettings').addEventListener('click',openSettings);$('#btnPauseSettings').addEventListener('click',openSettings);$('#btnSettingsBack').addEventListener('click',closeSettings);
 $('#btnMenuHelp').addEventListener('click',()=>toggleHelp());$('#btnHelpClose').addEventListener('click',()=>toggleHelp(false));
 $('#btnImport').addEventListener('click',()=>{hidePanels();$('#importMessage').textContent='';$('#importMenu').classList.remove('hidden');$('#importCode').focus();});
 $('#btnImportBack').addEventListener('click',showMainMenu);$('#btnOvMenu').addEventListener('click',showMainMenu);
 $('#btnNextChallenge').addEventListener('click',()=>{
   if(state!=='challengeWon'||activeChallengeLevel>=CHALLENGE_COUNT)return;
-  activeChallengeLevel++;activeChallengeGoal=challengeRequiredPoints(activeChallengeLevel);
-  $('#challengeGoal').textContent=activeChallengeGoal.toLocaleString('es-CL');$('#challengeLevel').textContent=activeChallengeLevel;
-  startWithTrack(presetTrack(activeChallengeLevel),'challenge');
+  const next=activeChallengeLevel+1;mode='challenge';showTrackSelection();previewCircuit(next,true);
 });
 $('#touchSetting').addEventListener('change',e=>{renderPrefs.touch=e.target.value;touchEnabled=renderPrefs.touch==='on'||(renderPrefs.touch==='auto'&&isTouchDevice);clearInputs();syncTouchHUD();saveRenderPrefs();});
 $('#cameraSetting').addEventListener('change',e=>{renderPrefs.camera=e.target.value;sceneView?.resetCamera();saveRenderPrefs();syncRenderUI();});
-$('#qualitySetting').addEventListener('change',e=>{renderPrefs.quality=e.target.value;sceneView?.setQuality(renderPrefs.quality);saveRenderPrefs();});
-$('#motionSetting').addEventListener('change',e=>{renderPrefs.motion=e.target.value;saveRenderPrefs();});
+$('#qualitySetting').addEventListener('change',e=>{renderPrefs.quality=e.target.value;sceneView?.setQuality(renderPrefs.quality);menuPreview?.setQuality(renderPrefs.quality);saveRenderPrefs();});
+$('#motionSetting').addEventListener('change',e=>{renderPrefs.motion=e.target.value;previewSpinning=e.target.value!=='reduced';saveRenderPrefs();});
 // Keep tab navigation inside the active menu; gameplay keys remain unchanged.
 addEventListener('keydown',e=>{
   if(e.key!=='Tab')return;
@@ -92,19 +90,110 @@ addEventListener('keydown',e=>{
 });
 syncRenderUI();
 requestAnimationFrame(loop);
+let MenuPreviewClass=null,menuPreview=null,previewSelection=null,previewSpinning=renderPrefs.motion!=='reduced',previewFailed=false,previewLastFrame=0;
+function showCircuitMenu(){
+  hidePanels();garageOrigin='circuits';$('#circuitMenu').classList.remove('hidden');$('#circuitList').classList.remove('hidden');
+  $('#circuitTitle').textContent=mode==='tt'?'Contrarreloj · Elige circuito':'Carrera · Elige circuito';
+  $('#btnCircuitBack').textContent='← Menú principal';
+  const root=$('#circuitList');root.innerHTML=Array.from({length:CircuitLayouts.count},(_,i)=>{
+    const c=CircuitLayouts.info(i+1);
+    return `<div class="challenge-item"><span class="circuit-num">${String(i+1).padStart(2,'0')}</span><canvas class="track-thumb" data-track="${i+1}" aria-label="${c.name}"></canvas><button data-circuit="${i+1}" aria-label="Ver circuito ${i+1}: ${c.name}">${c.name}</button></div>`;
+  }).join('');
+  drawTrackThumbnails(root);root.querySelectorAll('[data-circuit]').forEach(btn=>btn.addEventListener('click',()=>previewCircuit(Number(btn.dataset.circuit),false)));
+  previewCircuit(preparedTrack?.layout?.level||1,false);
+}
+function previewCircuit(n,challenge=false){
+  const circuit=presetTrack(n);previewSelection={track:circuit,level:n,origin:challenge?'challenge':'circuits',challenge};
+  updateTrackPreviewDetails();syncPreparationPreview();
+}
+function showCustomTrackPreview(track,origin='import'){
+  hidePanels();garageOrigin=origin;previewSelection={track,level:0,origin,challenge:false};
+  $('#circuitMenu').classList.remove('hidden');$('#circuitList').classList.add('hidden');
+  $('#circuitTitle').textContent=origin==='board'?'Tu circuito · Vista previa':'Circuito importado · Vista previa';
+  $('#btnCircuitBack').textContent=origin==='board'?'← Volver al dibujo':'← Importar otro circuito';
+  updateTrackPreviewDetails();syncPreparationPreview();
+}
+function updateTrackPreviewDetails(){
+  if(!previewSelection)return;
+  const {track:t,level,challenge}=previewSelection,prefix=challenge?'challenge':'circuit';
+  const length=t.layout?.length||t.points.reduce((s,p,i)=>{const q=t.points[(i+1)%t.points.length];return s+Math.hypot(p.x-q.x,p.y-q.y);},0);
+  $('#'+prefix+'PreviewName').textContent=t.layout?.name||'Circuito personalizado';
+  $('#'+prefix+'PreviewDetails').textContent=`${(length/1000).toFixed(2)} km · ${Math.round(t.roadHalf*2)} m de ancho${t.layout?' · '+t.layout.stage:''}`;
+  const locked=challenge&&level>unlockedLevel,button=$(challenge?'#btnChallengeContinue':'#btnCircuitContinue');
+  button.disabled=locked;button.textContent=locked?'SUPERA EL DESAFÍO ANTERIOR':'ELEGIR AUTO ↗';
+  if(challenge)$('#challengePreviewGoal').textContent=`Objetivo: ${challengeRequiredPoints(level).toLocaleString('es-CL')} pts · Mejor: ${getChallengeBest(level).toLocaleString('es-CL')} pts${locked?' · Bloqueado':''}`;
+  document.querySelectorAll('[data-circuit],.btnPickChallenge').forEach(b=>{
+    const selected=Number(b.dataset.circuit||b.dataset.lvl)===level;
+    b.setAttribute('aria-pressed',String(selected));b.closest?.('.challenge-item')?.classList.toggle('selected',selected);
+  });
+}
+function confirmTrackPreview(){
+  if(!previewSelection)return;
+  const {track:selected,level,origin,challenge}=previewSelection;
+  if(challenge&&level>unlockedLevel)return;
+  garageOrigin=origin;preparedTrack=selected;pendingTrackFactory=()=>selected;
+  if(challenge){mode='challenge';activeChallengeLevel=level;activeChallengeGoal=challengeRequiredPoints(level);challengeCompletedThisRun=false;$('#challengeGoal').textContent=activeChallengeGoal.toLocaleString('es-CL');$('#challengeLevel').textContent=level;}
+  openCarPanel();
+}
+function returnToTrackPreview(){
+  if(!preparedTrack){showTrackSelection();return;}
+  if(!preparedTrack.layout?.level){showCustomTrackPreview(preparedTrack,garageOrigin==='board'?'board':'import');return;}
+  const n=preparedTrack.layout.level;showTrackSelection();previewCircuit(n,mode==='challenge');
+}
+function syncPreparationPreview(){
+  const garage=!$('#carPanel').classList.contains('hidden'),challenge=!$('#challengeMenu').classList.contains('hidden'),circuit=!$('#circuitMenu').classList.contains('hidden');
+  if(!garage&&!challenge&&!circuit)return null;
+  const stage=$('#'+(garage?'garageStage':challenge?'challengeStage':'circuitStage')),canvas=$('#carPreview');
+  if(canvas.parentElement!==stage)stage.appendChild(canvas);
+  document.querySelectorAll('[data-preview-spin]').forEach(b=>b.textContent=previewSpinning?'Ⅱ Pausar giro':'▶ Activar giro');
+  return {kind:garage?'garage':'track',track:garage?preparedTrack:previewSelection?.track,stage};
+}
+function renderPreparationPreview(dt,time){
+  const preview=syncPreparationPreview();if(!preview)return false;
+  const status=preview.stage.querySelector('.preview-status');
+  if(previewFailed){if(status){status.textContent='Vista previa no disponible. Puedes continuar.';status.classList.remove('hidden');}return true;}
+  if(!MenuPreviewClass)return true;
+  try{
+    if(!menuPreview)menuPreview=new MenuPreviewClass($('#carPreview'),{quality:renderPrefs.quality,onFailure:()=>{previewFailed=true;},onVehicleFailure:()=>toast('No se pudo cargar el RX-7. Recarga para volver a intentarlo.')});
+    if(document.hidden)return true;
+    // There is only one preview canvas. Software mode caps work to 12 fps;
+    // invisible previews and the racing renderer do not render behind it.
+    if(menuPreview.software&&time-previewLastFrame<1/12)return true;
+    const elapsed=previewLastFrame?Math.min(.1,time-previewLastFrame):dt;previewLastFrame=time;
+    menuPreview.renderPreview({...preview,skin:chosen.sprite,dt:elapsed,spinning:previewSpinning});
+    status?.classList.add('hidden');
+  }catch(error){console.warn('Preview unavailable',error);previewFailed=true;}
+  return true;
+}
+$('#btnGarageTrack').addEventListener('click',returnToTrackPreview);
+$('#btnCircuitContinue').addEventListener('click',confirmTrackPreview);$('#btnChallengeContinue').addEventListener('click',confirmTrackPreview);
+$('#btnCircuitBack').addEventListener('click',()=>{
+  if(previewSelection?.origin==='board')showBoard();
+  else if(previewSelection?.origin==='import'){hidePanels();$('#importMenu').classList.remove('hidden');}
+  else showMainMenu();
+});
+document.querySelectorAll('[data-preview-spin]').forEach(b=>b.addEventListener('click',()=>{previewSpinning=!previewSpinning;syncPreparationPreview();}));
+let previewPointer=null;
+$('#carPreview').addEventListener('pointerdown',e=>{previewPointer={id:e.pointerId,x:e.clientX};e.currentTarget.setPointerCapture(e.pointerId);});
+$('#carPreview').addEventListener('pointermove',e=>{if(previewPointer?.id!==e.pointerId)return;menuPreview?.rotateBy((e.clientX-previewPointer.x)*.008);previewPointer.x=e.clientX;previewSpinning=false;});
+for(const event of ['pointerup','pointercancel','lostpointercapture'])$('#carPreview').addEventListener(event,()=>{previewPointer=null;});
+$('#carPreview').addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();menuPreview?.rotateBy(e.key==='ArrowLeft'?-.18:.18);previewSpinning=false;}});
+
+// Soporte de arranque vía hash (? o #t=TRK.XXXX)
+(function tryLoadFromHash(){
+  const h = location.hash || location.search || '';
+  const m = h.match(/[?#&]t=([A-Za-z0-9\-\._]+)/);
+  if(!m) return;
+  const code = /^TRK2?\./.test(m[1]) ? m[1] : ('TRK.'+m[1]);
+  const tr = decodeTrack(code);
+  if(!tr) return;
+  mode='race';updateTrackIdUI(tr);showCustomTrackPreview(tr,'import');
+})();
+
+
+
 import('./view3d.js').then(({DriftView3D})=>{
   sceneView=new DriftView3D($('#scene3d'),{quality:renderPrefs.quality,onFailure:fail3D,onVehicleFailure:()=>toast('No se pudo cargar el RX-7. Recarga para volver a intentarlo.')});
   if(sceneView.software)toast('3D compatible activo · Calidad ligera');
 }).catch(fail3D);
-
-function showCircuitMenu(){
-  hidePanels();garageOrigin='circuits';$('#circuitMenu').classList.remove('hidden');
-  $('#circuitTitle').textContent=mode==='tt'?'Contrarreloj · Selecciona circuito':'Carrera · Selecciona circuito';
-  const root=$('#circuitList');root.innerHTML=Array.from({length:CircuitLayouts.count},(_,i)=>{
-    const c=CircuitLayouts.info(i+1);
-    return `<div class="challenge-item"><span class="circuit-num">${String(i+1).padStart(2,'0')}</span><canvas class="track-thumb" data-track="${i+1}" aria-label="Circuito ${i+1}: ${c.name}"></canvas><div><b>${c.name}</b></div><div class="tag">${c.stage} · ${(c.length/1000).toFixed(2)} km</div><button data-circuit="${i+1}">Circuito ${i+1} ↗</button></div>`;
-  }).join('');
-  drawTrackThumbnails(root);root.querySelectorAll('[data-circuit]').forEach(btn=>btn.addEventListener('click',()=>{const n=Number(btn.dataset.circuit);pendingTrackFactory=()=>presetTrack(n);openCarPanel();}));
-}
-$('#btnGarageTrack').addEventListener('click',showTrackSelection);
-$('#btnCircuitBack').addEventListener('click',showMainMenu);
+import('./menu-preview.js').then(module=>{MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});

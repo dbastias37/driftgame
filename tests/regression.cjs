@@ -27,8 +27,8 @@ async function fixture(options={}){
 test('arranque, cuatro autos, menú de 20 desafíos y marcha manual',async()=>{
   const {page:p,context:c,errors}=await fixture();
   await p.click('#btnModeChallenge');assert.equal(await p.locator('.btnPickChallenge').count(),20);
-  assert.equal(await p.locator('.btnPickChallenge:not([disabled])').count(),1);
-  await p.click('.btnPickChallenge[data-lvl="1"]');const names=[];
+  await p.click('.btnPickChallenge[data-lvl="20"]');assert.equal(await p.locator('#btnChallengeContinue').isEnabled(),false);
+  await p.click('.btnPickChallenge[data-lvl="1"]');await p.click('#btnChallengeContinue');const names=[];
   for(let i=0;i<4;i++){names.push(await p.locator('#carName').textContent());await p.click('#carNext');}
   assert.equal(new Set(names).size,4);await p.check('input[value="manual"]');await p.click('#btnChooseStart');
   const initial=await p.evaluate(()=>({sprites:Object.values(CAR_IMG).every(i=>i.naturalWidth>0),state,auto:player.auto}));
@@ -57,7 +57,7 @@ test('puntaje cero detenido, proporcional al tiempo y caja sin rebotes',async()=
 });
 test('victoria, derrota y reintentos son terminales y conservan progreso',async()=>{
   const {page:p,context:c}=await fixture();
-  await p.click('#btnModeChallenge');await p.click('.btnPickChallenge[data-lvl="1"]');await p.click('#btnChooseStart');
+  await p.click('#btnModeChallenge');await p.click('.btnPickChallenge[data-lvl="1"]');await p.click('#btnChallengeContinue');await p.click('#btnChooseStart');
   await p.evaluate(()=>{state='running';player.score=activeChallengeGoal;checkChallengeProgress();});
   assert.equal(await p.evaluate(()=>state),'challengeWon');assert.equal(await p.evaluate(()=>localStorage.getItem('challenge:unlocked')),'2');
   const t=await p.evaluate(()=>raceTime);await p.evaluate(()=>{for(let i=0;i<120;i++)simulate(SIM_DT)});assert.equal(await p.evaluate(()=>raceTime),t);
@@ -93,7 +93,7 @@ test('pizarra visible, cierre obligatorio, generar y compartir pista',async()=>{
     return encodeSharedTrack(presetTrack(1));
   });
   await p.evaluate(()=>{bpts=Array.from({length:60},(_,i)=>({x:i*12,y:200}));renderBoard()});assert.equal(await p.evaluate(()=>boardValid),false);
-  await p.goto(url+'?t='+code);assert.equal(await p.locator('#carPanel').isVisible(),true);await p.click('#btnChooseStart');assert.equal(await p.evaluate(()=>track.roadHalf),14);
+  await p.goto(url+'?t='+code);assert.equal(await p.locator('#circuitMenu').isVisible(),true);await p.click('#btnCircuitContinue');assert.equal(await p.locator('#carPanel').isVisible(),true);await p.click('#btnChooseStart');assert.equal(await p.evaluate(()=>track.roadHalf),14);
   const legacy=await p.evaluate(()=>encodeTrack(presetTrack(1).points));assert.equal(await p.evaluate(code=>!!decodeTrack(code),legacy),true);
   assert.equal(await p.evaluate(()=>decodeTrack('TRK.'+b64u_enc(JSON.stringify(Array(8).fill([0,0]))))),null);
   assert.deepEqual(errors,[]);await c.close();
@@ -101,12 +101,12 @@ test('pizarra visible, cierre obligatorio, generar y compartir pista',async()=>{
 test('récord y fantasma persistentes, ocultar no detiene el reloj',async()=>{
   const {page:p,context:c}=await fixture();
   await p.evaluate(()=>{startWithTrack(presetTrack(1),'tt');lapTime=20;ghostSamples=Array.from({length:600},()=>({x:player.pos.x,y:player.pos.y,angle:player.angle}));onLap()});
-  await p.reload();await p.click('#btnModeTT');await p.click('#btnChooseStart');
+  await p.reload();await p.click('#btnModeTT');await p.click('#btnCircuitContinue');await p.click('#btnChooseStart');
   const r=await p.evaluate(()=>{for(let i=0;i<182;i++)simulate(SIM_DT);const before=ghost.t;ghost.visible=false;ghost.update(1);return {best:document.getElementById('bestTT').textContent,time:ghost.data.time,advanced:ghost.t-before,samples:ghost.data.samples.length}});
   assert.equal(r.best,'0:20.000');assert.equal(r.time,20);assert.equal(r.samples,600);assert.ok(r.advanced>.99);await c.close();
 });
 test('pausa, pérdida de foco y entrada de texto no dejan controles activos',async()=>{
-  const {page:p,context:c}=await fixture();await p.click('#btnModeTT');await p.click('#btnChooseStart');
+  const {page:p,context:c}=await fixture();await p.click('#btnModeTT');await p.click('#btnCircuitContinue');await p.click('#btnChooseStart');
   await p.evaluate(()=>state='running');await p.keyboard.down('w');await p.evaluate(()=>dispatchEvent(new Event('blur')));
   assert.equal(await p.evaluate(()=>state),'paused');assert.equal(await p.evaluate(()=>keys.size),0);
   const t=await p.evaluate(()=>raceTime);await p.evaluate(()=>simulate(1/60));assert.equal(await p.evaluate(()=>raceTime),t);
@@ -117,8 +117,9 @@ for(const [name,viewport] of [['portrait',{width:390,height:844}],['landscape',{
   test('menús y controles táctiles completos: '+name,async()=>{
     const {page:p,context:c,errors}=await fixture({viewport,isMobile:true,hasTouch:true,deviceScaleFactor:2.75});
     await p.click('#btnModeChallenge');
-    const x=await p.locator('.btnPickChallenge[data-lvl="20"]').boundingBox();assert.ok(x.x+x.width<=viewport.width);
-    await p.click('.btnPickChallenge[data-lvl="1"]');
+    const x=await p.locator('#btnChallengeContinue').boundingBox();assert.ok(x.x+x.width<=viewport.width);
+    await p.click('.btnPickChallenge[data-lvl="1"]');await p.click('#btnChallengeContinue');
+    await p.waitForFunction(()=>MenuPreviewClass!==null);await p.evaluate(()=>renderPreparationPreview(0,performance.now()/1000));
     const previewRatio=await p.evaluate(()=>{const p=document.getElementById('carPreview');return (p.width/p.height)/(p.clientWidth/p.clientHeight)});
     assert.ok(Math.abs(previewRatio-1)<.01,'El auto mantiene su proporción al abrir el selector');
     await p.click('#btnChooseStart');assert.equal(await p.locator('#touchHUD').isVisible(),true);
@@ -134,7 +135,7 @@ for(const [name,viewport] of [['portrait',{width:390,height:844}],['landscape',{
     assert.equal(await p.evaluate(()=>touch.accel),true);assert.ok(await p.evaluate(()=>touch.steerAxis<0));
     await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});assert.equal(await p.evaluate(()=>touch.accel||touch.steerAxis!==0),false);
     await p.click('#btnPause');assert.equal(await p.evaluate(()=>state),'paused');await p.click('#btnQuit');assert.equal(await p.locator('#touchHUD').isVisible(),false);
-    if(process.env.DRIFT_SCREENSHOTS){const dir=path.resolve(process.env.DRIFT_SCREENSHOTS);fs.mkdirSync(dir,{recursive:true});await p.click('#btnModeChallenge');await p.screenshot({path:path.join(dir,name+'-challenge.png')});await p.click('.btnPickChallenge[data-lvl="1"]');await p.screenshot({path:path.join(dir,name+'-car.png')});await p.click('#btnChooseStart');await p.evaluate(()=>{state='running';loop(performance.now())});await p.screenshot({path:path.join(dir,name+'-game.png')});}
+    if(process.env.DRIFT_SCREENSHOTS){const dir=path.resolve(process.env.DRIFT_SCREENSHOTS);fs.mkdirSync(dir,{recursive:true});await p.click('#btnModeChallenge');await p.screenshot({path:path.join(dir,name+'-challenge.png')});await p.click('.btnPickChallenge[data-lvl="1"]');await p.click('#btnChallengeContinue');await p.screenshot({path:path.join(dir,name+'-car.png')});await p.click('#btnChooseStart');await p.evaluate(()=>{state='running';loop(performance.now())});await p.screenshot({path:path.join(dir,name+'-game.png')});}
     assert.deepEqual(errors,[]);await c.close();
   });
 }
@@ -144,7 +145,7 @@ test('bucle real: cuenta atrás, acelerar, frenar, pausar y reanudar',async()=>{
   const p=await c.newPage(),errors=[];
   p.on('pageerror',e=>errors.push(e.message));
   p.on('console',m=>{if(m.type()==='error' && /Error in game loop|Error detected/.test(m.text()))errors.push(m.text());});
-  await p.goto(url);await p.click('#btnModeTT');await p.click('#btnChooseStart');
+  await p.goto(url);await p.click('#btnModeTT');await p.click('#btnCircuitContinue');await p.click('#btnChooseStart');
   await p.waitForFunction(()=>state==='running',null,{timeout:12000});
   await p.keyboard.down('w');await p.waitForFunction(()=>player.worldSpeed()>3);
   await p.keyboard.up('w');const speed=await p.evaluate(()=>player.worldSpeed());
