@@ -1,3 +1,12 @@
+# 0.3.4 — Reconocimiento del circuito y garaje 3D
+
+- Preparación unificada: elegir/previsualizar la pista → elegir auto en el garaje → correr. Incluye carrera, contrarreloj, desafíos, editor, importación y enlaces compartidos.
+- Garaje 3D original con paredes claras, hormigón, luces de techo, ventanas, portón y tarima giratoria. Se muestran los cuatro modelos reales, incluido el RX-7, junto con las estadísticas y opciones existentes.
+- Vista de dron del circuito real, con sus bordes, meta y entorno. Encuadre automático para los veinte trazados y pistas personalizadas; giro automático, pausa y control al arrastrar o con teclado.
+- Los desafíos bloqueados se pueden inspeccionar, conservando el bloqueo de inicio. Volver desde el garaje mantiene el circuito seleccionado; el siguiente desafío vuelve a pasar por reconocimiento y garaje.
+- Un solo visor de preparación, sin renderizar la carrera detrás del menú; calidad reducida para equipos sin WebGL. El render compatible respeta ahora la distancia de cámara y niebla de cada escena.
+- 35 regresiones aprobadas, incluida equivalencia de física, contactos de suspensión, apoyo de ruedas y encuadre de los veinte circuitos. Inspección en navegador con render compatible; validación GPU y móvil pendiente.
+
 # 0.3.3 — Trazados progresivos y bordes con relieve
 
 - Se reemplazan las ondulaciones radiales por veinte circuitos originales con rectas, arcos tangentes, horquillas y sectores enlazados. Cinco etapas, de 720 a 2550 m y de 5 a 22 curvas.

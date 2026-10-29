@@ -2,7 +2,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Drift Racer — 2D + 3D</title>
-<meta name="application-version" content="0.3.3">
+<meta name="application-version" content="0.3.4">
 <meta name="theme-color" content="#111719">
 <style>
   :root{--bg:#0b0b0b;--ink:#e6f1ff;}
@@ -302,33 +302,23 @@
   <canvas id="scene3d" aria-label="Circuito tridimensional"></canvas>
   <canvas id="game" aria-label="Vista de carrera y telemetría"></canvas>
 
-  <!-- ===== Panel de auto (sin "Volver al juego") ===== -->
-  <div id="carPanel" class="modal hidden">
-    <div class="card">
-      <p class="eyebrow">PREPARACIÓN / GARAJE</p><h2 style="margin:0 0 10px">Elige tu máquina</h2><p id="sessionBrief" class="muted"></p>
-      <div class="row" style="align-items:center;gap:14px">
-        <button id="carPrev" class="arrow" aria-label="Auto anterior">‹</button>
-        <canvas id="carPreview"></canvas>
-        <button id="carNext" class="arrow" aria-label="Auto siguiente">›</button>
+  <div id="previewPool" class="hidden"><canvas id="carPreview" aria-label="Vista previa 3D. Arrastra para girar." tabindex="0"></canvas></div>
+  <div id="carPanel" class="modal hidden preparation">
+    <div class="preparation-shell garage-shell">
+      <header class="preparation-header"><div><p class="eyebrow">02 / GARAJE</p><h2>Elige tu máquina</h2></div><span class="preparation-step">PISTA ✓ <b>AUTO</b> CARRERA</span></header>
+      <div class="garage-layout">
+        <div class="garage-showcase"><div id="garageStage" class="preview-stage"><span class="preview-status">Preparando garaje 3D…</span></div><div class="preview-controls"><button id="carPrev" class="arrow" aria-label="Auto anterior">‹</button><span id="carCounter">01 / 04</span><button id="carNext" class="arrow" aria-label="Auto siguiente">›</button><button class="text-button spin-button" data-preview-spin>Ⅱ Pausar giro</button><small>ARRASTRA PARA GIRAR</small></div></div>
+        <aside class="garage-details">
+          <p class="eyebrow">LISTO PARA SALIR</p><h3 id="carName">—</h3><p id="carDesc">—</p>
+          <div class="garage-stats">
+            <div>Aceleración<div class="bar"><i id="barAcc"></i></div></div><div>Torque<div class="bar"><i id="barTrq"></i></div></div><div>Velocidad máxima<div class="bar"><i id="barVmax"></i></div></div><div>Peso<div class="bar"><i id="barMass"></i></div></div>
+          </div>
+          <div class="tx-select"><b>Transmisión</b><label><input type="radio" name="tx" value="auto" checked> Automática</label><label><input type="radio" name="tx" value="manual"> Manual</label></div>
+          <div class="view-segment garage-views"><button data-view="2d">2D clásica</button><button data-view="3d">3D inmersiva</button></div>
+          <div class="garage-destination"><small>CIRCUITO ELEGIDO</small><b id="garageTrackName">—</b><p id="sessionBrief" class="muted"></p><button id="btnGarageTrack" class="text-button">Revisar circuito ↗</button></div>
+        </aside>
       </div>
-      <div id="carName" class="glow" style="font-weight:700;margin-top:10px">—</div>
-      <div id="carDesc" class="glow" style="font-size:12px;opacity:.95">—</div>
-      <div class="row" style="margin-top:8px">
-        <div style="min-width:170px">Aceleración<div class="bar"><i id="barAcc"></i></div></div>
-        <div style="min-width:170px">Torque<div class="bar"><i id="barTrq"></i></div></div>
-        <div style="min-width:170px">Vel. máx<div class="bar"><i id="barVmax"></i></div></div>
-        <div style="min-width:170px">Peso<div class="bar"><i id="barMass"></i></div></div>
-      </div>
-      <div class="row garage-choice"><button id="btnGarageTrack" class="text-button">Cambiar circuito ↗</button></div><div class="view-segment garage-views"><button data-view="2d">2D clásica</button><button data-view="3d">3D inmersiva</button></div>
-      <div class="tx-select">
-        <div><b>Transmisión:</b></div>
-        <label><input type="radio" name="tx" value="auto" checked> Automática</label>
-        <label><input type="radio" name="tx" value="manual"> Manual</label>
-      </div>
-      <div class="row" style="justify-content:flex-end;margin-top:12px">
-        <button id="btnCarBack" class="btn gray">Volver</button>
-        <button id="btnChooseStart" class="btn">A LA PISTA ↗</button>
-      </div>
+      <footer class="preparation-footer"><button id="btnCarBack" class="gray">← Volver a la pista</button><button id="btnChooseStart">A LA PISTA ↗</button></footer>
     </div>
   </div>
 
@@ -353,7 +343,13 @@
     </div>
   </div>
 
-  <div id="circuitMenu" class="modal hidden"><div class="menu-card"><p class="eyebrow">EXPLORA EL ASFALTO</p><h2 id="circuitTitle">Selecciona circuito</h2><div id="circuitList" class="challenge-list"></div><button id="btnCircuitBack" class="gray" style="margin-top:18px">Menú principal</button></div></div>
+  <div id="circuitMenu" class="modal hidden preparation">
+    <div class="preparation-shell track-shell">
+      <header class="preparation-header"><div><p class="eyebrow">01 / RECONOCIMIENTO</p><h2 id="circuitTitle">Selecciona circuito</h2></div><span class="preparation-step"><b>PISTA</b> AUTO CARRERA</span></header>
+      <div class="track-workspace"><div id="circuitList" class="challenge-list track-picker"></div><div class="track-showcase"><div id="circuitStage" class="preview-stage"><span class="preview-status">Preparando vista aérea 3D…</span></div><div class="track-preview-caption"><div><h3 id="circuitPreviewName">—</h3><p id="circuitPreviewDetails">—</p></div><button class="text-button spin-button" data-preview-spin>Ⅱ Pausar giro</button></div></div></div>
+      <footer class="preparation-footer"><button id="btnCircuitBack" class="gray">← Menú principal</button><button id="btnCircuitContinue">ELEGIR AUTO ↗</button></footer>
+    </div>
+  </div>
   <div id="settingsMenu" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
     <div class="card settings-card"><p class="eyebrow">A TU MEDIDA</p><h2 id="settingsTitle">Configuración</h2>
       <div class="setting"><span>Vista al conducir</span><div class="view-segment"><button data-view="2d">2D clásica</button><button data-view="3d">3D inmersiva</button></div></div>
@@ -369,14 +365,11 @@
   <div id="toast" role="status" aria-live="polite"></div>
   <div id="driveHud"><div class="drive-gear"><small>MARCHA</small><b id="driveGear">1</b><span id="driveTx">AUTO</span></div><div class="drive-speed"><b id="driveSpeed">000</b><small>KM/H</small><div class="rev-track"><i id="revFill"></i></div></div></div>
   <div id="viewBadge">3D / SEGUIMIENTO</div>
-  <!-- ===== Menú challenge ===== -->
-  <div id="challengeMenu" class="hidden">
-    <div class="menu-card">
-      <p class="eyebrow">ELIGE TU PRÓXIMO RETO</p><h1>Desafíos</h1><p class="muted">Completa el objetivo de drift para desbloquear el siguiente circuito.</p>
-      <div class="challenge-list" style="margin-top:10px"><!-- items se generan dinámicamente por JS --></div>
-      <div class="row" style="justify-content:flex-end;margin-top:12px">
-        <button id="btnBackMain" class="gray">Volver</button>
-      </div>
+  <div id="challengeMenu" class="hidden preparation">
+    <div class="preparation-shell track-shell">
+      <header class="preparation-header"><div><p class="eyebrow">01 / RECONOCIMIENTO</p><h2>Elige tu próximo desafío</h2></div><span class="preparation-step"><b>PISTA</b> AUTO CARRERA</span></header>
+      <div class="track-workspace"><div class="challenge-list track-picker"></div><div class="track-showcase"><div id="challengeStage" class="preview-stage"><span class="preview-status">Preparando vista aérea 3D…</span></div><div class="track-preview-caption"><div><h3 id="challengePreviewName">—</h3><p id="challengePreviewDetails">—</p><p id="challengePreviewGoal">—</p></div><button class="text-button spin-button" data-preview-spin>Ⅱ Pausar giro</button></div></div></div>
+      <footer class="preparation-footer"><button id="btnBackMain" class="gray">← Menú principal</button><button id="btnChallengeContinue">ELEGIR AUTO ↗</button></footer>
     </div>
   </div>
 
@@ -480,6 +473,7 @@ addEventListener('keydown',e=>{
     else if(state==='paused'){ setPaused(false); }
     else if(state==='running'||state==='countdown'){ setPaused(true); }
     else if(!$('#carPanel').classList.contains('hidden')) $('#btnCarBack').click();
+    else if(!$('#circuitMenu').classList.contains('hidden')) $('#btnCircuitBack').click();
     else if(state==='menu') showMainMenu();
   }
   if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) e.preventDefault();
@@ -498,6 +492,7 @@ addEventListener('keydown',e=>{
 
 let pendingTrackFactory = null;
 let garageOrigin='main';
+let preparedTrack=null;
 
 /* ===== HUD refs ===== */
 const elScore=$('#score'), elSpeed=$('#speed'), elLives=$('#lives'), elMulti=$('#multi'), elLap=$('#lap'),
@@ -741,10 +736,10 @@ function showTrackSelection(){
 }
 safeAddListener('btnModeCreative','click',showBoard);
 safeAddListener('btnModeChallenge','click',()=>{mode='challenge';showTrackSelection();});
-safeAddListener('btnModeTT','click',()=>{hidePanels();garageOrigin='main';mode='tt';pendingTrackFactory=()=>presetTrack(1);openCarPanel();});
+safeAddListener('btnModeTT','click',()=>{mode='tt';showCircuitMenu();});
 safeAddListener('btnBackMain','click',showMainMenu);
 safeAddListener('btnBoardBack','click',showMainMenu);
-safeAddListener('btnCarBack','click',()=>{if(garageOrigin==='board')showBoard();else if(garageOrigin==='challenge')showTrackSelection();else if(garageOrigin==='circuits')showCircuitMenu();else showMainMenu();});
+safeAddListener('btnCarBack','click',()=>returnToTrackPreview());
 
 // Importar por código
 safeAddListener('btnLoadCode', 'click', ()=>{
@@ -753,10 +748,7 @@ safeAddListener('btnLoadCode', 'click', ()=>{
   const tr = decodeTrack(val);
   if(!tr){ $('#importMessage').textContent='El código no es válido. Revisa que esté completo y comience con TRK. o TRK2.'; return; }
   hidePanels();
-  mode='race';garageOrigin='main';pendingTrackFactory = ()=>tr;
-  updateTrackIdUI(tr);
-  mainMenu?.classList.add('hidden');
-  openCarPanel();
+  mode='race';updateTrackIdUI(tr);showCustomTrackPreview(tr,'import');
 });
 
 /* ===== Pistas predefinidas (Challenge) ===== */
@@ -767,16 +759,6 @@ function presetTrack(n){
   tr.layout={name:layout.name,level:layout.level,length:layout.length,corners:layout.corners,stage:layout.stage};
   return tr;
 }
-
-// botones de challenge (si existen estáticos)
-document.querySelectorAll('.btnPickChallenge').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const lvl = Number(btn.getAttribute('data-lvl')||'1');
-    pendingTrackFactory = ()=>presetTrack(lvl);
-    challengeMenu?.classList.add('hidden');
-    openCarPanel();
-  });
-});
 
 /* ===== Car ===== */
 class Car{
@@ -1447,12 +1429,13 @@ function loop(ms){
     ctx.setTransform(view.dpr,0,0,view.dpr,0,0);
     ctx.clearRect(0,0,view.width,view.height);
     const inSession=document.body.classList.contains('in-game');
-    const draw3D=sceneView && !sceneFailed && (renderPrefs.view==='3d'||!inSession);
+    const preparing=typeof renderPreparationPreview==='function'&&renderPreparationPreview(dt,now);
+    const draw3D=!preparing && sceneView && !sceneFailed && (renderPrefs.view==='3d'||!inSession);
     $('#scene3d').style.visibility=draw3D?'visible':'hidden';
     if(draw3D){
       try{sceneView.render({track:inSession?track:attractTrack,player:inSession?player:attractCar,ghost:inSession?ghost:null,skin:chosen.sprite,dt,inMenu:!inSession,time:now,camera:renderPrefs.camera,motion:renderPrefs.motion});}
       catch(error){fail3D(error);}
-    }else{
+    }else if(!preparing){
       ctx.fillStyle=bgPat;ctx.fillRect(0,0,view.width,view.height);
       if(inSession && track) track.draw(ctx,camera);
       if(inSession && ghost) ghost.draw(ctx,camera);
@@ -1519,48 +1502,14 @@ const CAR_DATA = [
 let carIdx=0, chosen=CAR_DATA[0];
 
 const carPanel=document.getElementById('carPanel');
-const carPv=document.getElementById('carPreview');
-const pv=carPv?.getContext('2d');
 const txRadios = ()=>Array.from(document.querySelectorAll('input[name="tx"]'));
 const selectedTx = ()=>{ const r=txRadios().find(x=>x.checked); return r ? r.value : 'auto'; };
 
-function drawCarPreview(){
-  if(!carPv || !pv) return;
-  
-  const dpr = window.devicePixelRatio || 1;
-  const cw = carPv.clientWidth || 640;
-  const ch = carPv.clientHeight || 300;
-  carPv.width  = Math.max(1, cw * dpr);
-  carPv.height = Math.max(1, ch * dpr);
-
-  const w = carPv.width, h = carPv.height;
-  pv.setTransform(1,0,0,1,0,0);
-  pv.clearRect(0,0,w,h);
-
-  const spriteKey = CAR_DATA[carIdx].sprite;
-  const img = CAR_IMG[spriteKey];
-
-  function render(){
-    pv.setTransform(1,0,0,1,0,0);
-    pv.clearRect(0,0,w,h);
-
-    pv.save();
-    pv.translate(w/2, h/2);
-    pv.rotate(-Math.PI/2);
-
-    const ih = h * 0.62;
-    const iw = ih * (img.width / Math.max(1, img.height));
-
-    pv.drawImage(img, -iw/2, -ih/2, iw, ih);
-    pv.restore();
-  }
-
-  if (img && (img.complete || img instanceof HTMLCanvasElement)) render();
-  else if(img) img.onload = render;
-}
+function drawCarPreview(){ if(typeof syncPreparationPreview==='function')syncPreparationPreview(); }
 
 function updatePanel(){
   chosen=CAR_DATA[carIdx];
+  $('#carCounter').textContent=String(carIdx+1).padStart(2,'0')+' / 04';
   drawCarPreview();
   const carNameEl = document.getElementById('carName');
   const carDescEl = document.getElementById('carDesc');
@@ -1578,8 +1527,12 @@ function updatePanel(){
 }
 
 function openCarPanel(){ 
+  preparedTrack=pendingTrackFactory?pendingTrackFactory():preparedTrack;
+  if(!preparedTrack){showTrackSelection();return;}
+  const selected=preparedTrack;pendingTrackFactory=()=>selected;
   hidePanels();
   carPanel?.classList.remove('hidden');
+  $('#garageTrackName').textContent=preparedTrack.layout?.name||'Circuito personalizado';
   $('#sessionBrief').textContent=mode==='challenge'?`Desafío ${activeChallengeLevel} · ${activeChallengeGoal.toLocaleString('es-CL')} puntos · 3 vidas`:mode==='tt'?'Contrarreloj · Vueltas libres · Fantasma de tu récord':'Carrera · 5 vueltas · 3 vidas';
   updatePanel();
 }
@@ -1619,12 +1572,11 @@ function applyChosen(){
 safeAddListener('btnStart', 'click', ()=>{
   const b = document.getElementById('btnStart');
   if (!b || b.disabled) return;
-  pendingTrackFactory = ()=>makeTrackFromBoard();
-  openCarPanel();
+  const custom=makeTrackFromBoard();if(custom)showCustomTrackPreview(custom,'board');
 });
 
 safeAddListener('btnChooseStart', 'click', ()=>{
-  const tr = pendingTrackFactory ? pendingTrackFactory() : makeTrackFromBoard();
+  const tr = preparedTrack;
   if(!tr){ alert('Pista inválida. Dibuja o elige otra.'); return; }
   updateTrackIdUI(tr);
   startWithTrack(tr, mode);
@@ -1846,33 +1798,14 @@ function buildChallengeMenu(){
         <div class="tag">${circuit.stage} · ${(circuit.length/1000).toFixed(2)} km</div>
         <div class="tag">Objetivo: <b>${req.toLocaleString('es-CL')}</b> pts</div>
         <div class="tag">Mejor: <b>${best.toLocaleString('es-CL')}</b> pts</div>
-        <button class="btnPickChallenge" data-lvl="${i}" ${locked?'disabled':''} style="margin-top:8px">${locked?'Bloqueado':'Jugar'}</button>
+        <button class="btnPickChallenge" data-lvl="${i}" aria-label="Ver desafío ${i}: ${circuit.name}" style="margin-top:8px">${locked?'Ver · Bloqueado':'Ver circuito'}</button>
       </div>`;
   }
   grid.innerHTML = htmlItems;
   drawTrackThumbnails(grid);
 
-  grid.querySelectorAll('.btnPickChallenge').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const lvl = Number(btn.getAttribute('data-lvl')||'1');
-      if(lvl>unlockedLevel){ return; }
-      mode='challenge';
-      activeChallengeLevel = lvl;
-      activeChallengeGoal = challengeRequiredPoints(lvl);
-      challengeCompletedThisRun = false;
-      const cb = document.getElementById('challengeBadge');
-      const cg = document.getElementById('challengeGoal');
-      const cl = document.getElementById('challengeLevel');
-      if(cb && cg && cl){
-        cg.textContent = activeChallengeGoal.toLocaleString('es-CL');
-        cl.textContent = String(activeChallengeLevel);
-        cb.classList.add('show');
-      }
-      pendingTrackFactory = ()=>presetTrack(lvl);
-      document.getElementById('challengeMenu')?.classList.add('hidden');
-      openCarPanel();
-    });
-  });
+  grid.querySelectorAll('.btnPickChallenge').forEach(btn=>btn.addEventListener('click',()=>previewCircuit(Number(btn.dataset.lvl),true)));
+  previewCircuit(Math.min(CHALLENGE_COUNT,Math.max(1,activeChallengeLevel||unlockedLevel)),true);
 }
 
 // Chequear si se cumplió la meta durante la carrera
@@ -1890,21 +1823,6 @@ function checkChallengeProgress(){
     showOverlay({title:'¡Challenge superado!',msg:`Pista ${activeChallengeLevel} completada.<br>Objetivo: <b>${activeChallengeGoal.toLocaleString('es-CL')}</b> pts<br>Tu puntaje: <b>${Math.floor(player.score).toLocaleString('es-CL')}</b> pts`});
   }
 }
-
-// Soporte de arranque vía hash (? o #t=TRK.XXXX)
-(function tryLoadFromHash(){
-  const h = location.hash || location.search || '';
-  const m = h.match(/[?#&]t=([A-Za-z0-9\-\._]+)/);
-  if(!m) return;
-  const code = /^TRK2?\./.test(m[1]) ? m[1] : ('TRK.'+m[1]);
-  const tr = decodeTrack(code);
-  if(!tr) return;
-  pendingTrackFactory = ()=>tr;
-  updateTrackIdUI(tr);
-  document.getElementById('mainMenu')?.classList.add('hidden');
-  openCarPanel();
-})();
-
 
 </script>
 <script src="js/experience.js"></script>

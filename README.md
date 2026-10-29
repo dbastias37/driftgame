@@ -1,4 +1,4 @@
-# Drift Racer 0.3.3 — 2D + 3D
+# Drift Racer 0.3.4 — 2D + 3D
 
 Juego de drift estático para navegador, con dos vistas intercambiables de **una misma simulación**. Mantiene cuatro autos, veinte desafíos, editor de circuitos, transmisión manual/automática y contrarreloj con fantasma local.
 
@@ -14,11 +14,13 @@ python3 -m http.server 8000
 
 Abrir `http://localhost:8000`. No necesita compilación ni instalar dependencias para jugar. `index.html` es el punto de entrada; `index_*` son versiones históricas.
 
-- **Carrera rápida:** garaje → carrera de cinco vueltas.
-- **Desafíos:** circuito desbloqueado → garaje → objetivo de puntos → siguiente desafío.
-- **Contrarreloj:** garaje → vueltas libres con el fantasma del récord. «Cambiar circuito» permite elegir cualquiera de los veinte trazados.
-- **Creativo:** dibujar circuito cerrado → garaje → carrera. Los códigos `TRK` y `TRK2` siguen siendo compatibles.
+- **Carrera rápida:** circuito con vista aérea 3D → garaje → carrera de cinco vueltas.
+- **Desafíos:** vista aérea del circuito → garaje → objetivo de puntos → reconocimiento del siguiente desafío. Se pueden explorar los bloqueados, pero solo jugar los desbloqueados.
+- **Contrarreloj:** elegir y previsualizar uno de los veinte circuitos → garaje → vueltas libres con el fantasma del récord.
+- **Creativo:** dibujar circuito cerrado → vista aérea 3D → garaje → carrera. Los códigos `TRK` y `TRK2` siguen siendo compatibles.
 - **Configuración:** vista, cámara, calidad, movimiento reducido y controles táctiles automáticos/forzados.
+
+El garaje es el último paso: modelo 3D sobre una tarima giratoria, estadísticas originales, transmisión, vista 2D/3D y resumen del circuito. Arrastrar o usar las flechas con el visor enfocado cambia el ángulo; «Pausar giro» detiene la rotación. «Volver a la pista» conserva la selección. Los circuitos importados y enlaces compartidos también pasan por la vista aérea antes del garaje.
 
 ## Controles
 
@@ -49,6 +51,7 @@ La ayuda pausa la conducción. Cambiar de pestaña o perder foco también pausa 
 - `js/rx7-model.js`: adaptación del RX-7 FD RedSuns suministrado para el auto amarillo; conserva cuatro ruedas independientes, texturas y movimiento del juego. Créditos y procedencia en `assets/models/README.md`.
 - `js/track-surface.js`: une el área del circuito antes de triangular. Asfalto, línea de borde, piano y escapatoria son regiones contiguas sin superposición. El piano se eleva con seis bandas unidas y conserva sus franjas naranjas/blancas; utiliza el mismo campo de alturas que las ruedas. Se divide en sectores para descartar geometría fuera de cámara. No modifica puntos, ancho ni muestreo de físicas.
 - `js/software-renderer.js`: proyección 3D con búfer de profundidad sobre Canvas para equipos sin WebGL. Reduce resolución y detalle; es más lenta que WebGL y se recomienda 2D si no resulta fluida.
+- `js/menu-preview.js`: garaje original inspirado en la referencia del usuario y vista aérea del circuito real; una sola instancia de previsualización, encuadre según el trazado y render detenido cuando el menú está oculto.
 - `js/experience.js`: navegación, configuración, preferencias y HUD.
 - `css/experience.css`: interfaz adaptable y estilo visual.
 - `vendor/`: Three.js (MIT) y Clipper 6.4.2 (Boost Software License 1.0, con aviso del subconjunto JSBN) distribuidos localmente. El juego no depende de una CDN para el 3D.
@@ -80,6 +83,11 @@ npm test
 Usar `CHROMIUM_EXECUTABLE=/ruta/a/chromium` para un Chromium instalado. La suite bloquea servicios externos y controla el RAF cuando necesita pasos deterministas.
 
 ### Validación de esta entrega
+
+0.3.4: 35 pruebas de núcleo aprobadas. Se comprueban pista → garaje → carrera, regreso al origen, bloqueo de desafíos, conservación del circuito y aislamiento respecto de la simulación. Render real de los veinte circuitos con diferentes proporciones y ángulos de cámara, cuatro autos y RX-7 con apoyo de neumáticos sobre la tarima. Inspección del flujo en navegador de escritorio con render compatible: vista aérea, selección del RX-7, giro manual/pausa, transmisión manual, inicio de carrera y pausa. El navegador de revisión no dispone de WebGL; siguen pendientes GPU real, revisión móvil de esta versión y la suite Playwright completa.
+
+![Garaje 3D, captura del navegador en modo compatible](docs/garage-preview-0.3.4.jpg)
+![Previsualización aérea del circuito, captura del navegador en modo compatible](docs/track-preview-0.3.4.jpg)
 
 0.3.3: 28 pruebas de núcleo, con inspección de las veinte siluetas y render real de compatibilidad del RX-7 apoyado en el piano. Comprueba separación de tramos, ausencia de cruces y solapes, radios internos, continuidad de meta, progresión, identidad entre puntos del juego y miniaturas, superficies elevadas, contacto independiente, amortiguación, cruces rápidos/marcha atrás, pausa y reinicio. `Car` continúa idéntica a 0.2; la nueva respuesta vertical vive fuera de esa clase. La vista 2D sigue siendo cenital y plana, pero calcula el mismo contacto. WebGL en GPU real y una prueba de conducción manual en teléfono siguen pendientes.
 
