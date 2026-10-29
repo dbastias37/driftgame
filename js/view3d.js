@@ -1,5 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
 import {SoftwareRenderer} from './software-renderer.js';
+import {trackSurface,surfaceGeometry} from './track-surface.js';
 const TAU=Math.PI*2;
 const SKINS={blue:{color:0x276bdb,roof:1.28,length:4.2,spoiler:true},red:{color:0xd54232,roof:1.16,length:4.5,stripes:true},yellow:{color:0xe6b52b,roof:.95,length:4.45,spoiler:true},gray:{color:0x85979a,roof:1.35,length:3.85}};
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -49,7 +50,7 @@ function createCar(key,ghost=false){
     for(let i=0;i<5;i++){const spoke=box(spin,black,0,0,z>0?.132:-.132,.38,.035,.01);spoke.rotation.z=i/5*Math.PI;}
     wheels.push({steer,spin,front:x>0});
   }
-  const shadow=mesh(new T.PlaneGeometry(L+1,3),new T.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.23,depthWrite:false}),root,0,.015,0);shadow.rotation.x=-Math.PI/2;shadow.renderOrder=-35;
+  const shadow=mesh(new T.PlaneGeometry(L+1,3),new T.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.23,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1}),root,0,.035,0);shadow.rotation.x=-Math.PI/2;shadow.renderOrder=-35;
   if(ghost)root.traverse(o=>{if(o.isMesh){o.material=o.material.clone();o.material.color.set(0x77f2e7);o.material.transparent=true;o.material.opacity=.24;o.material.depthWrite=false;}});
   return {root,body,wheels,tailmat};
 }
@@ -58,13 +59,12 @@ function noiseTexture(){
   for(let i=0;i<im.data.length;i+=4){const v=62+Math.floor(r()*17);im.data[i]=v;im.data[i+1]=v+6;im.data[i+2]=v+7;im.data[i+3]=255;}g.putImageData(im,0,0);
   const t=new T.CanvasTexture(c);t.wrapS=t.wrapT=T.RepeatWrapping;t.colorSpace=T.SRGBColorSpace;return t;
 }
-function smokeTexture(){const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'#ffffffb0');gr.addColorStop(.3,'#ffffff65');gr.addColorStop(1,'#ffffff00');g.fillStyle=gr;g.fillRect(0,0,64,64);return new T.CanvasTexture(c);}
-function ribbon(track,lo,hi,y,material){
-  const verts=[],uv=[],indices=[],N=track.points.length;
-  for(let i=0;i<=N;i++){const p=track.points[i%N],n=track.normalAt(i%N);for(const d of [lo,hi]){verts.push(p.x+n.x*d,y,p.y+n.y*d);uv.push((p.x+n.x*d)/9,(p.y+n.y*d)/9);}}
-  for(let i=0;i<N;i++){const a=i*2;indices.push(a,a+2,a+1,a+1,a+2,a+3);}
-  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(verts,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(indices);g.computeVertexNormals();const surface=new T.Mesh(g,material);surface.renderOrder=-90+y*100;return surface;
+function curbTexture(){
+  const canvas=document.createElement('canvas');canvas.width=64;canvas.height=4;
+  const ctx=canvas.getContext('2d');ctx.fillStyle='#c85837';ctx.fillRect(0,0,32,4);ctx.fillStyle='#d7cec0';ctx.fillRect(32,0,32,4);
+  const texture=new T.CanvasTexture(canvas);texture.wrapS=T.RepeatWrapping;texture.colorSpace=T.SRGBColorSpace;return texture;
 }
+function smokeTexture(){const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'#ffffffb0');gr.addColorStop(.3,'#ffffff65');gr.addColorStop(1,'#ffffff00');g.fillStyle=gr;g.fillRect(0,0,64,64);return new T.CanvasTexture(c);}
 export class DriftView3D{
   constructor(canvas,{quality='auto',onFailure=()=>{}}={}){
     this.canvas=canvas;this.onFailure=onFailure;
@@ -74,7 +74,7 @@ export class DriftView3D{
     this.renderer.outputColorSpace=T.SRGBColorSpace;this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.25;
     this.scene=new T.Scene();this.scene.background=new T.Color(0x9fb4b6);this.scene.fog=new T.Fog(0x9fb4b6,160,700);
     this.scene.add(new T.HemisphereLight(0xc7e4ee,0x56634a,2.3));const sun=new T.DirectionalLight(0xffe4c6,3.1);sun.position.set(-110,180,60);this.scene.add(sun);
-    this.camera=new T.PerspectiveCamera(58,1,.12,1600);this.world=new T.Group();this.scene.add(this.world);
+    this.camera=new T.PerspectiveCamera(58,1,.5,1200);this.world=new T.Group();this.scene.add(this.world);
     this.car=createCar('blue');this.scene.add(this.car.root);this.ghostCar=createCar('blue',true);this.scene.add(this.ghostCar.root);
     this.smokeTexture=smokeTexture();this.smokeGeo=new T.BufferGeometry();this.smokePos=new Float32Array(450*3);this.smokeGeo.setAttribute('position',new T.BufferAttribute(this.smokePos,3).setUsage(T.DynamicDrawUsage));
     this.smokeMat=new T.PointsMaterial({color:0xdde8e8,map:this.smokeTexture,size:2.8,transparent:true,opacity:.23,depthWrite:false,sizeAttenuation:true});
@@ -89,17 +89,23 @@ export class DriftView3D{
   zoomBy(m){this.distance=clamp(this.distance*m,.65,1.9);}
   build(track){
     disposeGroup(this.world);this.track=track;const r=rng(),b=track.bounds,cx=b.minX+b.w/2,cz=b.minY+b.h/2,half=track.roadHalf;
-    const roadMat=mat(0xaeb7ba,{map:noiseTexture(),roughness:.96,side:T.DoubleSide});
-    const ground=mesh(new T.PlaneGeometry(Math.max(2200,b.w+1200),Math.max(2200,b.h+1200)),mat(0x526253),this.world,cx,-.045,cz);ground.rotation.x=-Math.PI/2;ground.renderOrder=-100;
-    this.world.add(ribbon(track,-half-4,half+4,-.01,mat(0x7a8074,{side:T.DoubleSide})),ribbon(track,-half,half,.015,roadMat));
-    for(const sign of [-1,1]){
-      this.world.add(ribbon(track,sign*half-.16,sign*half+.16,.045,mat(0xdde0d3,{side:T.DoubleSide})));
-      this.world.add(ribbon(track,sign*(half+.4)-.35,sign*(half+.4)+.35,.03,mat(0xd7cec0,{side:T.DoubleSide})));
+    const asphaltTexture=noiseTexture(),kerbTexture=curbTexture();
+    asphaltTexture.anisotropy=Math.min(8,this.renderer.capabilities?.getMaxAnisotropy()||1);
+    kerbTexture.anisotropy=asphaltTexture.anisotropy;
+    const ground=mesh(new T.PlaneGeometry(Math.max(2200,b.w+1200),Math.max(2200,b.h+1200)),mat(0x526253,{polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1}),this.world,cx,-.12,cz);ground.rotation.x=-Math.PI/2;ground.renderOrder=-100;
+    const materials={
+      asphalt:mat(0xaeb7ba,{map:asphaltTexture,roughness:.96}),
+      edge:mat(0xdde0d3),curb:mat(0xffffff,{map:kerbTexture}),
+      runoff:mat(0x7a8074),centerLine:mat(0xcfc8a3),
+    };
+    // Adjacent, non-overlapping regions share a single height. The curb is a
+    // continuous painted strip, not floating boxes laid over another ribbon.
+    const layout=trackSurface(track);
+    for(const [name,region] of Object.entries(layout.regions)){
+      const surface=mesh(surfaceGeometry(region,name==='curb'?layout.curbContours:null),materials[name],this.world);
+      surface.name='track-'+name;surface.renderOrder=-90;
     }
-    const kerb=new T.InstancedMesh(new T.BoxGeometry(1,.08,1),mat(0xc85837),track.points.length*2);let ki=0;const o=new T.Object3D();
-    for(let i=0;i<track.points.length;i+=2){const p=track.point(i),q=track.point(i+1),n=track.normalAt(i),len=Math.hypot(p.x-q.x,p.y-q.y);for(const sign of [-1,1]){o.position.set((p.x+q.x)/2+n.x*sign*(half+.4),.03,(p.y+q.y)/2+n.y*sign*(half+.4));o.rotation.set(0,-Math.atan2(q.y-p.y,q.x-p.x),0);o.scale.set(len,.6,.7);o.updateMatrix();kerb.setMatrixAt(ki++,o.matrix);}}kerb.renderOrder=-70;kerb.count=ki;kerb.instanceMatrix.needsUpdate=true;this.world.add(kerb);
-    const lines=new T.InstancedMesh(new T.BoxGeometry(2.5,.02,.12),mat(0xcfc8a3),Math.ceil(track.points.length/4));let li=0;
-    for(let i=0;i<track.points.length;i+=4){const p=track.point(i);o.position.set(p.x,.045,p.y);o.rotation.set(0,-track.tangentAt(i),0);o.scale.set(1,1,1);o.updateMatrix();lines.setMatrixAt(li++,o.matrix);}lines.renderOrder=-60;lines.count=li;this.world.add(lines);
+    const o=new T.Object3D();
     // Start gantry and checkers follow the same start normal as the 2D circuit.
     const start=track.point(0),a=track.tangentAt(0),gate=new T.Group();gate.position.set(start.x,0,start.y);gate.rotation.y=-a;this.world.add(gate);
     const metal=mat(0x283b43),orange=mat(0xf47345),white=mat(0xf1ece0);
@@ -116,11 +122,11 @@ export class DriftView3D{
     }trees.count=trunks.count=ti;this.world.add(trees,trunks);
     const mountainMat=mat(0x728a84);for(let i=0;i<14;i++){const a=i/14*TAU,rad=Math.max(b.w,b.h)*.7+350;const m=mesh(new T.ConeGeometry(65+r()*100,70+r()*100,5),mountainMat,this.world,cx+Math.cos(a)*rad,20,cz+Math.sin(a)*rad);m.rotation.y=r()*TAU;}
     // Track-side marker posts, pit sheds, and floodlights give scale to the world.
-    const postGeo=new T.BoxGeometry(.16,1.2,.16),posts=new T.InstancedMesh(postGeo,white,Math.ceil(track.points.length/6)*2);let pi=0;
-    for(let i=0;i<track.points.length;i+=6){const p=track.point(i),n=track.normalAt(i);for(const sign of [-1,1]){o.position.set(p.x+n.x*sign*(half+6),.6,p.y+n.y*sign*(half+6));o.rotation.set(0,0,0);o.scale.set(1,1,1);o.updateMatrix();posts.setMatrixAt(pi++,o.matrix);}}posts.count=pi;this.world.add(posts);
+    const postGeo=new T.BoxGeometry(.16,1.2,.16),posts=new T.InstancedMesh(postGeo,white,layout.markers.length);let pi=0;
+    for(const p of layout.markers){o.position.set(p.x,.6,p.z);o.rotation.set(0,0,0);o.scale.set(1,1,1);o.updateMatrix();posts.setMatrixAt(pi++,o.matrix);}posts.count=pi;this.world.add(posts);
     const pit=new T.Group();pit.position.set(start.x,0,start.y);pit.rotation.y=-a;this.world.add(pit);
     for(let i=0;i<4;i++){const z=half+16;box(pit,mat(i%2?0x647774:0x334c56),-13+i*9,2.5,z,7,5,8);box(pit,metal,-13+i*9,5.15,z,7.6,.35,8.6);box(pit,mat(0x17282f),-13+i*9,2,z-4.02,5,3.6,.06);box(pit,orange,-13+i*9,4.3,z-4.05,5,.2,.06);}
-    for(let i=0;i<8;i++){const idx=Math.floor(i/8*track.points.length),p=track.point(idx),n=track.normalAt(idx);const x=p.x+n.x*(half+10),z=p.y+n.y*(half+10);box(this.world,metal,x,6,z,.15,12,.15);box(this.world,white,x,12,z,2,.35,.6);}
+    for(let i=0;i<Math.min(8,layout.markers.length);i++){const p=layout.markers[Math.floor(i/8*layout.markers.length)],x=p.x,z=p.z;box(this.world,metal,x,6,z,.15,12,.15);box(this.world,white,x,12,z,2,.35,.6);}
   }
   setSkin(key){if(key===this.key)return;this.scene.remove(this.car.root,this.ghostCar.root);disposeGroup(this.car.root);disposeGroup(this.ghostCar.root);this.car=createCar(key);this.ghostCar=createCar(key,true);this.scene.add(this.car.root,this.ghostCar.root);this.key=key;}
   effects(player){
