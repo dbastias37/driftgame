@@ -43,14 +43,15 @@ La ayuda pausa la conducción. Cambiar de pestaña o perder foco también pausa 
 
 `Car`, el paso fijo de 1/60 s, las reglas de puntuación, los cambios, las penalizaciones de salida y las puertas de vueltas se conservan. La vista 3D lee `player`, `track` y el fantasma; no integra otra física ni reinicia carreras al cambiar de vista. La escena genera el asfalto a partir de los mismos puntos y ancho del circuito, incluidas las pistas dibujadas/importadas.
 
-- `js/view3d.js`: Three.js r170, modelos geométricos de los cuatro autos, ruedas orientables, humo, huellas, cámaras y entorno. La decoración no añade colisiones a las reglas originales.
+- `js/view3d.js`: Three.js r170, modelos de los cuatro autos, ruedas orientables, humo, huellas, cámaras y entorno. La decoración no añade colisiones a las reglas originales.
+- `js/rx7-model.js`: adaptación del RX-7 FD RedSuns suministrado para el auto amarillo; conserva cuatro ruedas independientes, texturas y movimiento del juego. Créditos y procedencia en `assets/models/README.md`.
 - `js/track-surface.js`: une el área del circuito antes de triangular. Asfalto, línea de borde, piano y escapatoria son regiones contiguas sin superposición; las franjas siguen la distancia real del borde. No modifica puntos, ancho ni muestreo de físicas.
 - `js/software-renderer.js`: proyección 3D con búfer de profundidad sobre Canvas para equipos sin WebGL. Reduce resolución y detalle; es más lenta que WebGL y se recomienda 2D si no resulta fluida.
 - `js/experience.js`: navegación, configuración, preferencias y HUD.
 - `css/experience.css`: interfaz adaptable y estilo visual.
 - `vendor/`: Three.js (MIT) y Clipper 6.4.2 (Boost Software License 1.0, con aviso del subconjunto JSBN) distribuidos localmente. El juego no depende de una CDN para el 3D.
 
-Las geometrías, materiales y texturas de la pista anterior se liberan al cambiar de circuito. La calidad limita la resolución y la cantidad de árboles. Los modelos son una primera interpretación geométrica de los autos existentes, sin assets externos ni simulación de suspensión.
+Las geometrías, materiales y texturas de la pista anterior se liberan al cambiar de circuito. La calidad limita la resolución y la cantidad de árboles. El auto amarillo usa el GLB aportado; los otros tres mantienen sus modelos geométricos. Se conserva el balanceo visual original, sin añadir otra simulación de suspensión.
 
 ## Datos guardados
 
@@ -77,6 +78,8 @@ npm test
 Usar `CHROMIUM_EXECUTABLE=/ruta/a/chromium` para un Chromium instalado. La suite bloquea servicios externos y controla el RAF cuando necesita pasos deterministas.
 
 ### Validación de esta entrega
+
+0.3.2: pruebas del GLB real, escala y orientación, cuatro pivotes, dirección y rodadura, balanceo sin desplazar ruedas, clonación de recursos, carga tardía/fallida y máscaras/orientación de textura en el render compatible. Revisión visual frontal, lateral, trasera y superior con ese renderer. WebGL en GPU real sigue pendiente.
 
 0.3.1: regresión geométrica de las veinte pistas, horquillas, cruces y puntos duplicados. Comprueba área cubierta, ausencia de intersecciones entre materiales, orientación de triángulos y conservación exacta del muestreo físico. El navegador de revisión no respondió durante esta corrección; se validó el render de compatibilidad fuera del navegador. La revisión WebGL en GPU sigue pendiente.
 

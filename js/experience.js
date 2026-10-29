@@ -93,7 +93,7 @@ addEventListener('keydown',e=>{
 syncRenderUI();
 requestAnimationFrame(loop);
 import('./view3d.js').then(({DriftView3D})=>{
-  sceneView=new DriftView3D($('#scene3d'),{quality:renderPrefs.quality,onFailure:fail3D});
+  sceneView=new DriftView3D($('#scene3d'),{quality:renderPrefs.quality,onFailure:fail3D,onVehicleFailure:()=>toast('No se pudo cargar el RX-7. Recarga para volver a intentarlo.')});
   if(sceneView.software)toast('3D compatible activo · Calidad ligera');
 }).catch(fail3D);
 

@@ -1,6 +1,7 @@
 import * as T from '../vendor/three.module.min.js';
 import {SoftwareRenderer} from './software-renderer.js';
 import {trackSurface,surfaceGeometry} from './track-surface.js';
+import {loadRX7,createRX7} from './rx7-model.js';
 const TAU=Math.PI*2;
 const SKINS={blue:{color:0x276bdb,roof:1.28,length:4.2,spoiler:true},red:{color:0xd54232,roof:1.16,length:4.5,stripes:true},yellow:{color:0xe6b52b,roof:.95,length:4.45,spoiler:true},gray:{color:0x85979a,roof:1.35,length:3.85}};
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -66,7 +67,7 @@ function curbTexture(){
 }
 function smokeTexture(){const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'#ffffffb0');gr.addColorStop(.3,'#ffffff65');gr.addColorStop(1,'#ffffff00');g.fillStyle=gr;g.fillRect(0,0,64,64);return new T.CanvasTexture(c);}
 export class DriftView3D{
-  constructor(canvas,{quality='auto',onFailure=()=>{}}={}){
+  constructor(canvas,{quality='auto',onFailure=()=>{},loadVehicle=loadRX7,onVehicleFailure=()=>{}}={}){
     this.canvas=canvas;this.onFailure=onFailure;
     try{this.renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});}
     catch{this.renderer=new SoftwareRenderer(canvas);}
@@ -82,6 +83,7 @@ export class DriftView3D{
     this.trailGeo=new T.BufferGeometry();this.trailPos=new Float32Array(3000*2*6*3);this.trailGeo.setAttribute('position',new T.BufferAttribute(this.trailPos,3).setUsage(T.DynamicDrawUsage));
     this.trails=new T.Mesh(this.trailGeo,new T.MeshBasicMaterial({color:0x131b20,transparent:true,opacity:.42,depthWrite:false,side:T.DoubleSide}));this.trails.frustumCulled=false;this.trails.renderOrder=-40;this.scene.add(this.trails);
     this.key='blue';this.distance=1;this.resetCamera();this.setQuality(quality);
+    this.assetReady=loadVehicle?loadVehicle().then(template=>{if(this.disposed)return;this.rx7Template=template;if(this.key==='yellow')this.setSkin('yellow',true);}).catch(error=>{if(!this.disposed)onVehicleFailure(error);}):Promise.resolve();
     this.contextLost=e=>{e.preventDefault();this.onFailure(new Error('WebGL context lost'));};canvas.addEventListener('webglcontextlost',this.contextLost);
   }
   setQuality(q){this.quality=q;this.low=this.software||q==='low'||(q==='auto'&&(innerWidth<700||navigator.hardwareConcurrency<=4));this.pixelRatio=Math.min(devicePixelRatio||1,this.low?1:1.75);this.renderer.setPixelRatio(this.pixelRatio);this.width=0;this.track=null;}
@@ -128,7 +130,13 @@ export class DriftView3D{
     for(let i=0;i<4;i++){const z=half+16;box(pit,mat(i%2?0x647774:0x334c56),-13+i*9,2.5,z,7,5,8);box(pit,metal,-13+i*9,5.15,z,7.6,.35,8.6);box(pit,mat(0x17282f),-13+i*9,2,z-4.02,5,3.6,.06);box(pit,orange,-13+i*9,4.3,z-4.05,5,.2,.06);}
     for(let i=0;i<Math.min(8,layout.markers.length);i++){const p=layout.markers[Math.floor(i/8*layout.markers.length)],x=p.x,z=p.z;box(this.world,metal,x,6,z,.15,12,.15);box(this.world,white,x,12,z,2,.35,.6);}
   }
-  setSkin(key){if(key===this.key)return;this.scene.remove(this.car.root,this.ghostCar.root);disposeGroup(this.car.root);disposeGroup(this.ghostCar.root);this.car=createCar(key);this.ghostCar=createCar(key,true);this.scene.add(this.car.root,this.ghostCar.root);this.key=key;}
+  setSkin(key,force=false){
+    if(key===this.key&&!force)return;
+    this.scene.remove(this.car.root,this.ghostCar.root);disposeGroup(this.car.root);disposeGroup(this.ghostCar.root);
+    this.car=key==='yellow'&&this.rx7Template?createRX7(this.rx7Template):createCar(key);
+    this.ghostCar=key==='yellow'&&this.rx7Template?createRX7(this.rx7Template,true):createCar(key,true);
+    this.scene.add(this.car.root,this.ghostCar.root);this.key=key;
+  }
   effects(player){
     const particles=player.smoke||[],count=Math.min(particles.length,this.low?140:450),stride=Math.max(1,Math.floor(particles.length/Math.max(1,count)));
     for(let i=0;i<count;i++){const p=particles[i*stride];this.smokePos[i*3]=p.x;this.smokePos[i*3+1]=.4+p.life*.75;this.smokePos[i*3+2]=p.y;}
@@ -145,8 +153,12 @@ export class DriftView3D{
     const w=innerWidth,h=innerHeight;if(this.width!==w||this.height!==h){this.width=w;this.height=h;this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();}
     const p=player.pos,a=player.angle,speed=player.worldSpeed();this.car.root.position.set(p.x,0,p.y);this.car.root.rotation.y=-a;
     this.car.body.rotation.x=motion==='reduced'?0:clamp(player.omega*speed*.002,-.055,.055);
-    for(const wheel of this.car.wheels){wheel.steer.rotation.y=wheel.front?-player.steerAngle:0;wheel.spin.rotation.z-=speed*dt/.36;}
-    this.car.tailmat.emissiveIntensity=player.handbrake?2:.65;
+    for(const wheel of this.car.wheels){
+      wheel.steer.rotation.y=wheel.front?-player.steerAngle:0;
+      const rollingSpeed=this.car.imported&&player.vel?player.vel.x*Math.cos(a)+player.vel.y*Math.sin(a):speed;
+      wheel.spin.rotation.z-=rollingSpeed*dt/(wheel.radius||.36);
+    }
+    if(this.car.tailmat)this.car.tailmat.emissiveIntensity=player.handbrake?2:.65;
     this.ghostCar.root.visible=!!(ghost?.visible&&ghost.data?.samples?.length&&!inMenu);
     if(this.ghostCar.root.visible){const gp=ghost._sample();this.ghostCar.root.position.set(gp.x,.015,gp.y);this.ghostCar.root.rotation.y=-gp.angle;}
     this.effects(player);this.car.root.visible=camera!=='hood'||inMenu;
@@ -161,5 +173,5 @@ export class DriftView3D{
     if(!this.look)this.look=target.clone();if(!this.cameraReady||inMenu||camera==='hood'||motion==='reduced')this.look.copy(target);else this.look.lerp(target,alpha);
     this.camera.lookAt(this.look);this.camera.updateProjectionMatrix();this.cameraReady=true;this.renderer.render(this.scene,this.camera);
   }
-  dispose(){this.canvas.removeEventListener('webglcontextlost',this.contextLost);disposeGroup(this.scene);this.renderer.dispose();}
+  dispose(){this.disposed=true;this.canvas.removeEventListener('webglcontextlost',this.contextLost);disposeGroup(this.scene);this.renderer.dispose();}
 }

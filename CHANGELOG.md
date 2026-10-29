@@ -1,3 +1,11 @@
+# 0.3.2 — RX-7 FD RedSuns
+
+- El auto amarillo utiliza el GLB proporcionado, sus texturas originales y cuatro ruedas independientes.
+- Pivotes centrados, orientación frontal y escala uniforme; dirección delantera y rodadura sobre los ejes correctos, incluida marcha atrás.
+- Se conserva el balanceo de carrocería, los controles y todos los ajustes físicos del auto amarillo.
+- Sprite 2D y garaje actualizados desde el mismo modelo. Carga asíncrona con sustituto temporal y aviso si el modelo no puede descargarse.
+- El render compatible respeta orientación y transparencias recortadas de las texturas glTF.
+
 # 0.3.1 — Curvas y bordes continuos
 
 - Se eliminan los pliegues y triángulos solapados al dar ancho a curvas cerradas o puntos muy próximos.
