@@ -1,3 +1,18 @@
+# 0.3.0 — Vista dual y experiencia de carrera
+
+- Alternar 2D/3D con V, sin recrear el auto ni cambiar físicas, marcha, puntuación o tiempos.
+- Cámaras de seguimiento, aérea y capó; zoom y movimiento reducido.
+- Escena 3D con cuatro siluetas, ruedas orientables, humo, huellas, asfalto, bordes, meta, boxes, arbolado y montañas.
+- Render WebGL local y modo compatible Canvas con profundidad; liberación de recursos al cambiar circuito.
+- Nuevo menú, carrera rápida, garaje, configuración persistente, importación dedicada y selección visual de veinte pistas.
+- Continuar al siguiente desafío, volver al origen correcto del garaje y ayuda que pausa la carrera.
+- HUD más compacto, controles adaptables, opción de forzar controles táctiles y radio sin reproducción automática.
+- Pruebas de equivalencia de simulación y de render real sin mutación de las físicas.
+
+Ver README para el alcance de la validación y los límites del modo compatible.
+
+---
+
 # Cambios
 
 ## 0.2.1 — Texto de controles táctiles

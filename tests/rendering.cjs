@@ -1,0 +1,19 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');
+const {pathToFileURL}=require('node:url');const path=require('node:path');
+function canvas(){
+  const ctx={createImageData:(w,h)=>({data:new Uint8ClampedArray(w*h*4)}),putImageData(){},fillRect(){},fillText(){},createRadialGradient:()=>({addColorStop(){}}),getImageData:(x,y,w,h)=>({data:new Uint8ClampedArray(w*h*4).fill(130)})};
+  return {width:256,height:256,style:{},getContext:type=>type==='2d'?ctx:null,addEventListener(){},removeEventListener(){}};
+}
+test('actual 3D scene, all car models, cameras and geometry leave the simulation untouched',async()=>{
+  global.document={createElement:canvas};global.innerWidth=800;global.innerHeight=560;global.devicePixelRatio=1;
+  const {DriftView3D}=await import(pathToFileURL(path.resolve(__dirname,'../js/view3d.js')));
+  const oldError=console.error;console.error=()=>{};let view;try{view=new DriftView3D(canvas());}finally{console.error=oldError;}
+  const points=Array.from({length:100},(_,i)=>({x:100*Math.cos(i/100*Math.PI*2),y:100*Math.sin(i/100*Math.PI*2)}));
+  const track={points,roadHalf:14,bounds:{minX:-100,minY:-100,w:200,h:200},point(i){return points[(i+100)%100]},normalAt(i){const p=this.point(i-1),q=this.point(i+1),d=Math.hypot(q.x-p.x,q.y-p.y);return{x:-(q.y-p.y)/d,y:(q.x-p.x)/d}},tangentAt(i){const p=this.point(i),q=this.point(i+1);return Math.atan2(q.y-p.y,q.x-p.x)},nearestIndex(x,y){let best=0,d=Infinity;points.forEach((p,i)=>{const n=Math.hypot(x-p.x,y-p.y);if(n<d){best=i;d=n}});return best}};
+  const player={pos:{x:100,y:0},angle:Math.PI/2,omega:.3,steerAngle:.1,handbrake:false,smoke:[{x:100,y:-1,life:.4}],tireTrails:[{x1:99,y1:0,x2:101,y2:0,a:.3},{x1:99,y1:1,x2:101,y2:1,a:.3}],worldSpeed:()=>10};
+  const before=JSON.stringify({track,player});
+  const timings=[];for(const skin of ['blue','red','yellow','gray'])for(const camera of ['chase','aerial','hood']){const t=performance.now();view.render({track,player,skin,camera,dt:1/60});timings.push(performance.now()-t);assert.equal(JSON.stringify({track,player}),before);assert.ok(view.renderer.frame.data.some((v,i)=>i%4===0&&v!==159),'Scene contains rendered pixels');}
+  let triangles=0;view.scene.traverse(o=>{if(o.geometry){const p=o.geometry.attributes.position;assert.ok(Array.from(p.array).every(Number.isFinite));triangles+=(o.geometry.index?.count||p.count)/3;}});assert.ok(triangles>500);
+  const oldWorld=view.world.children[0];view.render({track:{...track,roadHalf:8},player,dt:1/60});assert.ok(!view.world.children.includes(oldWorld));
+  view.dispose();console.log('Software renderer frame ms (median):',Math.round(timings.sort((a,b)=>a-b)[6]));
+});

@@ -1,10 +1,9 @@
 <!DOCTYPE html><html lang="es"><head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Drift Racer 0.2</title>
-<meta name="application-version" content="0.2.1">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+<title>Drift Racer — 2D + 3D</title>
+<meta name="application-version" content="0.3.0">
+<meta name="theme-color" content="#111719">
 <style>
   :root{--bg:#0b0b0b;--ink:#e6f1ff;}
   html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Arial}
@@ -220,6 +219,7 @@
   @media(max-width:480px){.menu-grid{grid-template-columns:1fr}.challenge-list{grid-template-columns:repeat(2,minmax(0,1fr))}.challenge-item button{width:100%;padding:9px 4px;font-size:12px}}
   @media(max-height:500px){#carPreview{height:110px} #carPanel h2{font-size:19px} #times{top:122px} #ui{max-width:330px} #stickZone{width:120px;height:120px} #gasZone{height:135px}}
 </style>
+<link rel="stylesheet" href="css/experience.css">
 </head>
 <body>
   <div id="ui">
@@ -237,8 +237,8 @@
     <b>Controles</b><br>
     A/← Izq · D/→ Der · W/↑ Acelerar · S/↓ Freno · Espacio Mano<br>
     R Volver a la pista (cuesta 1 vida) · Al terminar: reintentar<br>
-    Escape Pausa · Shift/Ctrl Cambiar marcha · G Fantasma · H Ayuda<br>
-    Rueda = Zoom (arriba acerca, abajo aleja)
+    Escape Pausa · Shift/Ctrl Cambiar marcha · G Fantasma · H Ayuda<br>V Cambiar 2D / 3D · C Cámara 3D<br>
+    Rueda = Zoom (arriba acerca, abajo aleja)<br><button id="btnHelpClose" class="text-button">Cerrar ayuda</button>
   </div>
 
   <div id="times">
@@ -257,7 +257,7 @@
       <h1 id="overlayTitle" style="margin:0 0 8px">¡Game Over!</h1>
       <p id="overlayMsg" style="margin:0 0 14px">Pulsa <b>R</b> para reiniciar</p>
       <div class="btnrow" style="margin-top:8px">
-        <button id="btnOvRetry">Reintentar</button>
+        <button id="btnNextChallenge" class="hidden">Siguiente desafío ↗</button><button id="btnOvMenu" class="gray">Menú principal</button><button id="btnOvRetry">Reintentar</button>
         <button id="btnOvChooseCar" class="gray">Elegir coche</button>
         <button id="btnOvChooseTrack" class="gray">Elegir pista</button>
       </div>
@@ -299,16 +299,17 @@
   <div id="countHint"></div>
   <div id="tests">Tests: <span id="testsResult">—</span></div>
 
-  <canvas id="game"></canvas>
+  <canvas id="scene3d" aria-label="Circuito tridimensional"></canvas>
+  <canvas id="game" aria-label="Vista de carrera y telemetría"></canvas>
 
   <!-- ===== Panel de auto (sin "Volver al juego") ===== -->
   <div id="carPanel" class="modal hidden">
     <div class="card">
-      <h2 class="glow" style="margin:0 0 10px">Elige tu coche</h2>
+      <p class="eyebrow">PREPARACIÓN / GARAJE</p><h2 style="margin:0 0 10px">Elige tu máquina</h2><p id="sessionBrief" class="muted"></p>
       <div class="row" style="align-items:center;gap:14px">
-        <button id="carPrev" class="arrow">‹</button>
+        <button id="carPrev" class="arrow" aria-label="Auto anterior">‹</button>
         <canvas id="carPreview"></canvas>
-        <button id="carNext" class="arrow">›</button>
+        <button id="carNext" class="arrow" aria-label="Auto siguiente">›</button>
       </div>
       <div id="carName" class="glow" style="font-weight:700;margin-top:10px">—</div>
       <div id="carDesc" class="glow" style="font-size:12px;opacity:.95">—</div>
@@ -318,6 +319,7 @@
         <div style="min-width:170px">Vel. máx<div class="bar"><i id="barVmax"></i></div></div>
         <div style="min-width:170px">Peso<div class="bar"><i id="barMass"></i></div></div>
       </div>
+      <div class="row garage-choice"><button id="btnGarageTrack" class="text-button">Cambiar circuito ↗</button></div><div class="view-segment garage-views"><button data-view="2d">2D clásica</button><button data-view="3d">3D inmersiva</button></div>
       <div class="tx-select">
         <div><b>Transmisión:</b></div>
         <label><input type="radio" name="tx" value="auto" checked> Automática</label>
@@ -325,41 +327,52 @@
       </div>
       <div class="row" style="justify-content:flex-end;margin-top:12px">
         <button id="btnCarBack" class="btn gray">Volver</button>
-        <button id="btnChooseStart" class="btn">Elegir y comenzar</button>
+        <button id="btnChooseStart" class="btn">A LA PISTA ↗</button>
       </div>
     </div>
   </div>
 
-  <!-- ===== Menú principal ===== -->
   <div id="mainMenu">
-    <div class="menu-card">
-      <h1>Drift Racer <small style="font-size:14px;color:#93baff">v0.2</small></h1>
-      <p class="muted">Elige un modo para empezar.</p>
-      <div class="menu-grid" style="margin:10px 0 12px">
-        <div>
-          <button id="btnModeChallenge" style="width:100%;padding:12px 16px;font-size:16px">Modo Challenge</button>
-          <div class="muted" style="margin-top:6px">20 pistas con dificultad y metas crecientes.</div>
+    <div class="menu-card home-card">
+      <header class="home-top"><span class="brand-mark">DR /</span><span>DRIFT RACER</span><span class="edition">DUAL VIEW · 03</span></header>
+      <div class="home-layout">
+        <div class="home-copy">
+          <p class="eyebrow">ENCUENTRA TU LÍNEA</p>
+          <h1>CONTROL.<br><em>DESCONTROL.</em></h1>
+          <p class="home-intro">El mismo asfalto. Otra perspectiva.<br>Domina el derrape en 2D y 3D.</p>
+          <button id="btnQuickRace" class="hero-button">ENTRAR A LA PISTA <span>↗</span></button>
+          <div class="home-modes">
+            <button id="btnModeChallenge"><span class="mode-number">01</span><span>DESAFÍOS<small>20 circuitos. Supera tus límites.</small></span><span>↗</span></button>
+            <button id="btnModeTT"><span class="mode-number">02</span><span>CONTRARRELOJ<small>Tu mejor vuelta, tu próximo rival.</small></span><span>↗</span></button>
+            <button id="btnModeCreative"><span class="mode-number">03</span><span>CREA TU CIRCUITO<small>Dibuja. Corre. Comparte.</small></span><span>↗</span></button>
+          </div>
         </div>
-        <div>
-          <button id="btnModeCreative" class="gray" style="width:100%;padding:12px 16px;font-size:16px">Modo Creativo (pizarra)</button>
-          <div class="muted" style="margin-top:6px">Dibuja tu circuito libremente.</div>
-        </div>
-        <div>
-          <button id="btnModeTT" class="gray" style="width:100%;padding:12px 16px;font-size:16px">Modo Contrarreloj</button>
-          <div class="muted" style="margin-top:6px">Corre contra tu fantasma.</div>
-        </div>
+        <div class="home-track"><span class="track-label">CIRCUITO / 01</span><div class="hero-line"></div><div class="home-caption"><span>LA CURVA ES TUYA.</span><small>4 AUTOS · 20 DESAFÍOS · INFINITAS LÍNEAS</small></div></div>
       </div>
-      <div class="row" style="gap:8px;flex-wrap:nowrap">
-        <input id="importCode" placeholder="Pegar código de pista…" style="flex:1;padding:10px;border-radius:10px;border:1px solid #fff2;background:#0b0e12;color:#fff" />
-        <button id="btnLoadCode">Cargar</button>
-      </div>
+      <footer class="home-bottom"><div class="view-segment" aria-label="Vista de conducción"><button data-view="2d">2D CLÁSICA</button><button data-view="3d">3D INMERSIVA</button></div><button id="btnSettings" class="text-button">Configuración</button><button id="btnMenuHelp" class="text-button">Controles</button><button id="btnImport" class="text-button">Importar pista ↗</button></footer>
     </div>
   </div>
 
+  <div id="circuitMenu" class="modal hidden"><div class="menu-card"><p class="eyebrow">EXPLORA EL ASFALTO</p><h2 id="circuitTitle">Selecciona circuito</h2><div id="circuitList" class="challenge-list"></div><button id="btnCircuitBack" class="gray" style="margin-top:18px">Menú principal</button></div></div>
+  <div id="settingsMenu" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="card settings-card"><p class="eyebrow">A TU MEDIDA</p><h2 id="settingsTitle">Configuración</h2>
+      <div class="setting"><span>Vista al conducir</span><div class="view-segment"><button data-view="2d">2D clásica</button><button data-view="3d">3D inmersiva</button></div></div>
+      <label class="setting">Cámara 3D<select id="cameraSetting"><option value="chase">Seguimiento</option><option value="aerial">Aérea</option><option value="hood">Capó</option></select></label>
+      <label class="setting">Calidad 3D<select id="qualitySetting"><option value="auto">Automática</option><option value="high">Alta</option><option value="low">Ligera</option></select></label>
+      <label class="setting">Controles táctiles<select id="touchSetting"><option value="auto">Automáticos</option><option value="on">Activados</option><option value="off">Desactivados</option></select></label>
+      <label class="setting">Movimiento de cámara<select id="motionSetting"><option value="full">Suave y dinámico</option><option value="reduced">Reducido</option></select></label>
+      <p class="muted">V cambia entre 2D y 3D durante la carrera. C cambia la cámara 3D. Tus preferencias se guardan en este navegador.</p>
+      <button id="btnSettingsBack">Volver</button>
+    </div>
+  </div>
+  <div id="importMenu" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="importTitle"><div class="card settings-card"><p class="eyebrow">DE PILOTO A PILOTO</p><h2 id="importTitle">Importar circuito</h2><label for="importCode">Código de pista TRK / TRK2</label><textarea id="importCode" placeholder="Pegar código de pista…" rows="4"></textarea><p id="importMessage" role="status"></p><div class="row"><button id="btnImportBack">Volver</button><button id="btnLoadCode">Cargar circuito</button></div></div></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <div id="driveHud"><div class="drive-gear"><small>MARCHA</small><b id="driveGear">1</b><span id="driveTx">AUTO</span></div><div class="drive-speed"><b id="driveSpeed">000</b><small>KM/H</small><div class="rev-track"><i id="revFill"></i></div></div></div>
+  <div id="viewBadge">3D / SEGUIMIENTO</div>
   <!-- ===== Menú challenge ===== -->
   <div id="challengeMenu" class="hidden">
     <div class="menu-card">
-      <h1>Selecciona pista (Challenge)</h1>
+      <p class="eyebrow">ELIGE TU PRÓXIMO RETO</p><h1>Desafíos</h1><p class="muted">Completa el objetivo de drift para desbloquear el siguiente circuito.</p>
       <div class="challenge-list" style="margin-top:10px"><!-- items se generan dinámicamente por JS --></div>
       <div class="row" style="justify-content:flex-end;margin-top:12px">
         <button id="btnBackMain" class="gray">Volver</button>
@@ -382,18 +395,19 @@
     </div>
   </div>
   <button id="btnTouchHUD">TÁCTIL</button>
-  <div id="gameActions"><button id="btnPause" aria-label="Pausar">Pausa</button><button id="btnHelp" aria-label="Ver controles">Ayuda</button></div>
+  <div id="gameActions"><button id="btnView" title="Cambiar vista (V)">Vista 3D</button><button id="btnCamera" title="Cambiar cámara 3D (C)">Cámara</button><button id="btnPause" aria-label="Pausar">Pausa</button><button id="btnHelp" aria-label="Ver controles">Ayuda</button></div>
 
   <div id="pauseMenu" class="modal hidden">
     <div class="card">
-      <h2>Pausa</h2>
+      <p class="eyebrow">TÓMATE UN RESPIRO</p><h2>Pausa</h2>
       <p>W / flechas: conducir · S: frenar · Espacio: freno de mano · Shift / Ctrl: marchas</p>
       <div class="row" style="gap:8px;margin-top:10px">
         <button id="btnResume">Seguir</button>
         <button id="btnRestart">Reiniciar</button>
         <button id="btnTrack">Seleccionar pista</button>
+        <button id="btnPauseSettings" class="gray">Configuración</button>
         <button id="btnQuit" class="gray">Salir al menú</button>
-        <button id="btnHardReset" style="background:#99313b">Borrar tiempos y progreso</button>
+        <details class="reset-details"><summary>Datos guardados</summary><button id="btnHardReset" style="background:#99313b">Borrar tiempos y progreso</button></details>
       </div>
     </div>
   </div>
@@ -402,7 +416,7 @@
   <div id="radioBar">
     <button id="radioPrev" class="rb sm" title="Anterior">‹</button>
     <button id="radioPlay" class="rb" aria-label="Play/Pausa">▶</button>
-    <div class="rb text"><b>radiodrift</b> <span id="radioNow">Cargando emisora…</span></div>
+    <div class="rb text"><b>radiodrift</b> <span id="radioNow">Radio apagada · Pulsa ▶</span></div>
     <button id="radioNext" class="rb sm" title="Siguiente">›</button>
   </div>
   
@@ -445,8 +459,10 @@ addEventListener('keydown',e=>{
   const k=e.key.toLowerCase();
   if(e.target.closest?.('input,textarea,select,[contenteditable]')) return;
   keys.add(k);
-  if(e.repeat && ['r','g','escape','h'].includes(k)) return;
-  if(k==='h') document.getElementById('help').classList.toggle('show');
+  if(e.repeat && ['r','g','escape','h','v','c'].includes(k)) return;
+  if(k==='h') toggleHelp();
+  if(k==='v') setRenderView(renderPrefs.view==='3d'?'2d':'3d');
+  if(k==='c') cycleCamera();
   if(k==='r'){
     if(state==='running'){ loseLifeAndRespawn(); }
     else if(['finished','gameover','challengeWon'].includes(state)){ restartRaceSameTrack(); }
@@ -456,8 +472,13 @@ addEventListener('keydown',e=>{
   }
   if(k==='escape'){
     e.preventDefault();
-    if(state==='paused'){ setPaused(false); }
-    else { setPaused(true); }
+    if(!$('#help').classList.contains('hidden') && $('#help').classList.contains('show')) toggleHelp(false);
+    else if(!$('#settingsMenu').classList.contains('hidden')) closeSettings();
+    else if(!$('#importMenu').classList.contains('hidden')) showMainMenu();
+    else if(state==='paused'){ setPaused(false); }
+    else if(state==='running'||state==='countdown'){ setPaused(true); }
+    else if(!$('#carPanel').classList.contains('hidden')) $('#btnCarBack').click();
+    else if(state==='menu') showMainMenu();
   }
   if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) e.preventDefault();
 });
@@ -474,6 +495,7 @@ addEventListener('keydown',e=>{
 });
 
 let pendingTrackFactory = null;
+let garageOrigin='main';
 
 /* ===== HUD refs ===== */
 const elScore=$('#score'), elSpeed=$('#speed'), elLives=$('#lives'), elMulti=$('#multi'), elLap=$('#lap'),
@@ -516,7 +538,7 @@ btnRestartGame?.addEventListener('click', ()=>{ setPaused(false); restartRaceSam
 btnTrack?.addEventListener('click', ()=>showTrackSelection());
 btnQuit?.addEventListener('click', ()=>showMainMenu());
 document.getElementById('btnPause').addEventListener('click', ()=>setPaused(true));
-document.getElementById('btnHelp').addEventListener('click', ()=>document.getElementById('help').classList.toggle('show'));
+document.getElementById('btnHelp').addEventListener('click', ()=>toggleHelp());
 addEventListener('blur', ()=>{clearInputs();setPaused(true);});
 document.addEventListener('visibilitychange', ()=>{if(document.hidden){clearInputs();setPaused(true);}});
 function shiftManual(direction){
@@ -548,11 +570,11 @@ function clearInputs(){
   keys.clear(); touch.accel=false; touch.brake=false; touch.handbrake=false; resetKnob();
 }
 function syncTouchHUD(){
-  const visible=isTouchDevice && touchEnabled && ['running','countdown'].includes(state);
+  const visible=touchEnabled && ['running','countdown'].includes(state);
   touchHUD.classList.toggle('show',visible);
   document.getElementById('touchGears').style.display=player && !player.auto?'flex':'none';
   const toggle=document.getElementById('btnTouchHUD');
-  toggle.style.display=isTouchDevice && ['running','countdown'].includes(state)?'block':'none';
+  toggle.style.display=(isTouchDevice||touchEnabled) && ['running','countdown'].includes(state)?'block':'none';
   toggle.classList.toggle('on',touchEnabled);toggle.textContent=touchEnabled?'TÁCTIL ON':'TÁCTIL';
 }
 (function initJoystick(){
@@ -622,16 +644,16 @@ class Track{
     const dLR=Math.hypot(left[0].x-right[L-1].x, left[0].y-right[L-1].y);
     if (dLR < dLL) { const t=left[L-1]; left[L-1]=right[L-1]; right[L-1]=t; }
     // asfalto
-    g.beginPath(); left.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); for(let i=right.length-1;i>=0;i--){const p=right[i]; g.lineTo(p.x,p.y);} g.closePath(); g.fillStyle='#1a1a1a'; g.fill();
+    g.beginPath(); left.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); for(let i=right.length-1;i>=0;i--){const p=right[i]; g.lineTo(p.x,p.y);} g.closePath(); g.fillStyle='#303b40'; g.fill();
     // bordes
-    g.lineWidth=1.4; g.strokeStyle='rgba(255,255,255,.35)';
+    g.lineWidth=.32; g.strokeStyle='#eddbbc';
     g.beginPath(); g.moveTo(left[0].x,left[0].y); for(let i=1;i<left.length;i++){ const p=left[i]; g.lineTo(p.x,p.y);} g.stroke();
     g.beginPath(); g.moveTo(right[0].x,right[0].y); for(let i=1;i<right.length;i++){ const p=right[i]; g.lineTo(p.x,p.y);} g.stroke();
     // línea central discontinua
-    g.setLineDash([20,18]); g.lineWidth=2.2; g.strokeStyle='rgba(255,255,0,.35)';
+    g.setLineDash([7,10]); g.lineWidth=.22; g.strokeStyle='#d8cda785';
     g.beginPath(); g.moveTo(this.points[0].x,this.points[0].y); for(let i=1;i<L;i++){ const p=this.points[i]; g.lineTo(p.x,p.y);} g.stroke(); g.setLineDash([]);
     // meta
-    const n0=this.normalAt(0), ps=this.point(0); g.strokeStyle='rgba(255,255,255,.8)'; g.lineWidth=2.5; g.setLineDash([8,6]);
+    const n0=this.normalAt(0), ps=this.point(0); g.strokeStyle='rgba(255,255,255,.8)'; g.lineWidth=1.1; g.setLineDash([1,1]);
     g.beginPath(); g.moveTo(ps.x-n0.x*(this.roadHalf+1.5),ps.y-n0.y*(this.roadHalf+1.5)); g.lineTo(ps.x+n0.x*(this.roadHalf+1.5),ps.y+n0.y*(this.roadHalf+1.5)); g.stroke(); g.setLineDash([]);
     g.restore();
   }
@@ -713,32 +735,32 @@ function safeAddListener(id, event, handler) {
 
 function hidePanels(){
   clearInputs();
-  for(const id of ['mainMenu','challengeMenu','startPanel','carPanel','pauseMenu','overlay','help'])document.getElementById(id).classList.add('hidden');
+  for(const id of ['mainMenu','challengeMenu','startPanel','carPanel','pauseMenu','overlay','help','settingsMenu','importMenu','circuitMenu'])document.getElementById(id).classList.add('hidden');
   document.getElementById('help').classList.remove('show');
   state='menu';syncTouchHUD();document.body.classList.remove('in-game');document.getElementById('gameActions').classList.remove('show');
   document.getElementById('challengeBadge').classList.remove('show');
 }
-function showMainMenu(){hidePanels();mode='race';mainMenu.classList.remove('hidden');}
-function showBoard(){hidePanels();mode='race';startPanel.classList.remove('hidden');resizeBoard();}
+function showMainMenu(){hidePanels();mode='race';pendingTrackFactory=null;mainMenu.classList.remove('hidden');}
+function showBoard(){hidePanels();garageOrigin='board';pendingTrackFactory=null;mode='race';startPanel.classList.remove('hidden');resizeBoard();}
 function showTrackSelection(){
-  if(mode==='challenge'){hidePanels();challengeMenu.classList.remove('hidden');buildChallengeMenu();}
-  else if(mode==='race'){showBoard();}
-  else{showMainMenu();}
+  if(mode==='challenge'){garageOrigin='challenge';hidePanels();challengeMenu.classList.remove('hidden');buildChallengeMenu();}
+  else{showCircuitMenu();}
 }
 safeAddListener('btnModeCreative','click',showBoard);
 safeAddListener('btnModeChallenge','click',()=>{mode='challenge';showTrackSelection();});
-safeAddListener('btnModeTT','click',()=>{hidePanels();mode='tt';pendingTrackFactory=()=>presetTrack(1);openCarPanel();});
+safeAddListener('btnModeTT','click',()=>{hidePanels();garageOrigin='main';mode='tt';pendingTrackFactory=()=>presetTrack(1);openCarPanel();});
 safeAddListener('btnBackMain','click',showMainMenu);
 safeAddListener('btnBoardBack','click',showMainMenu);
-safeAddListener('btnCarBack','click',showTrackSelection);
+safeAddListener('btnCarBack','click',()=>{if(garageOrigin==='board')showBoard();else if(garageOrigin==='challenge')showTrackSelection();else if(garageOrigin==='circuits')showCircuitMenu();else showMainMenu();});
 
 // Importar por código
 safeAddListener('btnLoadCode', 'click', ()=>{
   const input = document.getElementById('importCode');
   const val = (input?.value||'').trim();
   const tr = decodeTrack(val);
-  if(!tr){ alert('Código inválido'); return; }
-  mode='race';pendingTrackFactory = ()=>tr;
+  if(!tr){ $('#importMessage').textContent='El código no es válido. Revisa que esté completo y comience con TRK. o TRK2.'; return; }
+  hidePanels();
+  mode='race';garageOrigin='main';pendingTrackFactory = ()=>tr;
   updateTrackIdUI(tr);
   mainMenu?.classList.add('hidden');
   openCarPanel();
@@ -969,7 +991,7 @@ const camera={ s:22, tx:0, ty:0, shakeAmp:0, shakeTime:0, minS:10, maxS:42, targ
   zoomBy(m){ this.targetS=clamp(this.targetS*m,this.minS,this.maxS); },
   shake(a,ms){ this.shakeAmp=a; this.shakeTime=ms/1000; }
 };
-cvs.addEventListener('wheel',e=>{if(!['running','paused','countdown'].includes(state))return;e.preventDefault();camera.zoomBy(e.deltaY>0?.9:1.1);},{passive:false});
+cvs.addEventListener('wheel',e=>{if(!['running','paused','countdown'].includes(state))return;e.preventDefault();if(renderPrefs.view==='3d'&&sceneView)sceneView.zoomBy(e.deltaY>0?1.1:.9);else camera.zoomBy(e.deltaY>0?.9:1.1);},{passive:false});
 
 /* ===== Velocímetro y mini-mapa ===== */
 const GAUGE={r:110,minA:-2.35,maxA:2.35,vmax:220};
@@ -1008,7 +1030,7 @@ function drawGearPanel(g,gear,blink=false){
   }
   g.restore();
 }
-function drawMiniMap(g,track,car){ const compact=view.width<700||view.height<500,w=compact?82:220,h=w,pad=16,x=compact?view.width-w-10:pad,y=compact?117:view.height-h-pad; g.save(); g.translate(x,y); g.globalAlpha=.92; fillCard(g,0,0,w,h,16); const b=track.bounds, s=Math.min((w-24)/b.w,(h-24)/b.h), ox=12-(b.minX+b.w/2)*s+w/2, oy=12-(b.minY+b.h/2)*s+h/2; g.save(); g.translate(ox,oy); g.scale(s,s); g.lineWidth=1/s; g.strokeStyle='rgba(255,255,255,.55)'; g.beginPath(); track.points.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); g.closePath(); g.stroke(); g.fillStyle='#ff2b2b'; g.beginPath(); g.arc(car.pos.x,car.pos.y,2.8/s,0,PI*2); g.fill(); g.restore(); g.restore(); }
+function drawMiniMap(g,track,car){ const compact=view.width<700||view.height<500,w=compact?78:152,h=w,pad=22,x=compact?view.width-w-10:pad,y=compact?135:view.height-h-34; g.save(); g.translate(x,y); g.globalAlpha=.92; fillCard(g,0,0,w,h,16); const b=track.bounds, s=Math.min((w-24)/b.w,(h-24)/b.h), ox=-(b.minX+b.w/2)*s+w/2, oy=-(b.minY+b.h/2)*s+h/2; g.save(); g.translate(ox,oy); g.scale(s,s); g.lineWidth=1/s; g.strokeStyle='rgba(255,255,255,.55)'; g.beginPath(); track.points.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); g.closePath(); g.stroke(); g.fillStyle='#ff2b2b'; g.beginPath(); g.arc(car.pos.x,car.pos.y,2.8/s,0,PI*2); g.fill(); g.restore(); g.restore(); }
 function fillCard(g,x,y,w,h,r){ g.fillStyle='rgba(0,0,0,.45)'; g.strokeStyle='rgba(255,255,255,.12)'; g.lineWidth=2; roundedRect(g,x,y,w,h,r); g.fill(); g.stroke(); }
 
 /* ===== Pizarra ===== */
@@ -1106,7 +1128,7 @@ function unlockControls(){ controlsLocked = false; }
 const asphalt=document.createElement('canvas'); 
 asphalt.width=asphalt.height=64; 
 const actx=asphalt.getContext('2d'); 
-actx.fillStyle='#0e0e0e'; 
+actx.fillStyle='#1b302a';
 actx.fillRect(0,0,64,64); 
 for(let i=0;i<320;i++){ 
   actx.fillStyle=`rgba(255,255,255,${Math.random()*.05})`; 
@@ -1145,6 +1167,12 @@ function startWithTrack(tr, m='race'){
   camera.tx=-player.pos.x*camera.s+view.width*.5;camera.ty=-player.pos.y*camera.s+view.height*.6;
   currentTrackId = encodeTrack(track.points);
   unlockControls();syncTouchHUD(); // Nueva sesión, mismos autos y datos guardados.
+  sceneView?.resetCamera();
+  saveRenderPrefs();
+  $('#help').classList.remove('show');
+  $('#btnNextChallenge').classList.add('hidden');
+  updateHUD(1);
+  updateDriveHUD();
 
   if(mode==='tt'){
     const best = loadTT('best', currentTrackId);
@@ -1170,6 +1198,8 @@ function showOverlay({title,msg}){
   if(overlayMsg) overlayMsg.innerHTML=msg||'';
   overlay?.classList.remove('hidden');
   lockControlsWithBrake(); // NUEVO: al mostrar overlay (fin), bloquear y frenar
+  syncTouchHUD();
+  $('#btnNextChallenge').classList.toggle('hidden',state!=='challengeWon'||activeChallengeLevel>=CHALLENGE_COUNT);
 }
 
 function gameOver(){
@@ -1253,10 +1283,10 @@ function input(){
   const kHand  = keys.has(' ');
 
   const hudOn = touchHUD?.classList.contains('show');
-  const steerAxisTouch = (isTouchDevice && hudOn) ? touch.steerAxis : 0;
+  const steerAxisTouch = (hudOn) ? touch.steerAxis : 0;
   const steerDigital = (kLeft?-1:0) + (kRight?1:0);
   const steerAxis = Math.abs(steerDigital) > 0 ? steerDigital : steerAxisTouch;
-  const accel     = ((isTouchDevice && hudOn) ? touch.accel : false) || kAccel;
+  const accel     = ((hudOn) ? touch.accel : false) || kAccel;
 
   return {left:kLeft,right:kRight,accel,brake:kBrake || (hudOn&&touch.brake),handbrake:kHand || (hudOn&&touch.handbrake),steerAxis};
 }
@@ -1433,18 +1463,22 @@ function loop(ms){
     if(player) camera.update(player);
     else camera.update({pos:{x:0,y:0}});
     
-    // Draw everything
+    // Rendering only reads the simulation. Both views use the same Car and Track.
     ctx.setTransform(view.dpr,0,0,view.dpr,0,0);
-    ctx.fillStyle=bgPat; 
-    ctx.fillRect(0,0,view.width,view.height);
-    
-    if(track) track.draw(ctx,camera);
-    if(ghost) ghost.draw(ctx,camera);
-    if(player){ 
-      player.draw(ctx,camera); 
-      drawSpeedHud(); 
+    ctx.clearRect(0,0,view.width,view.height);
+    const inSession=document.body.classList.contains('in-game');
+    const draw3D=sceneView && !sceneFailed && (renderPrefs.view==='3d'||!inSession);
+    $('#scene3d').style.visibility=draw3D?'visible':'hidden';
+    if(draw3D){
+      try{sceneView.render({track:inSession?track:attractTrack,player:inSession?player:attractCar,ghost:inSession?ghost:null,skin:chosen.sprite,dt,inMenu:!inSession,time:now,camera:renderPrefs.camera,motion:renderPrefs.motion});}
+      catch(error){fail3D(error);}
+    }else{
+      ctx.fillStyle=bgPat;ctx.fillRect(0,0,view.width,view.height);
+      if(inSession && track) track.draw(ctx,camera);
+      if(inSession && ghost) ghost.draw(ctx,camera);
+      if(inSession && player) player.draw(ctx,camera);
     }
-    
+    if(inSession && player){drawMiniMap(ctx,track,player);updateDriveHUD();}
     if(state==='countdown'){ 
       ctx.save(); 
       ctx.fillStyle='rgba(0,0,0,.45)'; 
@@ -1456,7 +1490,7 @@ function loop(ms){
       ctx.restore(); 
     }
     
-    drawComboOverlay(); 
+    if(inSession)drawComboOverlay();
     drawWarnings(); 
     
     if(raceNow) raceNow.textContent=formatTime(raceTime); 
@@ -1471,7 +1505,7 @@ function loop(ms){
   requestAnimationFrame(loop);
 }
 
-requestAnimationFrame(loop);
+/* Animation starts after the presentation controls have loaded. */
 
 /* ===== Tests ===== */
 (function(){
@@ -1564,7 +1598,9 @@ function updatePanel(){
 }
 
 function openCarPanel(){ 
-  carPanel?.classList.remove('hidden'); 
+  hidePanels();
+  carPanel?.classList.remove('hidden');
+  $('#sessionBrief').textContent=mode==='challenge'?`Desafío ${activeChallengeLevel} · ${activeChallengeGoal.toLocaleString('es-CL')} puntos · 3 vidas`:mode==='tt'?'Contrarreloj · Vueltas libres · Fantasma de tu récord':'Carrera · 5 vueltas · 3 vidas';
   updatePanel();
 }
 addEventListener('resize',()=>{if(carPanel && !carPanel.classList.contains('hidden'))drawCarPreview();});
@@ -1656,7 +1692,7 @@ setTimeout(() => {
       bar.innerHTML = `
         <button id="radioPrev" class="rb sm" title="Anterior">‹</button>
         <button id="radioPlay" class="rb" aria-label="Play/Pausa">▶</button>
-        <div class="rb text"><b>radiodrift</b> <span id="radioNow">Cargando emisora…</span></div>
+        <div class="rb text"><b>radiodrift</b> <span id="radioNow">Radio apagada · Pulsa ▶</span></div>
         <button id="radioNext" class="rb sm" title="Siguiente">›</button>
       `;
       document.body.appendChild(bar);
@@ -1750,7 +1786,8 @@ setTimeout(() => {
   rPlay?.addEventListener('click', async ()=>{
     if(!rAudio) return;
     if(rAudio.paused){
-      try{ await rAudio.play(); if(rPlay) rPlay.textContent='Ⅱ'; }catch(_){ }
+      if(!rAudio.getAttribute('src')){await radioLoad(rIndex);return;}
+      try{ await rAudio.play(); if(rPlay) rPlay.textContent='Ⅱ'; }catch(_){radioFlash('Emisora no disponible');}
     }else{
       rAudio.pause(); if(rPlay) rPlay.textContent='▶';
     }
@@ -1774,15 +1811,8 @@ setTimeout(() => {
     document.addEventListener('touchstart', resume, {passive:true});
   }
 
-  radioLoad(0).then(armRadioOnGesture);
+  if(rNow)rNow.textContent='Radio apagada · Pulsa ▶';
 
-  document.getElementById('btnChooseStart')?.addEventListener('click', ()=>{
-    setTimeout(async()=>{
-      if(!rAudio) return;
-      try{await rAudio.play();if(rPlay)rPlay.textContent='Ⅱ';}
-      catch{if(rPlay)rPlay.textContent='▶';}
-    }, 50);
-  });
 })();
 
 
@@ -1831,13 +1861,14 @@ function buildChallengeMenu(){
     const locked = i > unlockedLevel;
     htmlItems += `
       <div class="challenge-item ${locked?'locked':''}">
-        <div><b>Pista ${i}</b></div>
+        <span class="circuit-num">${String(i).padStart(2,'0')}</span><canvas class="track-thumb" data-track="${i}" aria-label="Trazado del circuito ${i}"></canvas><div><b>Circuito ${i}</b></div>
         <div class="tag">Objetivo: <b>${req.toLocaleString('es-CL')}</b> pts</div>
         <div class="tag">Mejor: <b>${best.toLocaleString('es-CL')}</b> pts</div>
         <button class="btnPickChallenge" data-lvl="${i}" ${locked?'disabled':''} style="margin-top:8px">${locked?'Bloqueado':'Jugar'}</button>
       </div>`;
   }
   grid.innerHTML = htmlItems;
+  drawTrackThumbnails(grid);
 
   grid.querySelectorAll('.btnPickChallenge').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -1906,4 +1937,5 @@ presetTrack = function(n){
 
 
 </script>
+<script src="js/experience.js"></script>
 </body></html>

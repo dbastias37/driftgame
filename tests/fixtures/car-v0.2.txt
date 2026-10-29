@@ -1,0 +1,171 @@
+class Car{
+  constructor(track,color='#2b72ff'){
+    this.color=color; const s=track.point(0);
+    this.pos={x:s.x,y:s.y}; this.angle=track.tangentAt(0);
+    this.vel={x:0,y:0}; this.length=3.2; this.mass=1200;
+    this.maxSteer=.9; this.steerAngle=0; this.steerTarget=0; this.steerRate=2.6;
+    this.engineForce=11800; this.brakeForce=11000;
+    this.baseLatFriction=2200; this.handLatFriction=320;
+    this.dragLinear=85; this.dragQuad=0.46;
+    this.throttleSm=0; this.throttleRate=1.6; this.handbrake=false;
+    this.auto=false; this.gear=1; this.gearCount=4; this.gearMax=[39,78,132,198];
+    this.redBlink=false;
+    this.tractionMin=[0.22,0.50,0.70,0.85];
+    this.tractionRamp=[28,30,42,54];
+    this.shiftUp=[25,55,90];
+    this.gearPower=[1.00,0.85,0.70,0.55];
+    this.shiftTimer=0; this.shiftDur=0.28;
+    this.lives=3; this.invuln=0; this.score=0; this.best=0; this.mult=1; this.driftTime=0; this.comboState=0; this.comboFlashTime=0; this.comboPhrase=''; this.comboPoints=0; this.comboBreak=0;
+    this.tireTrails=[]; this._lastTrailOn=false; this.prevAngle=this.angle; this.prevSteerAngle=this.steerAngle; this.yawRate=0; this.steerVel=0; this.omega=0;
+    this.trailOn=false; this.trailGrace=0; this.driftBreakTimer=0;
+    this.smoke=[]; this.smokeAcc=0; this.offTrack=false; this.offTimer=0; this.edgeShake=0;
+    this.sprite=null;
+    this._stripes=0;
+    this.wrongWay=false;
+  }
+  worldSpeed(){ return H(this.vel.x,this.vel.y); }
+  _physStep(dt,steer,thr,br){
+    if(this.shiftTimer>0) this.shiftTimer=Math.max(0,this.shiftTimer-dt);
+    const dThr=clamp(thr-this.throttleSm,-this.throttleRate*dt,this.throttleRate*dt); this.throttleSm+=dThr;
+    const sp=this.worldSpeed(), sf=clamp(1/(1+sp*.08),.25,1), maxNow=this.maxSteer*sf; this.steerTarget=steer*maxNow;
+    const sB=this.steerAngle, dS=clamp(this.steerTarget-this.steerAngle,-this.steerRate*dt,this.steerRate*dt); this.steerAngle+=dS; this.steerVel=(this.steerAngle-sB)/dt;
+    const f={x:C(this.angle),y:S(this.angle)}, r={x:-S(this.angle),y:C(this.angle)};
+    const vlong=this.vel.x*f.x+this.vel.y*f.y, vlat=this.vel.x*r.x+this.vel.y*r.y? (this.vel.x*r.x+this.vel.y*r.y) : 0;
+    const vlat2=this.vel.x*r.x+this.vel.y*r.y;
+    const gPow=this.gearPower[this.gear-1]||1, kmh=sp*3.6, maxK=this.gearMax[this.gear-1]||9999;
+    const shiftScale=this.shiftTimer>0?(0.45+0.55*(1-(this.shiftTimer/this.shiftDur))):1;
+    const bog=(this.gear>1 && kmh<maxK*0.38)? clamp(kmh/(maxK*0.38),0,1):1;
+    const trMin=this.tractionMin[this.gear-1]||0.85, trRamp=this.tractionRamp[this.gear-1]||40;
+    const traction=clamp(kmh/trRamp, trMin, 1);
+    let forceLong=this.throttleSm*this.engineForce*gPow*shiftScale*bog*traction - br*this.brakeForce*Math.sign(vlong);
+    forceLong+=-vlong*this.dragLinear - Math.sign(vlong)*vlong*vlong*this.dragQuad;
+    let latCoeff=this.handbrake?this.handLatFriction:this.baseLatFriction;
+    const dynDrop=clamp(Math.abs(this.omega)*0.35 + Math.abs(this.steerVel)*0.15,0,0.6); latCoeff*=1-0.25*dynDrop;
+    if(this.gear===1 && this.throttleSm>0.6 && kmh<32) latCoeff*=0.55;
+    const ax_local=forceLong/this.mass, ay_local=(-(this.vel.x*r.x+this.vel.y*r.y)*latCoeff)/this.mass;
+    const ax=ax_local*f.x+ay_local*r.x, ay=ax_local*f.y+ay_local*r.y;
+    this.vel.x+=ax*dt; this.vel.y+=ay*dt;
+    const desired=(this.worldSpeed()/this.length)*Math.tan(this.steerAngle);
+    this.omega += ((desired - this.omega)*3.2 - this.omega*1.1)*dt;
+    const aBefore=this.angle; this.angle += this.omega*dt; this.yawRate=(this.angle-aBefore)/dt;
+    this.pos.x+=this.vel.x*dt; this.pos.y+=this.vel.y*dt;
+    if(this.throttleSm===0 && sp<0.6){ const k=Math.max(0,1-10*dt); this.vel.x*=k; this.vel.y*=k; }
+  }
+  _updateScoreAndTrail(dt,track,f,r,kmh,vlat){
+    const ENTER=.21; const s=track.sample(this.pos.x,this.pos.y);
+
+    // detección robusta sentido contrario
+    const tdir = {x:C(s.tang), y:S(s.tang)};
+    const dotFW = f.x*tdir.x + f.y*tdir.y;
+    this.wrongWay = (kmh > 12 && dotFW < -0.25);
+
+    this.offTrack=Math.abs(s.dist)>track.roadHalf; this.edgeShake=Math.max(0,this.edgeShake-dt);
+    { const pen=Math.abs(s.dist)-(track.roadHalf-1); if(pen>0){ const k=clamp(pen/2,0,1);
+      const drag = 1 - (0.22 * k) * dt * 4;
+      this.vel.x *= drag;
+      this.vel.y *= drag;
+      const push = 0.65 * k * dt;
+      const nsign = (s.dist>0 ? 1 : -1);
+      this.vel.x += nsign * push * C(s.tang + Math.PI/2);
+      this.vel.y += nsign * push * S(s.tang + Math.PI/2);
+      if(this.edgeShake<=0){ camera.shake(4+6*k,140); this.edgeShake=.18; }
+    } }
+    const slip=A(Math.abs(vlat),Math.abs(kmh/3.6)+.1);
+    const nearRed1=(this.gear===1&&this.throttleSm>0.6&&kmh>this.gearMax[0]*0.9);
+    const want=slip>ENTER && kmh>16;
+    if(want){ this.trailOn=true; this.trailGrace=.185; } else if(this.trailGrace>0){ this.trailGrace-=dt; this.trailOn=true; } else this.trailOn=false;
+    const harshSteer=Math.abs(this.steerVel)>2.266, harshYaw=Math.abs(this.yawRate)>2.678; if(this.trailOn&&(harshSteer||harshYaw)) this.trailOn=false,this.trailGrace=0;
+    if(this.trailOn&&this.offTrack) this.trailOn=false;
+
+    if(this.trailOn){ this.driftTime+=dt; this.driftBreakTimer=0; if(!this._lastTrailOn) this.comboPoints=0; }
+    else { this.driftBreakTimer+=dt; if(this.driftBreakTimer>.25){ this.driftTime=0; this.comboState=0; this.comboPhrase=''; this.comboPoints=0; } }
+    const newM=this.driftTime>=5?3:this.driftTime>=2?2:1;
+    if(newM>this.mult){ this.comboState=newM; this.comboFlashTime=.5; this.comboPhrase=newM===2?PH2[(Math.random()*PH2.length)|0]:PH3[(Math.random()*PH3.length)|0]; this.comboPoints=0; }
+    this.mult=newM;
+
+    let base=(this.trailOn&&!this.offTrack&&kmh>16&&slip>0.08)?(1+A(Math.abs(vlat),Math.abs(kmh/3.6)+.1)*2.4)*(1+kmh/120):0;
+    if(this.wrongWay) base = 0;
+
+    const points=base*this.mult*dt*60;
+    this.score+=points; if(this.trailOn&&!this.offTrack) this.comboPoints+=points;
+    return s;
+  }
+  update(dt,input,track){
+    const hasAxis = (typeof input.steerAxis === 'number') && Math.abs(input.steerAxis) > 0.001;
+    const steer = hasAxis
+      ? clamp(input.steerAxis, -1, 1)
+      : ((input.left ? -1 : 0) + (input.right ? 1 : 0));
+    const thr=input.accel?1:0, br=input.brake?1:0; this.handbrake=!!input.handbrake;
+    this._physStep(dt,steer,thr,br);
+    const f={x:C(this.angle),y:S(this.angle)}, r={x:-S(this.angle),y:C(this.angle)};
+    const vlong=this.vel.x*f.x+this.vel.y*f.y, vlat=this.vel.x*r.x+this.vel.y*r.y, kmh=this.worldSpeed()*3.6;
+    { const red=this.gearMax[this.gear-1]||9999; if(thr>0 && kmh>=red-0.2){ const sp=this.worldSpeed(); if(sp>0.001){ const target=red/3.6; const sc=clamp(target/sp,0.94,1); this.vel.x*=sc; this.vel.y*=sc; } this.redBlink=true; } else this.redBlink=false; }
+    const s=this._updateScoreAndTrail(dt,track,f,r,kmh,vlat);
+    const nearRed1=(this.gear===1&&this.throttleSm>0.6&&kmh>this.gearMax[0]*0.9);
+
+    // Contador fuera de pista (12 s)
+    if (this.offTrack) {
+      this.offTimer = (this.offTimer || 0) + dt;
+    } else {
+      this.offTimer = 0;
+    }
+
+    if(nearRed1) this.spawnTrails(f,r,dt,0.95);
+    if(this.auto && this.shiftTimer<=0){
+      const up = this.shiftUp[this.gear-1] ?? 1e9;
+      const down = (this.gear>1) ? (this.shiftUp[this.gear-2]*0.78) : 0;
+      if(kmh > up && this.gear < this.gearCount){ this.gear++; this.shiftTimer=this.shiftDur; }
+      else if(kmh < down && this.gear > 1){ this.gear--; this.shiftTimer=this.shiftDur; }
+    }
+    this.updateSmoke(dt,f,r,A(Math.abs(vlat),kmh/3.6+.1),kmh,vlat); if(this.invuln>0) this.invuln-=dt;
+    if(this.trailOn) this.spawnTrails(f,r,dt,Math.min(.9,.35+Math.abs(vlat))); this._lastTrailOn=this.trailOn;
+    return {sIndex:s.i, tang:s.tang};
+  }
+  hit(track,s){ this.invuln=1; this.best=Math.max(this.best,this.score|0); this.score=0; this.comboState=0; this.driftTime=0; this.comboBreak=.8; this.pos.x=s.cx; this.pos.y=s.cy; this.vel.x*=-.25; this.vel.y*=.4; this.gear=Math.max(1,this.gear-1); camera.shake(8,280); }
+  spawnTrails(f,r,dt,int){ const ro=-this.length*.5, rc={x:this.pos.x+f.x*ro,y:this.pos.y+f.y*ro}, ht=.9, lw={x:rc.x-r.x*ht,y:rc.y-r.y*ht}, rw={x:rc.x+r.x*ht,y:rc.y+r.y*ht}, a=clamp(.18+(int||0)*.1,.18,.9); this.tireTrails.push({x1:lw.x,y1:lw.y,x2:rw.x,y2:rw.y,a}); const MAX_TR=isTouchDevice?2500:4000; if(this.tireTrails.length>MAX_TR) this.tireTrails.splice(0,this.tireTrails.length-MAX_TR); }
+  updateSmoke(dt,f,r,slip,kmh,vlat){
+    const nearRed1=(this.gear===1&&this.throttleSm>0.6&&kmh>this.gearMax[0]*0.9);
+    const rate=(this.trailOn||nearRed1)?(40+220*clamp(Math.max(0,slip-.18)/.6,0,1)*clamp(kmh/120,0,1))*(nearRed1?1.4:1):0; this.smokeAcc+=rate*dt;
+    if(dt>0.022) this.smokeAcc*=0.9;
+    const ro=-this.length*.5, rc={x:this.pos.x+f.x*ro,y:this.pos.y+f.y*ro}, wo=.9;
+    while(this.smokeAcc>=1){
+      this.smokeAcc-=1;
+      [{x:rc.x-r.x*wo,y:rc.y-r.y*wo},{x:rc.x+r.x*wo,y:rc.y+r.y*wo}].forEach(b=>{
+        const rnd=()=>Math.random()-.5, lat=rnd()*.5+vlat*.15, fwd=rnd()*.2-.1;
+        this.smoke.push({x:b.x+rnd()*.15,y:b.y+rnd()*.15,vx:r.x*lat+f.x*fwd,vy:r.y*lat+fwd, r:.4+Math.random()*.35,grow:.55+Math.random()*.35,a:.45+Math.random()*.25,life:0});
+      });
+    }
+    const drag=.92;
+    for(let i=this.smoke.length-1;i>=0;i--){ const p=this.smoke[i]; p.life+=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vx*=drag; p.vy*=drag; p.r+=p.grow*dt; p.a*=.98; if(p.life>1.2||p.a<.03) this.smoke.splice(i,1); }
+    const MAX_SM=isTouchDevice?900:1200;
+    if(this.smoke.length>MAX_SM) this.smoke.splice(0,this.smoke.length-MAX_SM);
+  }
+  draw(g,cam){
+    g.save(); g.translate(cam.tx,cam.ty); g.scale(cam.s,cam.s);
+
+    g.lineWidth=.9;
+    for(const t of this.tireTrails){ g.strokeStyle=`rgba(0,0,0,${t.a})`; g.beginPath(); g.moveTo(t.x1,t.y1); g.lineTo(t.x2,t.y2); g.stroke(); t.a*=.998; }
+    for(const p of this.smoke){
+      const gr=g.createRadialGradient(p.x,p.y,0,p.x,p.y,Math.max(.001,p.r));
+      gr.addColorStop(0,`rgba(220,220,220,${p.a*.9})`);
+      gr.addColorStop(.4,`rgba(200,200,200,${p.a*.6})`);
+      gr.addColorStop(1,`rgba(180,180,180,0)`);
+      g.fillStyle=gr; g.beginPath(); g.arc(p.x,p.y,p.r,0,PI*2); g.fill();
+    }
+
+    g.translate(this.pos.x, this.pos.y);
+    g.rotate(this.angle + Math.PI/2);
+
+    const img = this.sprite;
+    g.globalAlpha = 1;
+    if (img && (img.complete && (img.naturalWidth || img.width))) {
+      const ih = 4;
+      const iw = ih * ((img.naturalWidth || img.width)/((img.naturalHeight || img.height)||1));
+      g.drawImage(img, -iw/2, -ih/2, iw, ih);
+    } else {
+      g.fillStyle = this.color;
+      g.fillRect(-1.2,-2,2.4,4);
+    }
+    g.restore();
+  }
+}

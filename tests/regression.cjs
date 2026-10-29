@@ -9,7 +9,7 @@ before(async()=>{
     const name=new URL(req.url,'http://localhost').pathname;
     const file=path.resolve(root,'.'+(name==='/'?'/index.html':name));
     if(!file.startsWith(root+path.sep)){res.writeHead(403);return res.end();}
-    try{res.setHeader('Content-Type',file.endsWith('.png')?'image/png':'text/html;charset=utf-8');res.end(fs.readFileSync(file));}
+    try{res.setHeader('Content-Type',file.endsWith('.png')?'image/png':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html;charset=utf-8');res.end(fs.readFileSync(file));}
     catch{res.writeHead(404);res.end();}
   });
   await new Promise(r=>server.listen(0,'127.0.0.1',r));url=`http://127.0.0.1:${server.address().port}/`;
@@ -110,7 +110,7 @@ test('pausa, pérdida de foco y entrada de texto no dejan controles activos',asy
   await p.evaluate(()=>state='running');await p.keyboard.down('w');await p.evaluate(()=>dispatchEvent(new Event('blur')));
   assert.equal(await p.evaluate(()=>state),'paused');assert.equal(await p.evaluate(()=>keys.size),0);
   const t=await p.evaluate(()=>raceTime);await p.evaluate(()=>simulate(1/60));assert.equal(await p.evaluate(()=>raceTime),t);
-  await p.keyboard.up('w');await p.click('#btnQuit');await p.fill('#importCode','r g h');assert.equal(await p.evaluate(()=>keys.size),0);
+  await p.keyboard.up('w');await p.click('#btnQuit');await p.click('#btnImport');await p.fill('#importCode','r g h');assert.equal(await p.evaluate(()=>keys.size),0);
   assert.equal(await p.locator('#help').isVisible(),false);await c.close();
 });
 for(const [name,viewport] of [['portrait',{width:390,height:844}],['landscape',{width:844,height:390}]]){
