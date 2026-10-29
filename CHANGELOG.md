@@ -1,3 +1,11 @@
+# 0.3.1 — Curvas y bordes continuos
+
+- Se eliminan los pliegues y triángulos solapados al dar ancho a curvas cerradas o puntos muy próximos.
+- Asfalto, líneas, piano y escapatoria se triangulan como regiones contiguas sin superficies duplicadas.
+- Los bordes naranjos y blancos forman una franja continua, con textura medida por distancia y cierre uniforme.
+- Línea central por distancia, filtrado anisotrópico y mejor precisión de profundidad; se corrige también el cierre de la pista en 2D.
+- El trazado, el muestreo físico y los controles permanecen idénticos. Regresión geométrica sobre las veinte pistas y trazados personalizados.
+
 # 0.3.0 — Vista dual y experiencia de carrera
 
 - Alternar 2D/3D con V, sin recrear el auto ni cambiar físicas, marcha, puntuación o tiempos.

@@ -2,7 +2,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Drift Racer — 2D + 3D</title>
-<meta name="application-version" content="0.3.0">
+<meta name="application-version" content="0.3.1">
 <meta name="theme-color" content="#111719">
 <style>
   :root{--bg:#0b0b0b;--ink:#e6f1ff;}
@@ -636,22 +636,13 @@ class Track{
   sample(x,y){ const i=this.nearestIndex(x,y), p0=this.point(i), t=this.tangentAt(i), dx=x-p0.x, dy=y-p0.y, dist=dx*S(t)-dy*C(t); return {cx:p0.x, cy:p0.y, tang:t, dist, i}; }
   draw(g,cam){
     g.save(); g.translate(cam.tx,cam.ty); g.scale(cam.s,cam.s); g.lineJoin='round'; g.lineCap='round';
-    const L=this.points.length,left=[],right=[];
-    for(let i=0;i<L;i++){ const p=this.points[i], n=this.normalAt(i); left.push({x:p.x+n.x*this.roadHalf,y:p.y+n.y*this.roadHalf}); right.push({x:p.x-n.x*this.roadHalf,y:p.y-n.y*this.roadHalf}); }
-    const nStart=this.normalAt(0), nEnd=this.normalAt(L-1);
-    if (nStart.x*nEnd.x + nStart.y*nEnd.y < 0) { const tL=left[L-1]; left[L-1]=right[L-1]; right[L-1]=tL; }
-    const dLL=Math.hypot(left[0].x-left[L-1].x, left[0].y-left[L-1].y);
-    const dLR=Math.hypot(left[0].x-right[L-1].x, left[0].y-right[L-1].y);
-    if (dLR < dLL) { const t=left[L-1]; left[L-1]=right[L-1]; right[L-1]=t; }
-    // asfalto
-    g.beginPath(); left.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); for(let i=right.length-1;i>=0;i--){const p=right[i]; g.lineTo(p.x,p.y);} g.closePath(); g.fillStyle='#303b40'; g.fill();
-    // bordes
-    g.lineWidth=.32; g.strokeStyle='#eddbbc';
-    g.beginPath(); g.moveTo(left[0].x,left[0].y); for(let i=1;i<left.length;i++){ const p=left[i]; g.lineTo(p.x,p.y);} g.stroke();
-    g.beginPath(); g.moveTo(right[0].x,right[0].y); for(let i=1;i<right.length;i++){ const p=right[i]; g.lineTo(p.x,p.y);} g.stroke();
-    // línea central discontinua
-    g.setLineDash([7,10]); g.lineWidth=.22; g.strokeStyle='#d8cda785';
-    g.beginPath(); g.moveTo(this.points[0].x,this.points[0].y); for(let i=1;i<L;i++){ const p=this.points[i]; g.lineTo(p.x,p.y);} g.stroke(); g.setLineDash([]);
+    const L=this.points.length;
+    const centerPath=()=>{g.beginPath();g.moveTo(this.points[0].x,this.points[0].y);for(let i=1;i<L;i++)g.lineTo(this.points[i].x,this.points[i].y);g.closePath();};
+    // Closed round strokes union the road in tight bends and at the start seam.
+    // The original centerline, road width and sampling used by physics stay intact.
+    centerPath();g.strokeStyle='#eddbbc';g.lineWidth=this.roadHalf*2+.32;g.stroke();
+    centerPath();g.strokeStyle='#303b40';g.lineWidth=this.roadHalf*2-.32;g.stroke();
+    g.setLineDash([7,10]);g.lineWidth=.22;g.strokeStyle='#d8cda785';centerPath();g.stroke();g.setLineDash([]);
     // meta
     const n0=this.normalAt(0), ps=this.point(0); g.strokeStyle='rgba(255,255,255,.8)'; g.lineWidth=1.1; g.setLineDash([1,1]);
     g.beginPath(); g.moveTo(ps.x-n0.x*(this.roadHalf+1.5),ps.y-n0.y*(this.roadHalf+1.5)); g.lineTo(ps.x+n0.x*(this.roadHalf+1.5),ps.y+n0.y*(this.roadHalf+1.5)); g.stroke(); g.setLineDash([]);
