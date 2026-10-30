@@ -1,4 +1,4 @@
-/* 1.0 local career. Stock physics and online authority remain independent. */
+/* Career rules shared by browser and account server. Stock physics and online authority remain independent. */
 globalThis.DriftCareer=(()=>{
   'use strict';
   const KEY='drift:career:v1',skins=['blue','red','yellow','gray','yugo','fujiwara'];
@@ -39,14 +39,15 @@ globalThis.DriftCareer=(()=>{
       for(const key of ['neonColor','smokeColor'])if(colors.includes(src?.[key]))car[key]=src[key];p.cars[skin]=car;
     }return p;
   }
-  function load(storage=globalThis.localStorage){try{const raw=storage.getItem(KEY);if(raw)return clean(JSON.parse(raw));const p=clean(fresh());p.unlocked=clamp(parseInt(storage.getItem('challenge:unlocked')||'1',10)||1,1,20);return p;}catch{return clean(fresh());}}
-  function save(p,storage=globalThis.localStorage){try{storage.setItem(KEY,JSON.stringify(clean(p)));return true;}catch{return false;}}
+  function load(storage=globalThis.localStorage){if(globalThis.DriftAccount?.enabled&&storage===globalThis.localStorage)return clean(DriftAccount.profile);try{const raw=storage.getItem(KEY);if(raw)return clean(JSON.parse(raw));const p=clean(fresh());p.unlocked=clamp(parseInt(storage.getItem('challenge:unlocked')||'1',10)||1,1,20);return p;}catch{return clean(fresh());}}
+  function save(p,storage=globalThis.localStorage){if(globalThis.DriftAccount?.enabled&&storage===globalThis.localStorage)return false;try{storage.setItem(KEY,JSON.stringify(clean(p)));return true;}catch{return false;}}
   function stars(p){return Object.values(p.missions).reduce((n,a)=>n+a.filter(Boolean).length,0);}
   function tierStars(tier){return [0,0,6,18][tier]??99;}
   function objectives(level){const l=clamp(level,1,20);return [{id:'score',target:Math.round(11000+1800*l+60*l*l),label:'Alcanza'},{id:'clean',target:1,label:'Completa una vuelta sin salir de la carretera, chocar ni recuperar'},{id:'longest',target:1800+450*l,label:'Enlaza un drift de'}];}
   function part(skin,id){const base=catalog.find(x=>x.id===id);return base?{...base,name:profiles[skin]?.[id]||base.name}:null;}
   function price(skin,id,tier){const x=part(skin,id);return x?Math.round(x.cost*(profiles[skin]?.price||1)*(1+(tier-1)*.85)/50)*50:Infinity;}
   function purchase(skin,id,storage=globalThis.localStorage){
+    if(globalThis.DriftAccount?.enabled&&storage===globalThis.localStorage)return DriftAccount.mutation('purchase',{skin,part:id,tier:(load().cars[skin]?.owned[id]||0)+1});
     const p=load(storage),x=part(skin,id),car=p.cars[skin];if(!x||!car)return {ok:false,error:'Pieza no válida'};
     const tier=car.owned[id]+1,cost=price(skin,id,tier);
     if(tier>x.max)return {ok:false,error:'Pieza completada'};
@@ -56,9 +57,10 @@ globalThis.DriftCareer=(()=>{
     if(!save(p,storage))return {ok:false,error:'No se pudo guardar. La compra no se aplicó.'};
     return {ok:true,profile:p,tier,cost};
   }
-  function equip(skin,id,level,storage=globalThis.localStorage){const p=load(storage),c=p.cars[skin];if(!c||!part(skin,id)||!Number.isInteger(level)||level<0||level>c.owned[id])return false;c.active[id]=level;return save(p,storage);}
-  function color(skin,key,value,storage=globalThis.localStorage){const p=load(storage),c=p.cars[skin];if(!c||!['neonColor','smokeColor'].includes(key)||!colors.includes(value))return false;c[key]=value;return save(p,storage);}
+  function equip(skin,id,level,storage=globalThis.localStorage){if(globalThis.DriftAccount?.enabled&&storage===globalThis.localStorage)return DriftAccount.mutation('equip',{skin,part:id,level}).then(r=>r.ok);const p=load(storage),c=p.cars[skin];if(!c||!part(skin,id)||!Number.isInteger(level)||level<0||level>c.owned[id])return false;c.active[id]=level;return save(p,storage);}
+  function color(skin,key,value,storage=globalThis.localStorage){if(globalThis.DriftAccount?.enabled&&storage===globalThis.localStorage)return DriftAccount.mutation('color',{skin,key,value}).then(r=>r.ok);const p=load(storage),c=p.cars[skin];if(!c||!['neonColor','smokeColor'].includes(key)||!colors.includes(value))return false;c[key]=value;return save(p,storage);}
   function onlineReward({key,place,finished,players},storage=globalThis.localStorage){
+    if(globalThis.DriftAccount?.enabled&&storage===globalThis.localStorage){DriftAccount.refresh().catch(e=>DriftAccount.status(e.message,true));return {ok:true,reward:0};}
     if(typeof key!=='string'||key.length>99||place!==1||finished<8000||players<2)return {ok:false,reward:0};
     const p=load(storage);if(p.receipts.includes(key))return {ok:true,reward:0};
     p.cash=money(p.cash+1500);p.wins++;p.receipts.push(key);p.receipts=p.receipts.slice(-100);
@@ -94,6 +96,7 @@ car.cosmetics=cosmetics(config);car.upgradeSignature=catalog.map(x=>config.activ
     observe(car,dt){this.elapsed+=Math.max(0,finite(dt));this.bestScore=Math.max(this.bestScore,finite(car.score));this.longest=Math.max(this.longest,finite(car.comboPoints));if(car.offTrack||car.descent?.motion==='falling'||(this.lastLives!==null&&car.lives<this.lastLives)||finite(car.impactCount)>this.lastHits)this.clean=false;this.lastLives=car.lives;this.lastHits=finite(car.impactCount);}
     recover(){this.clean=false;}
     finish({valid=false,won=false}={},storage=globalThis.localStorage){
+      if(globalThis.DriftAccount?.enabled&&storage===globalThis.localStorage){if(!this._accountFinish)this._accountFinish=DriftAccount.finish(this,{valid,won}).then(r=>{this.settled=r.ok;this.complete=r.complete;return r;}).catch(e=>{this._accountFinish=null;throw e;});return this._accountFinish;}
       if(this.settled)return {ok:true,reward:0,duplicate:true,complete:this.complete,profile:load(storage)};
       if(!valid||this.elapsed<8)return {ok:false,reward:0};
       const p=load(storage);let reward=0,newMissions=[],complete=false;
@@ -113,3 +116,4 @@ car.cosmetics=cosmetics(config);car.upgradeSignature=catalog.map(x=>config.activ
   }
   return Object.freeze({KEY,catalog,profiles,skins,colors,load,save,stars,tierStars,objectives,part,price,purchase,equip,color,onlineReward,cosmetics,apply,metrics,Run});
 })();
+

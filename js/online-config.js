@@ -1,2 +1,2 @@
-// Public WebSocket endpoint; this is not a credential.
-window.DRIFT_ONLINE_URL='wss://driftgame-online.onrender.com/rooms';
+// Accounts and rooms share one origin so HttpOnly session cookies reach both.
+window.DRIFT_ONLINE_URL=(location.protocol==='https:'?'wss://':'ws://')+location.host+'/rooms';

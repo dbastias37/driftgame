@@ -1,6 +1,8 @@
+> **Actualización de cuentas:** `npm start` sirve ahora juego, API y salas desde el mismo origen, con autenticación obligatoria. Node 24, disco persistente, Google OAuth y correo se configuran según [ACCOUNTS.md](../docs/ACCOUNTS.md). Los párrafos históricos de esta página describen el motor de salas; la afirmación anterior de que no necesitaba credenciales/base de datos ya no aplica al despliegue completo.
+
 # Drift online beta
 
-Single-instance, in-memory Node WebSocket service. Start with `npm ci --omit=dev && npm start`. Bind: `0.0.0.0:$PORT` (default 10000). Health: `/health`; WebSocket: `/rooms`. Set `ALLOWED_ORIGINS` to exact comma-separated frontend origins. Production requires WSS. No credentials, database or third-party game SDK required.
+Single-instance, in-memory Node WebSocket service. Start with `npm ci --omit=dev && npm start`. Bind: `0.0.0.0:$PORT` (default 10000). Health: `/health`; WebSocket: `/rooms`. Set `ALLOWED_ORIGINS` to exact comma-separated frontend origins. Production requires WSS. Account credentials and durable storage are now required for the complete application.
 
 Up to 24 concurrent private rooms, 3 seats each. Host chooses any of 20 circuits and 1–5 laps. Cars are non-contact. Server owns car physics, checkpoints, start time, results and recovery. Clients transmit bounded fixed-step commands, never positions. Commands at 20 Hz, fixed 60 Hz simulation, snapshots at 20 Hz. Physics is extracted from the game's own Car/Track classes at startup to prevent offline/online drift; marker changes fail startup and tests rather than silently changing handling. CPU-only server skips tire and smoke effects.
 
@@ -9,3 +11,4 @@ Client prediction reconciles acknowledged commands; rivals interpolate approxima
 Resume tokens are 192-bit, kept per browser tab in sessionStorage and sent only to their owner. Reconnection grace is 20 s, then the seat is removed. Host migrates to a connected peer. A restart clears rooms; clients report expiration and allow a fresh room. Idle lobbies expire in 30 min; races expire after 15 min, or 90 s after the first finisher. Compression is disabled for these small frequent messages. Payload, command, connection and message limits, origin validation, heartbeat and buffered-output limits bound resource use. This is a casual beta, not a ranked anti-cheat service. Use a single service instance; horizontal replicas would require shared room routing.
 
 Free Render services can sleep while idle. The UI explicitly allows time for startup and retries with backoff. Do not add synthetic keep-alive traffic. For sustained usage, measure actual region latency and CPU before choosing a paid plan. `npm run test:online` includes real three-client socket integration, privacy, capacity, recovery, prediction parity for all six cars, ordered gates and wall-clock limits.
+

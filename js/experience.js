@@ -204,7 +204,7 @@ $('#carPreview').addEventListener('pointermove',e=>{if(previewPointer?.id!==e.po
 for(const event of ['pointerup','pointercancel','lostpointercapture'])$('#carPreview').addEventListener(event,()=>{previewPointer=null;});
 $('#carPreview').addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();menuPreview?.rotateBy(e.key==='ArrowLeft'?-.18:.18);previewSpinning=false;}});
 
-function downhillBest(level){try{return JSON.parse(localStorage.getItem('downhill:v2:'+level)||'null')||{score:0,time:0};}catch{return {score:0,time:0};}}
+function downhillBest(level){try{return JSON.parse((globalThis.DriftStorage||localStorage).getItem('downhill:v2:'+level)||'null')||{score:0,time:0};}catch{return {score:0,time:0};}}
 function showDownhillMenu(level=preparedTrack?.downhill?preparedTrack.routeLevel:1){
   hidePanels();garageOrigin='downhill';$('#circuitMenu').classList.remove('hidden');$('#circuitList').classList.remove('hidden');$('#circuitTitle').textContent='Cerro abajo · Elige descenso';$('#btnCircuitBack').textContent='← Menú principal';
   const root=$('#circuitList');root.innerHTML=Array.from({length:DriftDownhill.count},(_,i)=>{const t=DriftDownhill.info(i+1);return `<div class="challenge-item"><span class="circuit-num">${String(i+1).padStart(2,'0')} / ${DriftDownhill.count}</span><canvas class="track-thumb" data-downhill="${i+1}" aria-label="Descenso ${t.name}"></canvas><div><b>${t.name}</b></div><div class="tag">${t.stage}</div><button data-downhill-pick="${i+1}" aria-label="Ver descenso ${t.name}">Ver descenso</button></div>`;}).join('');
@@ -224,7 +224,7 @@ function updateDescentHUD(){
 }
 function finishDownhill(){
   const won=player.score>=track.goal;player.descent.s=track.finishS;state=won?'downhillWon':'downhillFailed';
-  if(won){const best=downhillBest(track.routeLevel);if(player.score>best.score)try{localStorage.setItem('downhill:v2:'+track.routeLevel,JSON.stringify({score:Math.floor(player.score),time:raceTime}));}catch{}}
+  if(won){const best=downhillBest(track.routeLevel);if(player.score>best.score)try{(globalThis.DriftStorage||localStorage).setItem('downhill:v2:'+track.routeLevel,JSON.stringify({score:Math.floor(player.score),time:raceTime}));}catch{}}
   updateDescentHUD();showOverlay({title:won?'¡Cerro conquistado!':'Llegaste, pero faltaron puntos',msg:`${track.layout.name} · Sprint completado: <b>100%</b><br>Puntaje: <b>${Math.floor(player.score).toLocaleString('es-CL')} / ${track.goal.toLocaleString('es-CL')}</b> pts · Tiempo: <b>${formatTime(raceTime)}</b>${won?careerReward(true):'<br>Vuelve a intentarlo: enlaza los derrapes antes de la meta.'}`});
 }
 $('#btnRecover').addEventListener('click',loseLifeAndRespawn);
@@ -247,3 +247,4 @@ import('./view3d.js?v=1.0.0-prealpha.1').then(({DriftView3D})=>{
   if(sceneView.software)toast('3D compatible activo · Calidad ligera');
 }).catch(fail3D);
 import('./menu-preview.js?v=1.0.0-prealpha.1').then(module=>{MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});
+

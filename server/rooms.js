@@ -4,7 +4,7 @@ const ALPHABET='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const cleanName=n=>typeof n==='string'?n.normalize('NFKC').replace(/[^\p{L}\p{N} _.-]/gu,'').trim().slice(0,18)||'Piloto':'Piloto';
 const error=message=>({type:'error',message});
 export class Rooms {
-  constructor({now=Date.now,countdown=4000,maxRooms=24}={}){this.rooms=new Map();this.now=now;this.countdown=countdown;this.maxRooms=maxRooms;}
+  constructor({now=Date.now,countdown=4000,maxRooms=24,onReward=()=>{}}={}){this.rooms=new Map();this.now=now;this.countdown=countdown;this.maxRooms=maxRooms;this.onReward=onReward;}
   send(p,m){if(p.peer?.open)p.peer.send(m);}
   view(r){return {type:'room',code:r.code,host:r.host,phase:r.phase,level:r.level,laps:r.laps,day:r.day,race:r.race,startAt:r.startAt,players:[...r.players.values()].map(p=>({id:p.id,name:p.name,skin:p.skin,auto:p.auto,ready:p.ready,connected:!!p.peer?.open,place:p.place||0,finished:p.finished||0,lap:Math.min(r.laps,(p.gates||0)/16|0)+1}))};}
   broadcast(r,m=this.view(r)){for(const p of r.players.values())this.send(p,m);}
@@ -21,7 +21,7 @@ export class Rooms {
       if(peer.room){peer.send(error('Ya estás en una sala.'));return;}
       let r,p;
       if(m.type==='resume'){
-        r=this.rooms.get(String(m.code));p=r&&[...r.players.values()].find(p=>p.token===m.token&&p.until>=this.now());
+        r=this.rooms.get(String(m.code));p=r&&[...r.players.values()].find(p=>p.token===m.token&&p.until>=this.now()&&p.userId===peer.userId);
         if(!p){peer.send({type:'expired',message:'La sala terminó o tu plaza ya expiró. Puedes crear otra.'});return;}
         p.peer?.close?.();p.peer=peer;p.until=Infinity;p.queue=[];p.received=p.ack;
       }else{
@@ -32,8 +32,9 @@ export class Rooms {
         }else r=this.rooms.get(String(m.code||'').trim().toUpperCase());
         if(!r){peer.send(error('No encontramos esa sala. Revisa el código.'));return;}
         if(r.phase!=='lobby'){peer.send(error('Esta carrera ya comenzó. Espera la próxima salida.'));return;}
+        if(peer.userId&&[...r.players.values()].some(p=>p.userId===peer.userId)){peer.send(error('Tu cuenta ya está en esta sala.'));return;}
         if(r.players.size>=3){peer.send(error('Sala llena: máximo 3 pilotos.'));return;}
-        p={id:randomBytes(8).toString('hex'),token:randomBytes(24).toString('hex'),name:cleanName(m.name),skin:Net.SKINS.includes(m.skin)?m.skin:'blue',auto:m.auto!==false,ready:false,peer,until:Infinity};
+        p={id:randomBytes(8).toString('hex'),token:randomBytes(24).toString('hex'),name:cleanName(peer.name||m.name),userId:peer.userId,skin:Net.SKINS.includes(m.skin)?m.skin:'blue',auto:m.auto!==false,ready:false,peer,until:Infinity};
         r.players.set(p.id,p);if(!r.host)r.host=p.id;
       }
       peer.room=r.code;peer.player=p.id;r.updated=this.now();
@@ -85,7 +86,7 @@ export class Rooms {
     const L=r.track.points.length,gate=Math.round(((p.gates+1)%16)*L/16),wrap=gate===0;
     const crossed=wrap?previous>L*.9&&current<L*.1:previous<gate&&current>=gate&&current-previous<L*.08;
     if(crossed&&Math.abs(r.track.sample(p.car.pos.x,p.car.pos.y).dist)<=r.track.roadHalf+2){
-      p.gates++;if(p.gates>=r.laps*16){p.finished=Math.max(1,this.now()-r.startAt);p.place=r.order.push(p.id);p.car.vel.x=p.car.vel.y=0;p.queue=[];if(!r.finishBy)r.finishBy=this.now()+90000;this.broadcast(r);}
+      p.gates++;if(p.gates>=r.laps*16){p.finished=Math.max(1,this.now()-r.startAt);p.place=r.order.push(p.id);this.onReward({userId:p.userId,key:r.code+':'+r.startAt+':'+r.race,place:p.place,finished:p.finished,players:r.players.size});p.car.vel.x=p.car.vel.y=0;p.queue=[];if(!r.finishBy)r.finishBy=this.now()+90000;this.broadcast(r);}
     }
   }
   snapshot(r,self){return {type:'snapshot',now:this.now(),race:r.race,epoch:self.epoch,ack:self.ack,state:Net.capture(self.car),players:[...r.players.values()].filter(p=>p.car).map(p=>({id:p.id,pose:Net.pose(p.car).map(n=>Math.round(n*1000)/1000),gates:p.gates,progress:p.progress,finished:p.finished,place:p.place,connected:!!p.peer?.open}))};}
@@ -114,3 +115,4 @@ export class Rooms {
   disconnect(peer){const r=this.roomFor(peer),p=r?.players.get(peer.player);if(!p||p.peer!==peer)return;p.peer=null;p.until=this.now()+20000;p.ready=false;if(r.host===p.id)r.host=[...r.players.values()].find(q=>q.peer?.open)?.id||p.id;this.broadcast(r);}
   remove(r,p){if(p.peer){p.peer.room=null;p.peer.player=null;}r.players.delete(p.id);if(!r.players.size){this.rooms.delete(r.code);return;}if(r.host===p.id)r.host=[...r.players.values()].find(q=>q.peer?.open)?.id||r.players.keys().next().value;this.broadcast(r);}
 }
+
