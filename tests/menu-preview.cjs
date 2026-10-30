@@ -45,3 +45,21 @@ test('garage rotates the platform and four supported cars without leaking roots,
  for(const wheel of view.car.wheels){const v=wheel.steer.getWorldPosition(new T.Vector3()).project(view.camera);assert.ok(Math.abs(v.x)<1&&Math.abs(v.y)<1);}
  view.dispose();
 });
+
+test('mountain previews and chase/hood/fall cameras use actual elevation and preserve the simulation',async()=>{
+ const {T,view,c}=await setup();await import('../js/downhill.js');
+ class SeedTrack{constructor(points){this.points=points;const x=points.map(p=>p.x),y=points.map(p=>p.y),minX=Math.min(...x),maxX=Math.max(...x),minY=Math.min(...y),maxY=Math.max(...y);this.bounds={minX,maxX,minY,maxY,w:maxX-minX,h:maxY-minY};}}
+ for(let n=1;n<=3;n++){
+  const tr=globalThis.DriftDownhill.createTrack(SeedTrack,n);c.clientWidth=n===3?320:800;c.clientHeight=500;
+  view.renderPreview({kind:'track',track:tr,spinning:false});
+  for(const p of tr.points){const v=new T.Vector3(p.x,p.h,p.y).project(view.camera);assert.ok(Math.abs(v.x)<1&&Math.abs(v.y)<1&&v.z<1,'The open route must fit in 3D');}
+  let terrain=0;view.world.traverse(o=>{if(o.name==='mountain-terrain')terrain++;if(o.geometry?.attributes.position)assert.ok(o.geometry.attributes.position.array.every(Number.isFinite));});assert.ok(terrain>20);
+  const p=tr.atDistance(140),player={pos:{x:p.x,y:p.y},angle:tr.tangentAt(p.i),vel:{x:12,y:0},omega:0,steerAngle:.2,smoke:[],tireTrails:[],worldSpeed:()=>12};
+  player.ride=globalThis.DriftRoadContact.contacts(tr,player,'yellow');player.descent={motion:'driving',pitch:player.ride.pitch,y:player.ride.height};
+  const before=JSON.stringify(player);
+  for(const camera of ['chase','hood','aerial']){view.render({track:tr,player,skin:'yellow',camera,dt:1/60});assert.equal(JSON.stringify(player),before);assert.ok(view.camera.position.y>tr.terrainHeight(view.camera.position.x,view.camera.position.z));}
+  player.descent={motion:'falling',y:p.h-12,pitch:.4,roll:2};const falling=JSON.stringify(player);view.render({track:tr,player,skin:'yellow',dt:1/60});assert.equal(JSON.stringify(player),falling);
+  const center=new T.Vector3(0,.65,0).applyMatrix4(view.car.root.matrixWorld);assert.ok(Math.abs(center.y-player.descent.y)<1e-6);assert.equal(view.car.root.visible,true);
+ }
+ view.dispose();
+});

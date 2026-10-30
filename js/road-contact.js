@@ -11,6 +11,7 @@ globalThis.DriftRoadContact ||= (()=>{
     return t>0&&t<1?curb.height*Math.sin(Math.PI*t)**2:0;
   }
   function terrain(track){
+    if(track.downhill)return {height:track.surfaceHeight};
     const previous=terrainCache.get(track);if(previous?.half===track.roadHalf)return previous;
     const grid=new Map(),longSegments=[],pad=track.roadHalf+curb.start+curb.width;
     track.points.forEach((p,i)=>{
@@ -39,7 +40,7 @@ globalThis.DriftRoadContact ||= (()=>{
     terrainCache.set(track,result);return result;
   }
   function wheelOffsets(skin){
-    const front=skin==='yellow'?1.343514:1.27,rear=skin==='yellow'?-1.137491:-1.3,side=skin==='yellow'?.768966:.98;
+    const front=skin==='yugo'?1.06:skin==='yellow'?1.343514:1.27,rear=skin==='yugo'?-1.09:skin==='yellow'?-1.137491:-1.3,side=skin==='yugo'?.654:skin==='yellow'?.768966:.98;
     return [{x:rear,z:-side},{x:rear,z:side},{x:front,z:-side},{x:front,z:side}];
   }
   function contacts(track,pose,skin){

@@ -1,3 +1,15 @@
+# 0.4.0 — Cerro abajo y Yugo Koral 55
+
+- Nuevo challenge de sprint: tres descensos abiertos con altura real, horquillas, ladera, barrancos, guardarraíles parciales, salida y meta separadas.
+- Reconocimiento aéreo y selección final en el garaje; HUD de 0 a 100%, objetivo de puntos, pendiente y distancia restante. Victoria solo al cruzar la meta con el puntaje requerido.
+- Gravedad sobre pendiente, inercia de la masa al frenar, apoyo independiente de ruedas, suspensión y balanceo. Física exclusiva del descenso: los circuitos anteriores conservan su comportamiento.
+- Caída y vuelco mediante impulsos de contacto e inercia de caja; recuperación con R o botón táctil al último punto seguro. Tres vidas y recuperación automática tras 4,5 segundos de caída.
+- Progreso continuo validado y puntos solo sobre avance nuevo; no se puede llegar a la meta por un barranco ni repetir un tramo para acumular su puntaje.
+- Récords independientes por descenso. Render compatible con colores por vértice y cámaras adaptadas a la elevación y las caídas.
+- Nuevo quinto auto: Yugo Koral 55 retopologizado, atlas pixelado propio de 512×512, cuatro ruedas independientes y sprite 2D del mismo modelo. Mantiene los cuatro autos anteriores.
+- Ajuste exclusivo de 790 kg y cinco marchas; prueba en llano de ≈145 km/h y 0–100 en 18 s. Estadísticas visibles en el garaje y dimensiones propias durante las caídas.
+- 51 regresiones de física, flujo, geometría y render. Inspección en navegador compatible; GPU real, teléfono físico y ajuste final de dificultad mediante partidas humanas pendientes.
+
 # 0.3.4 — Reconocimiento del circuito y garaje 3D
 
 - Preparación unificada: elegir/previsualizar la pista → elegir auto en el garaje → correr. Incluye carrera, contrarreloj, desafíos, editor, importación y enlaces compartidos.
