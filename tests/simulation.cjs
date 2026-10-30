@@ -13,7 +13,7 @@ test('view and camera switches preserve every part of the active race immediatel
   const run=harness();run("startWithTrack(presetTrack(2),'tt');state='running';keys.add('w');for(let i=0;i<120;i++)simulate(SIM_DT);");const before=run(snapshot);run("setRenderView('2d');setRenderView('3d');cycleCamera();cycleCamera();");assert.deepEqual(run(snapshot),before);
 });
 test('all four original vehicle tunings and manual / automatic transmissions remain',()=>{
-  const run=harness();assert.equal(run('CAR_DATA.length'),5);assert.deepEqual(run('CAR_DATA.slice(0,4).map(c=>c.sprite)'),['blue','red','yellow','gray']);for(let i=0;i<4;i++){run(`carIdx=${i};chosen=CAR_DATA[carIdx];startWithTrack(presetTrack(1),'race');`);assert.equal(run('player.mass'),run('1200*chosen.tune.mass'));assert.equal(run('player.engineForce'),run('11800*chosen.tune.engine'));}
+  const run=harness();assert.equal(run('CAR_DATA.length'),6);assert.deepEqual(run('CAR_DATA.slice(0,4).map(c=>c.sprite)'),['blue','red','yellow','gray']);for(let i=0;i<4;i++){run(`carIdx=${i};chosen=CAR_DATA[carIdx];startWithTrack(presetTrack(1),'race');`);assert.equal(run('player.mass'),run('1200*chosen.tune.mass'));assert.equal(run('player.engineForce'),run('11800*chosen.tune.engine'));}
   run("player.auto=false;shiftManual(1)");assert.equal(run('player.gear'),2);run('shiftManual(-1)');assert.equal(run('player.gear'),1);
 });
 test('all 20 circuits retain valid closed geometry and complete lap gates',()=>{

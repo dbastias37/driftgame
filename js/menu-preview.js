@@ -1,5 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
 import {DriftView3D,disposeGroup} from './view3d.js';
+import {updateWorldVisibility} from './world-optimization.js';
 
 const material=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.82,...extra});
 function box(parent,m,x,y,z,w,h,d){const mesh=new T.Mesh(new T.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);parent.add(mesh);return mesh;}
@@ -47,9 +48,13 @@ export class MenuPreview3D extends DriftView3D{
     this.car.root.removeFromParent();this.ghostCar.root.removeFromParent();super.setSkin(key,force);
   }
   rotateBy(amount){if(this.previewMode==='garage')this.garageAngle+=amount;else this.droneAngle+=amount;}
-  renderPreview({kind,track,skin='blue',dt=0,spinning=true}){
+  renderPreview({kind,track,skin='blue',dt=0,spinning=true,timeOfDay=0}){
+    this.setTimeOfDay(timeOfDay);
     const width=Math.max(1,this.canvas.clientWidth||800),height=Math.max(1,this.canvas.clientHeight||500);
     if(this.width!==width||this.height!==height){this.width=width;this.height=height;this.renderer.setSize(width,height,false);this.camera.aspect=width/height;}
+    const revision=[kind,track,skin,spinning,this.garageAngle,this.droneAngle,timeOfDay,width,height,this.car,this.rx7Template,this.yugoTemplate,this.fujiwaraTemplate,this.quality];
+    if(!spinning&&this.previewRevision&&revision.every((v,i)=>v===this.previewRevision[i]))return;
+    this.previewRevision=revision;
     this.previewMode=kind;this.camera.near=.1;
     if(kind==='garage'){
       this.setSkin(skin);this.garage.platform.add(this.car.root);
@@ -58,7 +63,7 @@ export class MenuPreview3D extends DriftView3D{
       this.car.root.visible=true;this.car.root.position.set(0,.28,0);this.car.root.rotation.set(0,0,0);this.car.body.position.set(0,0,0);this.car.body.rotation.set(0,0,0);
       this.camera.fov=45;this.camera.far=100;
       const fit=Math.max(1,1.25/this.camera.aspect);this.camera.position.set(7.1*fit,Math.min(4.7,3.7*fit),7.8*fit);this.camera.lookAt(0,.8,0);this.camera.updateProjectionMatrix();
-      this.renderer.render(this.garage.scene,this.camera);
+      this.atmosphere.tintCar(this.car,true);this.renderer.render(this.garage.scene,this.camera);
     }else if(track){
       if(this.track!==track)this.build(track);
       this.car.root.visible=false;this.ghostCar.root.visible=false;this.smoke.visible=false;this.trails.visible=false;
@@ -66,9 +71,9 @@ export class MenuPreview3D extends DriftView3D{
       const b=track.bounds,cx=b.minX+b.w/2,cz=b.minY+b.h/2,radius=Math.hypot(b.w,b.h,track.maxHeight||0)/2+track.roadHalf+22,centerY=track.downhill?track.maxHeight/2:0;
       this.camera.fov=43;
       const fov=2*Math.atan(Math.tan(this.camera.fov*Math.PI/360)*Math.min(1,this.camera.aspect)),distance=radius/Math.sin(fov/2)*1.06;
-      this.camera.far=distance+radius*8+1500;this.scene.fog=new T.Fog(0x9fb4b6,distance+radius*1.5,distance+radius*6);
+      this.camera.near=Math.max(1,distance-radius*1.5);this.camera.far=distance+radius*4+900;this.scene.fog=new T.Fog(0x9fb4b6,distance+radius*1.5,distance+radius*6);
       this.camera.position.set(cx+Math.cos(this.droneAngle)*distance*(track.downhill?.65:.45),centerY+distance*(track.downhill?.76:.89),cz+Math.sin(this.droneAngle)*distance*(track.downhill?.65:.45));this.camera.lookAt(cx,centerY,cz);this.camera.updateProjectionMatrix();
-      this.renderer.render(this.scene,this.camera);
+      updateWorldVisibility(this.world,this.camera,Infinity,true);this.atmosphere.update(this.camera,this.car,track,this.streetLights,{overview:true});this.renderer.render(this.scene,this.camera);
     }
   }
   dispose(){disposeGroup(this.garage.scene);super.dispose();}

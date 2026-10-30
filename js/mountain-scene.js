@@ -1,4 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
+import {buildMountainTerrain} from './mountain-terrain.js';
+import {batchWorld} from './world-optimization.js';
 const mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.88,...extra});
 function mesh(parent,geo,material,x=0,y=0,z=0){const o=new T.Mesh(geo,material);o.position.set(x,y,z);parent.add(o);return o;}
 function box(p,m,x,y,z,w,h,d){return mesh(p,new T.BoxGeometry(w,h,d),m,x,y,z);}
@@ -16,17 +18,7 @@ function label(text){const c=document.createElement('canvas');c.width=512;c.heig
 export function buildMountain(track,world,low=false){
   const grass=mat(0x526253),rock=mat(0x728a84),dark=mat(0x283b43),white=mat(0xdde0d3),orange=mat(0xc85837),metal=mat(0x8a9694,{metalness:.45}),asphalt=mat(0xaeb7ba,{map:noise()}),sand=mat(0x7a8074);
   const b=track.bounds,tile=64,step=8;
-  for(let x=Math.floor((b.minX-160)/tile)*tile;x<b.maxX+160;x+=tile)for(let z=Math.floor((b.minY-180)/tile)*tile;z<b.maxY+180;z+=tile){
-    const vertices=[],colors=[],indices=[],N=tile/step+1;
-    for(let j=0;j<N;j++)for(let i=0;i<N;i++){
-      const px=x+i*step,pz=z+j*step,q=track.sample(px,pz),h=track.terrainHeight(px,pz)-(q.distance<track.roadHalf+5?.65:0);
-      vertices.push(px,h,pz);const gradient=Math.abs(track.terrainHeight(px+2,pz)-track.terrainHeight(px-2,pz))+Math.abs(track.terrainHeight(px,pz+2)-track.terrainHeight(px,pz-2));
-      const color=new T.Color(gradient>4?0x728a84:0x526253);colors.push(color.r,color.g,color.b);
-      if(i<N-1&&j<N-1){const a=j*N+i;indices.push(a,a+N,a+1,a+1,a+N,a+N+1);}
-    }
-    const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(vertices,3));geo.setAttribute('color',new T.Float32BufferAttribute(colors,3));geo.setIndex(indices);geo.computeVertexNormals();
-    mesh(world,geo,mat(0xffffff,{vertexColors:true})).name='mountain-terrain';
-  }
+  buildMountainTerrain(track,world,mat(0xffffff,{vertexColors:true}));
   const distantMaterial=mat(0x526253);
   // Continue the mountain outside the detailed road area; no floating rectangle.
   for(let x=Math.floor((b.minX-700)/tile)*tile;x<b.maxX+700;x+=tile)for(let z=Math.floor((b.minY-700)/tile)*tile;z<b.maxY+700;z+=tile){
@@ -38,16 +30,18 @@ export function buildMountain(track,world,low=false){
   for(let i=0;i<12;i++){const angle=i*Math.PI/6,radius=Math.max(b.w,b.h)*.6+500,x=b.minX+b.w/2+Math.cos(angle)*radius,z=b.minY+b.h/2+Math.sin(angle)*radius;mesh(world,new T.ConeGeometry(170+(i%3)*45,160+(i%4)*40,6),rock,x,track.baseHeight(x,z)+35,z);}
   // The real open ribbon, shoulders and rounded curb share the physics heights.
   const half=track.roadHalf;
-  band(track,world,sand,-half-1.3,half+1.3,()=>-.035);
-  band(track,world,asphalt,-half,half,()=>.02);
+  for(const side of [-1,1])band(track,world,sand,side<0?-half-1.3:half+.86,side<0?-half-.86:half+1.3,()=>.02);
+  band(track,world,asphalt,-half+.16,half-.16,()=>.02);
   const start=track.points[0],heading=track.tangentAt(0),apron=box(world,asphalt,start.x-Math.cos(heading)*2,start.h-.04,start.y-Math.sin(heading)*2,4,.12,half*2);apron.rotation.y=-heading;
+  const curbCanvas=document.createElement('canvas');curbCanvas.width=64;curbCanvas.height=4;const cg=curbCanvas.getContext('2d');cg.fillStyle='#c85837';cg.fillRect(0,0,32,4);cg.fillStyle='#dde0d3';cg.fillRect(32,0,32,4);
+  const curbMap=new T.CanvasTexture(curbCanvas);curbMap.wrapS=T.RepeatWrapping;curbMap.colorSpace=T.SRGBColorSpace;
+  const curbMat=mat(0xffffff,{map:curbMap});
   for(const side of [-1,1]){
-    const lo=side<0?-half-.16:half;band(track,world,white,lo,lo+.16,()=>.035);
+    band(track,world,white,side<0?-half-.16:half-.16,side<0?-half+.16:half+.16,()=>.02);
+    // One textured surface replaces twelve alternating meshes per road chunk.
     for(let k=0;k<6;k++){
       const aa=half+.16+k*.70/6,bb=half+.16+(k+1)*.70/6;
-      const a=side<0?-bb:aa,b=side<0?-aa:bb;
-      const height=o=>.025+globalThis.DriftRoadContact.profile(Math.abs(o)-half);
-      band(track,world,orange,a,b,height,s=>Math.floor(s/5)%2===0);band(track,world,white,a,b,height,s=>Math.floor(s/5)%2!==0);
+      band(track,world,curbMat,side<0?-bb:aa,side<0?-aa:bb,o=>.02+globalThis.DriftRoadContact.profile(Math.abs(o)-half));
     }
   }
   band(track,world,mat(0xcfc8a3),-.09,.09,()=>.045,s=>Math.floor(s/7)%2===0);
@@ -76,5 +70,6 @@ export function buildMountain(track,world,low=false){
   }
   // Kilometer / hairpin markers are scenery, not invisible collision walls.
   for(let s=180;s<track.finishS;s+=220){const p=track.atDistance(s),n=track.normalAt(p.i),x=p.x+n.x*(half+2.3),z=p.y+n.y*(half+2.3);box(world,dark,x,p.h+1,z,.12,2,.12);const sign=mesh(world,new T.PlaneGeometry(2.7,1.2),label('› › ›'),x,p.h+2,z);sign.rotation.y=-track.tangentAt(p.i)-Math.PI/2;}
+  batchWorld(world);
   return world;
 }

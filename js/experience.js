@@ -4,6 +4,7 @@ let savedPrefs={};try{savedPrefs=JSON.parse(localStorage.getItem(PREF_KEY)||'{}'
 const renderPrefs={
   view:['2d','3d'].includes(savedPrefs.view)?savedPrefs.view:'3d',
   camera:['chase','aerial','hood'].includes(savedPrefs.camera)?savedPrefs.camera:'chase',
+  timeOfDay:Math.max(0,Math.min(1,Number(savedPrefs.timeOfDay)||0)),
   quality:['auto','high','low'].includes(savedPrefs.quality)?savedPrefs.quality:'auto',
   touch:['auto','on','off'].includes(savedPrefs.touch)?savedPrefs.touch:'auto',
   motion:['full','reduced'].includes(savedPrefs.motion)?savedPrefs.motion:(matchMedia('(prefers-reduced-motion: reduce)').matches?'reduced':'full')
@@ -22,8 +23,17 @@ function syncRenderUI(){
   $('#btnView').setAttribute('aria-label',renderPrefs.view==='3d'?'Cambiar a vista 2D':'Cambiar a vista 3D');
   $('#btnCamera').disabled=renderPrefs.view!=='3d';
   $('#viewBadge').textContent=renderPrefs.view==='3d'?'3D / '+CAMERA_NAMES[renderPrefs.camera].toUpperCase():'2D / CLÁSICA';
+  syncDaytimeUI();
   $('#touchSetting').value=renderPrefs.touch;$('#cameraSetting').value=renderPrefs.camera;$('#qualitySetting').value=renderPrefs.quality;$('#motionSetting').value=renderPrefs.motion;
 }
+function syncDaytimeUI(){
+  const value=renderPrefs.timeOfDay,label=value<.25?'Día':value<.72?'Atardecer':'Noche';
+  document.querySelectorAll('[data-daytime]').forEach(input=>{input.value=Math.round(value*100);input.setAttribute('aria-valuetext',label);});
+  document.querySelectorAll('[data-daytime-label]').forEach(output=>output.textContent=label);
+}
+document.querySelectorAll('[data-daytime]').forEach(input=>input.addEventListener('input',e=>{
+  renderPrefs.timeOfDay=Math.max(0,Math.min(1,Number(e.target.value)/100));syncDaytimeUI();saveRenderPrefs();
+}));
 function setRenderView(next){
   if(next==='3d'&&sceneFailed){toast('3D no disponible en este navegador. Puedes seguir jugando en 2D.');return;}
   renderPrefs.view=next;sceneView?.resetCamera();syncRenderUI();saveRenderPrefs();
@@ -164,9 +174,9 @@ function renderPreparationPreview(dt,time){
     if(document.hidden)return true;
     // There is only one preview canvas. Software mode caps work to 12 fps;
     // invisible previews and the racing renderer do not render behind it.
-    if(menuPreview.software&&time-previewLastFrame<1/12)return true;
+    if(time-previewLastFrame<1/(menuPreview.software?12:30))return true;
     const elapsed=previewLastFrame?Math.min(.1,time-previewLastFrame):dt;previewLastFrame=time;
-    menuPreview.renderPreview({...preview,skin:chosen.sprite,dt:elapsed,spinning:previewSpinning});
+    menuPreview.renderPreview({...preview,skin:chosen.sprite,dt:elapsed,spinning:previewSpinning,timeOfDay:renderPrefs.timeOfDay});
     status?.classList.add('hidden');
   }catch(error){console.warn('Preview unavailable',error);previewFailed=true;}
   return true;
