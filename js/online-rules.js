@@ -15,7 +15,7 @@ globalThis.DriftNet = (() => {
     return result;
   }
   function configure(car,data,auto){
-    car.color=data.color;car.engineForce*=data.tune.engine;car.baseLatFriction*=data.tune.lat;car.handLatFriction*=data.tune.hand;car.dragLinear*=data.tune.drag;car.mass*=data.tune.mass;
+    car.skin=data.sprite;car.color=data.color;car.engineForce*=data.tune.engine;car.baseLatFriction*=data.tune.lat;car.handLatFriction*=data.tune.hand;car.dragLinear*=data.tune.drag;car.mass*=data.tune.mass;
     if(data.sprite==='yugo')globalThis.DriftYugo.configure(car);
     car.auto=auto;
   }

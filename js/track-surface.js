@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
 import C from '../vendor/clipper.module.js';
-import './road-contact.js?v=0.7.0';
+import './road-contact.js?v=0.8.0';
 
 // Visual footprint only. Never resample or replace the simulation's track.points.
 // Integer clipping removes folds in tight bends before triangulation, including
