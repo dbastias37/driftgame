@@ -5,9 +5,9 @@ class Track{constructor(points){this.points=points;const x=points.map(p=>p.x),y=
 async function setup(){global.document={createElement:canvas};global.innerWidth=640;global.innerHeight=400;global.devicePixelRatio=1;await import('../js/road-contact.js');await import('../js/downhill.js');return import('../vendor/three.module.min.js');}
 test('mountain terrain has no faces inside the actual shoulder footprint; chunks disappear only beyond opaque fog',async()=>{
  const T=await setup(),{buildMountain}=await import('../js/mountain-scene.js'),{updateWorldVisibility}=await import('../js/world-optimization.js');
- for(let level=1;level<=3;level++){
+ for(const level of [1,2,3,12,20]){
   const track=DriftDownhill.createTrack(Track,level),world=new T.Group();buildMountain(track,world,false);world.updateMatrixWorld(true);
-  assert.ok(world.userData.chunks.length<650);const terrain=[];world.traverse(o=>{if(o.name==='mountain-terrain')terrain.push(o);});
+  assert.ok(world.userData.chunks.length<1300);const terrain=[];world.traverse(o=>{if(o.name==='mountain-terrain'){terrain.push(o);assert.equal(o.material.flatShading,true);assert.ok(o.geometry.index);assert.ok(o.geometry.attributes.position.count<o.geometry.index.count*.5);assert.equal(o.geometry.attributes.normal,undefined);}});
   const ray=new T.Raycaster();for(let s=10;s<track.length-10;s+=13){const p=track.atDistance(s),n=track.normalAt(p.i);for(const offset of[-track.roadHalf,0,track.roadHalf]){ray.set(new T.Vector3(p.x+n.x*offset,1000,p.y+n.y*offset),new T.Vector3(0,-1,0));assert.equal(ray.intersectObjects(terrain).length,0,`Terrain pierces route ${level} at ${s}`);}}
   const camera=new T.PerspectiveCamera(58,1,.3,520);camera.position.set(track.points[0].x,track.points[0].h+6,track.points[0].y);
   updateWorldVisibility(world,camera,290);const visible=world.userData.visibleChunks;assert.ok(visible<world.userData.chunks.length*.65);
@@ -17,7 +17,7 @@ test('mountain terrain has no faces inside the actual shoulder footprint; chunks
  }
 });
 test('far-terrain acceleration preserves the original height equation',async()=>{
- await setup();const tr=DriftDownhill.createTrack(Track,3);for(let x=-400;x<400;x+=23)for(let y=-150;y<1000;y+=27){const q=tr.sample(x,y),t=Math.max(0,Math.min(1,(q.distance-tr.roadHalf-1.3)/30)),expected=q.h+(tr.baseHeight(x,y)-q.h)*t*t*(3-2*t);assert.ok(Math.abs(expected-tr.terrainHeight(x,y))<1e-10);}
+ await setup();const tr=DriftDownhill.createTrack(Track,3);for(let x=-400;x<400;x+=23)for(let y=-150;y<1000;y+=27){const q=tr.sample(x,y),t=Math.max(0,Math.min(1,(q.distance-tr.roadHalf-1.3)/30)),expected=q.h+(tr.baseHeight(x,y)-q.h)*t*t*(3-2*t);assert.ok(Math.abs(expected-tr.terrainHeight(x,y))<1e-10);const surface=expected+(q.distance<tr.roadHalf+1.1?DriftRoadContact.profile(q.distance-tr.roadHalf):0);assert.ok(Math.abs(surface-tr.surfaceHeight(x,y))<1e-10);}
 });
 test('day/night is continuous, preserves simulation state, and limits lighting to one shadowless spotlight',async()=>{
  await setup();const {DriftView3D}=await import('../js/view3d.js'),{atmosphereAt}=await import('../js/atmosphere.js');

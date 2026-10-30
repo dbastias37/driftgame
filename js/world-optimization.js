@@ -33,17 +33,20 @@ export function batchWorld(world,size=128){
     source.dispose();
   }
   const chunks=[];world.traverse(o=>{if(!o.isMesh)return;if(o.isInstancedMesh){o.computeBoundingSphere();}else if(!o.geometry.boundingSphere)o.geometry.computeBoundingSphere();chunks.push(o);});
+  world.updateMatrixWorld(true);
+  // This world is static. Cache world bounds once instead of transforming
+  // hundreds of spheres and taking square roots on every rendered frame.
+  for(const o of chunks)o.userData.worldBound=(o.isInstancedMesh?o.boundingSphere:o.geometry.boundingSphere).clone().applyMatrix4(o.matrixWorld);
   world.userData.chunks=chunks;return chunks;
 }
 
 export function updateWorldVisibility(world,camera,far,overview=false){
-  const sphere=new T.Sphere();let visible=0;
+  let visible=0;
   for(const o of world.userData.chunks||[]){
-    const bound=o.isInstancedMesh?o.boundingSphere:o.geometry.boundingSphere;
-    sphere.copy(bound).applyMatrix4(o.matrixWorld);
+    const sphere=o.userData.worldBound;
     // Cull only after the complete chunk is beyond opaque fog. No timed or
     // speed-dependent loading, so fast driving/reversing cannot reveal a hole.
-    o.visible=overview||camera.position.distanceTo(sphere.center)-sphere.radius<far+12;
+    o.visible=overview||camera.position.distanceToSquared(sphere.center)<(far+12+sphere.radius)**2;
     if(o.visible)visible++;
   }
   world.userData.visibleChunks=visible;

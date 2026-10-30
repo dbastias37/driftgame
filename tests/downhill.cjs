@@ -1,10 +1,10 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {harness}=require('./harness.cjs');
 const boot="startWithTrack(DriftDownhill.createTrack(Track,1),'downhill');state='running';";
-test('three open mountain routes descend continuously, with separated hairpins and no finish/start shortcut',()=>{
- const r=harness();const routes=r('Array.from({length:3},(_,i)=>{const t=DriftDownhill.createTrack(Track,i+1);return {points:t.points,half:t.roadHalf,finish:t.finishS,length:t.length,drop:t.drop,goal:t.goal,start:t.sample(t.points[0].x,t.points[0].y),end:t.sample(t.points.at(-1).x,t.points.at(-1).y)}})');
- let previous=0;
- for(const t of routes){assert.ok(t.length>previous);previous=t.length;assert.ok(t.finish<t.length);assert.ok(t.drop>100);assert.ok(t.start.s<.001);assert.ok(t.end.s>t.finish);
+test('twenty distinct open mountain routes descend continuously, with separated hairpins and no finish/start shortcut',()=>{
+ const r=harness();const routes=r('Array.from({length:20},(_,i)=>{const t=DriftDownhill.createTrack(Track,i+1);return {points:t.points,half:t.roadHalf,finish:t.finishS,length:t.length,drop:t.drop,goal:t.goal,start:t.sample(t.points[0].x,t.points[0].y),end:t.sample(t.points.at(-1).x,t.points.at(-1).y)}})');
+ assert.equal(routes.length,20);
+ for(const t of routes){assert.ok(t.length>1500&&t.length<5500);assert.ok(t.finish<t.length);assert.ok(t.drop>100);assert.ok(t.start.s<.001);assert.ok(t.end.s>t.finish);
   for(let i=1;i<t.points.length;i++){const a=t.points[i-1],b=t.points[i];assert.ok(b.h<a.h);assert.ok(b.s>a.s);assert.ok(Math.hypot(b.x-a.x,b.y-a.y)<3.01);for(let j=i+30;j<t.points.length;j+=5){const q=t.points[j];assert.ok(Math.hypot(q.x-b.x,q.y-b.y)>t.half*2+4,'Unrelated road sections intersect');}}
  }
 });
@@ -28,7 +28,7 @@ test('teleporting or falling onto a lower switchback cannot advance sprint progr
 test('score is judged only at the 100% finish; success/failure freeze time and persist separately',()=>{
  for(const win of [false,true]){const r=harness();r(boot+`player.score=${win?'track.goal+100':'0'};simulate(SIM_DT);`);assert.equal(r('state'),'running');
   r("for(const p of track.points){if(p.s>=track.finishS-.5)break;const before={...player.pos,s:player.descent.s};player.pos={x:p.x,y:p.y};DriftDownhill.advance(track,player,before,1/60);}var p=track.atDistance(track.finishS-.08),a=track.tangentAt(p.i);player.pos={x:p.x,y:p.y};player.angle=a;player.vel={x:Math.cos(a)*10,y:Math.sin(a)*10};player.descent.s=player.descent.maxS=track.finishS-.08;DriftRoadContact.reset(track,player,chosen.sprite);simulate(SIM_DT);");
-  assert.equal(r('state'),win?'downhillWon':'downhillFailed');assert.equal(r('player.descent.s'),r('track.finishS'));const time=r('raceTime');r('simulate(1)');assert.equal(r('raceTime'),time);assert.equal(r("!!localStorage.getItem('downhill:v1:1')"),win);assert.equal(r("localStorage.getItem('challenge:unlocked')"),null);
+  assert.equal(r('state'),win?'downhillWon':'downhillFailed');assert.equal(r('player.descent.s'),r('track.finishS'));const time=r('raceTime');r('simulate(1)');assert.equal(r('raceTime'),time);assert.equal(r("!!localStorage.getItem('downhill:v2:1')"),win);assert.equal(r("localStorage.getItem('challenge:unlocked')"),null);
  }
 });
 test('pause, 2D/3D switches and restart preserve downhill dynamics and reset the sprint coherently',()=>{
@@ -37,4 +37,14 @@ test('pause, 2D/3D switches and restart preserve downhill dynamics and reset the
 });
 test('Cerro abajo goes through reconnaissance and the final garage, retaining the chosen descent',()=>{
  const r=harness();r("$('#btnModeDownhill').click();previewDownhill(3);confirmTrackPreview();");assert.equal(r('mode'),'downhill');assert.equal(r('preparedTrack.routeLevel'),3);r('returnToTrackPreview()');assert.equal(r('previewSelection.track.routeLevel'),3);r("confirmTrackPreview();$('#btnChooseStart').click()");assert.equal(r('track.downhill'),true);assert.equal(r('player.descent.s'),0);
+});
+
+test('route identities, normalized shapes and grades vary; thumbnail layouts reuse no physics grid',()=>{
+ const r=harness();assert.equal(r('DriftDownhill.count'),20);
+ const data=r(`Array.from({length:20},(_,i)=>{const t=DriftDownhill.createTrack(Track,i+1),b=t.bounds;return {name:t.layout.name,grade:t.drop/t.length,half:t.roadHalf,shape:Array.from({length:41},(_,j)=>{const p=t.atDistance(j*t.length/40);return [(p.x-b.minX)/b.w,(p.y-b.minY)/b.h]}),local:t.points.slice(1).map((p,j)=>(t.points[j].h-p.h)/(p.s-t.points[j].s))}})`);
+ assert.equal(new Set(data.map(t=>t.name)).size,20);assert.ok(Math.max(...data.map(t=>t.grade))-Math.min(...data.map(t=>t.grade))>.09);
+ for(let i=0;i<data.length;i++){const t=data[i];assert.ok(Math.max(...t.local)-Math.min(...t.local)>.025);assert.ok(Math.min(...t.local)>.03);assert.ok(Math.max(...t.local)<.23);
+  for(let j=i+1;j<data.length;j++){const d=t.shape.reduce((sum,p,k)=>sum+Math.hypot(p[0]-data[j].shape[k][0],p[1]-data[j].shape[k][1]),0)/t.shape.length;assert.ok(d>.065,`Routes ${i+1}/${j+1} have too similar silhouettes: ${d}`);}
+ }
+ assert.equal(r('DriftDownhill.layout(20)===DriftDownhill.layout(20)'),true);assert.equal(r('typeof DriftDownhill.layout(20).sample'),'undefined');
 });

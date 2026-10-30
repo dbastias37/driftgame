@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
-import {buildMountainTerrain} from './mountain-terrain.js?v=0.6.0';
-import {batchWorld} from './world-optimization.js?v=0.6.0';
+import {buildMountainTerrain} from './mountain-terrain.js?v=0.7.0';
+import {batchWorld} from './world-optimization.js?v=0.7.0';
 const mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.88,...extra});
 function mesh(parent,geo,material,x=0,y=0,z=0){const o=new T.Mesh(geo,material);o.position.set(x,y,z);parent.add(o);return o;}
 function box(p,m,x,y,z,w,h,d){return mesh(p,new T.BoxGeometry(w,h,d),m,x,y,z);}
@@ -11,6 +11,7 @@ function band(track,parent,material,a,b,height=()=>.025,filter=()=>true){
     const end=Math.min(track.points.length-1,start+24),pos=[],uv=[],indices=[];
     for(let i=start;i<=end;i++){const p=track.points[i],n=track.normalAt(i);for(const offset of [a,b]){pos.push(p.x+n.x*offset,p.h+height(offset,p.s),p.y+n.y*offset);uv.push(p.s/8,offset/8);}}
     for(let i=start;i<end;i++){if(!filter(track.points[i].s))continue;const k=(i-start)*2;indices.push(k,k+1,k+2,k+1,k+3,k+2);}
+    if(!indices.length)continue;
     const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(pos,3));geo.setAttribute('uv',new T.Float32BufferAttribute(uv,2));geo.setIndex(indices);geo.computeVertexNormals();mesh(parent,geo,material).name='mountain-road';
   }
 }
@@ -18,7 +19,7 @@ function label(text){const c=document.createElement('canvas');c.width=512;c.heig
 export function buildMountain(track,world,low=false){
   const grass=mat(0x526253),rock=mat(0x728a84),dark=mat(0x283b43),white=mat(0xdde0d3),orange=mat(0xc85837),metal=mat(0x8a9694,{metalness:.45}),asphalt=mat(0xaeb7ba,{map:noise()}),sand=mat(0x7a8074);
   const b=track.bounds,tile=64,step=8;
-  buildMountainTerrain(track,world,mat(0xffffff,{vertexColors:true}));
+  buildMountainTerrain(track,world,mat(0xffffff,{vertexColors:true,flatShading:true}));
   const distantMaterial=mat(0x526253);
   // Continue the mountain outside the detailed road area; no floating rectangle.
   for(let x=Math.floor((b.minX-700)/tile)*tile;x<b.maxX+700;x+=tile)for(let z=Math.floor((b.minY-700)/tile)*tile;z<b.maxY+700;z+=tile){
@@ -48,7 +49,7 @@ export function buildMountain(track,world,low=false){
   const object=new T.Object3D(),treeGeo=new T.ConeGeometry(2.8,10,5),treeMat=mat(0x284b43),trees=new T.InstancedMesh(treeGeo,treeMat,low?230:650);let ti=0,seed=734;
   const random=()=>((seed=(1664525*seed+1013904223)>>>0)/4294967296);
   for(let i=0;i<5000&&ti<trees.count;i++){
-    const x=b.minX-100+random()*(b.w+200),z=b.minY-100+random()*(b.h+200),q=track.sample(x,z);if(q.distance<half+8)continue;
+    const x=b.minX-100+random()*(b.w+200),z=b.minY-100+random()*(b.h+200),q=track.sampleNearby(x,z);if(q&&q.distance<half+8)continue;
     const scale=.7+random()*.9;object.position.set(x,track.terrainHeight(x,z)+5*scale,z);object.rotation.set(0,random()*6.28,0);object.scale.setScalar(scale);object.updateMatrix();trees.setMatrixAt(ti++,object.matrix);
   }trees.count=ti;world.add(trees);
   for(let i=0;i<track.points.length-1;i+=3){const p=track.points[i],n=track.normalAt(i),q=track.points[Math.min(i+3,track.points.length-1)];
@@ -69,7 +70,8 @@ export function buildMountain(track,world,low=false){
     for(let j=-Math.floor(half);j<half;j++)for(let row=0;row<2;row++)box(gate,(j+row)%2?white:dark,row*.6,.065,j+.5,.6,.03,1);
   }
   // Kilometer / hairpin markers are scenery, not invisible collision walls.
-  for(let s=180;s<track.finishS;s+=220){const p=track.atDistance(s),n=track.normalAt(p.i),x=p.x+n.x*(half+2.3),z=p.y+n.y*(half+2.3);box(world,dark,x,p.h+1,z,.12,2,.12);const sign=mesh(world,new T.PlaneGeometry(2.7,1.2),label('› › ›'),x,p.h+2,z);sign.rotation.y=-track.tangentAt(p.i)-Math.PI/2;}
+  const chevron=label('› › ›');
+  for(let s=180;s<track.finishS;s+=220){const p=track.atDistance(s),n=track.normalAt(p.i),x=p.x+n.x*(half+2.3),z=p.y+n.y*(half+2.3);box(world,dark,x,p.h+1,z,.12,2,.12);const sign=mesh(world,new T.PlaneGeometry(2.7,1.2),chevron,x,p.h+2,z);sign.rotation.y=-track.tangentAt(p.i)-Math.PI/2;}
   batchWorld(world);
   return world;
 }
