@@ -1,4 +1,4 @@
-# Drift Racer 0.5.0 — 2D + 3D
+# Drift Racer 0.5.1 — 2D + 3D
 
 Juego de drift estático para navegador, con dos vistas intercambiables de **una misma simulación**. Incluye seis autos, veinte desafíos, editor de circuitos, transmisión manual/automática y contrarreloj con fantasma local.
 
@@ -57,6 +57,8 @@ Quinto auto, sin reemplazar los cuatro anteriores. Carrocería retopologizada a 
 ![Yugo Koral 55 en el garaje, render compatible](docs/yugo-garage-0.4.0.jpg)
 
 ## Rendimiento, cielo y Fujiwara (0.5)
+
+Las entradas y módulos JavaScript usan una versión de URL común para evitar mezclar archivos de distintas publicaciones en la caché CDN.
 
 - El terreno de Cerro abajo se recorta contra el contorno exacto de las bermas: no existen triángulos del cerro cruzando el asfalto. Carretera, líneas, bordillos y bermas son franjas contiguas. La cámara de reconocimiento ajusta el plano cercano a la distancia del circuito para mejorar la precisión de profundidad.
 - Geometría estática agrupada por material y zona de 128 m; vegetación instanciada por zona. Se ocultan sectores completos solo después de la niebla opaca: 290 m en Ligera y 440 m en Alta/Automática. Al reconocer la pista se muestra el escenario completo. No se descarga la física ni se alteran puntos de apoyo.
