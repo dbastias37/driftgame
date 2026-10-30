@@ -1,3 +1,5 @@
+> **Perfiles y acceso:** esta rama requiere servidor Node 24 y configuración de cuentas antes de desplegar. Consulta [la guía de cuentas](docs/ACCOUNTS.md). El acceso de Google y correo no se activa sin las credenciales del proyecto.
+
 # Drift Racer 1.0 pre-alpha
 
 Juego de drift 3D para navegador. Seis autos, campaña de veinte etapas y sesenta objetivos, taller por vehículo, veinte descensos, carreras online de hasta tres jugadores, editor y contrarreloj con fantasma local. Versión técnica: `1.0.0-prealpha.1`.
@@ -245,3 +247,4 @@ En el menú, abre **Online beta**. Escribe tu nombre y crea una sala, o entra co
 Las carreras son sin contacto. Se conserva la física de los seis autos en vista 3D. Shift activa la función de derrape que antes estaba en Espacio; Espacio frena. E/Q cambian marchas manuales. R vuelve al último control validado. Abrir el menú online no detiene la carrera. El servidor valida las vueltas y muestra la clasificación; al terminar, el anfitrión puede preparar otra carrera.
 
 La conexión usa WebSocket seguro, predicción local e interpolación de los dos rivales. Si se interrumpe, la plaza se conserva 20 segundos. Las salas beta viven en memoria y se pierden al reiniciar el servidor. En el plan gratuito de Render, la primera conexión puede tardar mientras despierta. Ver [operación y protocolo](server/README.md).
+

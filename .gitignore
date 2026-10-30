@@ -1,2 +1,8 @@
 node_modules/
 test-results/
+data/
+.env
+.env.*
+!.env.example
+*.sqlite*
+*.db*

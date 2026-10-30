@@ -3,6 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Drift Racer — 1.0 pre-alpha</title>
 <meta name="application-version" content="1.0.0-prealpha.1">
+<link rel="stylesheet" href="css/accounts.css?v=1.1.0">
 <meta name="theme-color" content="#111719">
 <style>
   :root{--bg:#0b0b0b;--ink:#e6f1ff;}
@@ -225,7 +226,7 @@
 <link rel="stylesheet" href="css/raw-menu.css?v=1.0.0-prealpha.1">
 <link rel="stylesheet" href="css/career.css?v=1.0.0-prealpha.1">
 </head>
-<body>
+<body class="account-locked">
   <div id="ui">
     <div class="stat big">Puntos: <span id="score">0</span><small id="downhillTarget"></small></div>
     <div class="stat">Velocidad: <span id="speed">0</span> km/h</div>
@@ -456,6 +457,20 @@
   
   <audio id="radio" preload="none" crossorigin="anonymous"></audio>
 
+
+<button id="accountOpen" type="button">◉ PERFIL</button>
+<section id="accountGate" role="dialog" aria-modal="true" aria-labelledby="accountTitle">
+ <div class="account-shell"><aside class="account-intro"><span class="account-kicker">DRIFT RACER / PRE-ALPHA</span><h2>TU AUTO.<br>TU HISTORIA.</h2><p>Cada curva cuenta. Conserva tus misiones, tu taller y tus logros en una sola cuenta.</p><footer>01 — CREA TU PERFIL<br>02 — CONQUISTA LA CAMPAÑA<br>03 — PREPARA TU MÁQUINA</footer></aside>
+ <div class="account-form-wrap"><button id="accountClose" type="button" aria-label="Cerrar perfil" hidden>✕</button><span class="account-kicker">PERFIL DE PILOTO</span><h2 id="accountTitle">VUELVE A LA PISTA</h2>
+ <div id="accountAuth"><div id="accountTabs"><button id="accountLoginTab" type="button" aria-pressed="true">INGRESAR</button><button id="accountRegisterTab" type="button" aria-pressed="false">REGISTRARSE</button></div>
+ <button id="accountGoogle" class="account-secondary" type="button" disabled>Continuar con Google</button>
+ <form id="accountForm"><label id="accountNameRow" hidden>Nombre de piloto<input id="accountName" autocomplete="nickname" minlength="2" maxlength="24"></label><label id="accountEmailRow">Correo electrónico<input id="accountEmail" type="email" autocomplete="email" maxlength="254" required></label><label id="accountPasswordRow">Contraseña · mínimo 12 caracteres<input id="accountPassword" type="password" autocomplete="current-password" minlength="12" maxlength="128" required></label><button id="accountSubmit" type="submit">INICIAR SESIÓN ↗</button></form>
+ <div class="account-links"><button id="accountForgot" class="account-link" type="button">Olvidé mi contraseña</button><button id="accountResend" class="account-link" type="button">Reenviar verificación</button><button id="accountBackLogin" class="account-link" type="button">Volver a ingresar</button></div></div>
+ <div id="accountProfile" hidden><span id="profileIdentity" class="account-kicker"></span><p id="profileEmail"></p><label>Nombre de piloto<input id="profileName" minlength="2" maxlength="24" autocomplete="nickname"></label><button id="profileSave" class="account-secondary" type="button">Guardar nombre</button><div class="profile-wallet"><strong id="profileCredits"></strong><span id="profileProgress"></span></div><h3>LOGROS</h3><ul id="profileAchievements"></ul><h3>CRÉDITOS Y COMPRAS</h3><ul id="profileLedger"></ul><div class="profile-actions"><button id="profileSync" type="button">Sincronizar</button><button id="accountLinkGoogle" type="button" class="account-secondary">Vincular Google</button><button id="accountLogout" type="button" class="account-secondary">Cerrar sesión</button><button id="accountLogoutAll" type="button" class="account-link">Cerrar todas las sesiones</button></div></div>
+ <p id="accountStatus" role="status" aria-live="polite">Conectando con tu perfil…</p><button id="accountRetry" type="button" class="account-link">Reintentar conexión</button><noscript>Activa JavaScript para iniciar sesión y jugar.</noscript></div></div>
+</section>
+
+<script src="js/accounts.js?v=1.1.0"></script>
 <script src="js/career.js?v=1.0.0-prealpha.1"></script>
 <script src="js/replay.js?v=1.0.0-prealpha.1"></script>
 <script src="js/drift-effects.js?v=1.0.0-prealpha.1"></script>
@@ -762,10 +777,10 @@ function updateTrackIdUI(tr){
 
 // helpers para Time Trial
 function saveTT(type, trackId, obj){
-  try{ localStorage.setItem(`tt:${type}:${trackId}`, JSON.stringify(obj)); }catch(_){ }
+  try{ (globalThis.DriftStorage||localStorage).setItem(`tt:${type}:${trackId}`, JSON.stringify(obj)); }catch(_){ }
 }
 function loadTT(type, trackId){
-  try{ const s = localStorage.getItem(`tt:${type}:${trackId}`); return s?JSON.parse(s):null; }catch(_){ return null; }
+  try{ const s = (globalThis.DriftStorage||localStorage).getItem(`tt:${type}:${trackId}`); return s?JSON.parse(s):null; }catch(_){ return null; }
 }
 function startTTRecording(){
   ghostSamples=player?[{x:player.pos.x,y:player.pos.y,angle:player.angle}]:[];ghostAcc=0;
@@ -1177,12 +1192,14 @@ function makeTrackFromBoard(){
   return new Track(world);
 }
 
-function startWithTrack(tr, m='race'){
+function startWithTrack(tr, m='race', accountTicket=null){
+  if(globalThis.DriftAccount?.ready!==true){globalThis.DriftAccount?.show();return;}
+  if(globalThis.DriftAccount?.enabled&&m!=='online'&&!accountTicket){DriftAccount.prepare(tr?.downhill?'downhill':m,m==='challenge'?activeChallengeLevel:tr?.routeLevel||1,ticket=>startWithTrack(tr,m,ticket));return;}
   $('#titleScreen').classList.add('hidden');
   if(!tr){ alert('Pista inválida.'); return; }
   if(replayUI?.active)replayUI.close();
   mode = tr.downhill?'downhill':m;
-  TOTAL_LAPS=mode==='challenge'?1:5;careerRun=new DriftCareer.Run(mode,mode==='challenge'?activeChallengeLevel:tr.routeLevel||1);
+  TOTAL_LAPS=mode==='challenge'?1:5;careerRun=new DriftCareer.Run(mode,mode==='challenge'?activeChallengeLevel:tr.routeLevel||1);careerRun.accountTicket=accountTicket?.id;
   track = tr;
   player = new Car(track,'#2b72ff');
   try{ applyChosen?.(); }catch(_){ }
@@ -1491,6 +1508,7 @@ function advanceLap(prevIdx,currentIdx){
   }
 }
 function simulate(step){
+  if(globalThis.DriftAccount?.enabled&&!DriftAccount.ready)return;
   if(mode==='online'&&online?.racing){online.simulate(step);return;}
   if(state==='countdown'){
     countdownTimer+=step;
@@ -1522,6 +1540,7 @@ function simulate(step){
 }
 let lastScenePresentation=null,lastSceneFrame=0;
 function loop(ms){
+  if(globalThis.DriftAccount?.enabled&&!DriftAccount.ready){lastTS=ms/1000;requestAnimationFrame(loop);return;}
   try{
     const now=ms/1000;perfNow=now;dt=clamp(now-lastTS,0,.25);lastTS=now;
     if(['running','countdown'].includes(state)||(mode==='online'&&online?.racing)){
@@ -1719,17 +1738,18 @@ safeAddListener('btnChooseStart', 'click', ()=>{
 
 // Hard reset button
 safeAddListener('btnHardReset', 'click', ()=>{
+  if(globalThis.DriftAccount?.enabled){DriftAccount.show('profile');DriftAccount.status('El progreso de tu cuenta se conserva en el servidor.');return;}
   if(confirm('¿Borrar todos los tiempos, fantasmas, objetivos, créditos y piezas de campaña? Esta acción no se puede deshacer.')){
     try{
-      for(let i=localStorage.length-1; i>=0; i--){
-        const key = localStorage.key(i);
-        if(key && key.startsWith('tt:')) localStorage.removeItem(key);
+      for(let i=(globalThis.DriftStorage||localStorage).length-1; i>=0; i--){
+        const key = (globalThis.DriftStorage||localStorage).key(i);
+        if(key && key.startsWith('tt:')) (globalThis.DriftStorage||localStorage).removeItem(key);
       }
-      localStorage.removeItem(DriftCareer.KEY);
+      (globalThis.DriftStorage||localStorage).removeItem(DriftCareer.KEY);
       // limpiar progreso challenge también
-      for(let i=localStorage.length-1; i>=0; i--){
-        const key = localStorage.key(i);
-        if(key && key.startsWith('challenge:')) localStorage.removeItem(key);
+      for(let i=(globalThis.DriftStorage||localStorage).length-1; i>=0; i--){
+        const key = (globalThis.DriftStorage||localStorage).key(i);
+        if(key && key.startsWith('challenge:')) (globalThis.DriftStorage||localStorage).removeItem(key);
       }
       location.reload();
     }catch(_){}
@@ -1897,17 +1917,17 @@ let careerRun=null;
 function challengeRequiredPoints(level){return DriftCareer.objectives(level)[0].target;}
 function loadChallengeProgress(){unlockedLevel=DriftCareer.load().unlocked;}
 function saveChallengeProgress(){
-  try{ localStorage.setItem('challenge:unlocked', String(unlockedLevel)); }catch(_){}
+  try{ (globalThis.DriftStorage||localStorage).setItem('challenge:unlocked', String(unlockedLevel)); }catch(_){}
 }
 function saveChallengeBest(level, score){
   try{
     const key = `challenge:best:${level}`;
-    const prev = parseInt(localStorage.getItem(key)||'0', 10) || 0;
-    if(score > prev) localStorage.setItem(key, String(Math.floor(score)));
+    const prev = parseInt((globalThis.DriftStorage||localStorage).getItem(key)||'0', 10) || 0;
+    if(score > prev) (globalThis.DriftStorage||localStorage).setItem(key, String(Math.floor(score)));
   }catch(_){}
 }
 function getChallengeBest(level){
-  try{ return parseInt(localStorage.getItem(`challenge:best:${level}`)||'0',10)||0; }catch(_){ return 0; }
+  try{ return parseInt((globalThis.DriftStorage||localStorage).getItem(`challenge:best:${level}`)||'0',10)||0; }catch(_){ return 0; }
 }
 
 // Construye la grilla de pistas
@@ -1948,4 +1968,6 @@ function checkChallengeProgress(){
 <script src="js/replay-ui.js?v=1.0.0-prealpha.1"></script>
 <script src="js/online-config.js?v=1.0.0-prealpha.1"></script>
 <script src="js/online-client.js?v=1.0.0-prealpha.1"></script>
+<script src="js/account-game.js?v=1.1.0"></script>
 </body></html>
+

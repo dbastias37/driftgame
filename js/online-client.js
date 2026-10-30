@@ -23,6 +23,7 @@ online=(()=>{
   }
   function connectingUI(value){connecting=value;$id('onlineCreate').disabled=$id('onlineJoin').disabled=value;}
   function open(){
+    if(globalThis.DriftAccount?.enabled&&!DriftAccount.ready){DriftAccount.show();return;}
     hidePanels();mode='online';$id('onlineMenu').classList.remove('hidden');$id('onlineHud').classList.add('hidden');
     $id('onlineEntry').classList.toggle('hidden',!!room);$id('onlineLobby').classList.toggle('hidden',!room);$id('onlineResults').classList.add('hidden');$id('onlineStart').classList.add('hidden');
     renderChat();$id('onlineBack').textContent=room?'← Salir de la sala':'← Menú principal';status('');enabled=true;
@@ -52,7 +53,7 @@ online=(()=>{
   function request(type){
     const code=$id('onlineCodeInput').value.trim().toUpperCase();
     if(type==='join'&&!/^[A-Z2-9]{6}$/.test(code)){status('Escribe el código de 6 caracteres de la sala.');$id('onlineCodeInput').focus();return;}
-    const name=$id('onlineName').value.trim()||'Piloto';try{localStorage.setItem('drift:online:name',name);}catch{}
+    const name=globalThis.DriftAccount?.user?.name||$id('onlineName').value.trim()||'Piloto';try{localStorage.setItem('drift:online:name',name);}catch{}
     intent={type,name,code,skin:chosen.sprite,auto:selectedTx()==='auto'};enabled=true;retry=0;connectingUI(true);
     if(socket?.readyState===1){send(intent);intent=null;}else connect();
   }
@@ -191,3 +192,4 @@ online=(()=>{
   addEventListener('beforeunload',()=>socket?.close());
   return {open,showLobby,confirmCar,leave,recover,simulate,frame,shift:d=>gear=d,rivals:()=>visibleRivals,draw2D(g,cam){for(const car of visibleRivals){car.draw(g,cam);g.save();g.font='11px system-ui';g.textAlign='center';g.fillStyle='#e5ffff';g.fillText(car.name,car.pos.x*cam.s+cam.tx,car.pos.y*cam.s+cam.ty-35);g.restore();}},get inRoom(){return !!room;},get racing(){return raceActive;}};
 })();
+
