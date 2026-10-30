@@ -1,9 +1,11 @@
 import * as T from '../vendor/three.module.min.js';
 import {SoftwareRenderer} from './software-renderer.js';
 import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles} from './track-surface.js';
+import {buildMountain} from './mountain-scene.js';
 import {loadRX7,createRX7} from './rx7-model.js';
+import {loadYugo,createYugo} from './yugo-model.js';
 const TAU=Math.PI*2;
-const SKINS={blue:{color:0x276bdb,roof:1.28,length:4.2,spoiler:true},red:{color:0xd54232,roof:1.16,length:4.5,stripes:true},yellow:{color:0xe6b52b,roof:.95,length:4.45,spoiler:true},gray:{color:0x85979a,roof:1.35,length:3.85}};
+const SKINS={yugo:{color:0xce362b,roof:1.335,length:3.49},blue:{color:0x276bdb,roof:1.28,length:4.2,spoiler:true},red:{color:0xd54232,roof:1.16,length:4.5,stripes:true},yellow:{color:0xe6b52b,roof:.95,length:4.45,spoiler:true},gray:{color:0x85979a,roof:1.35,length:3.85}};
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 function rng(seed=812){return()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};}
 export function disposeGroup(group){
@@ -67,7 +69,7 @@ function curbTexture(){
 }
 function smokeTexture(){const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'#ffffffb0');gr.addColorStop(.3,'#ffffff65');gr.addColorStop(1,'#ffffff00');g.fillStyle=gr;g.fillRect(0,0,64,64);return new T.CanvasTexture(c);}
 export class DriftView3D{
-  constructor(canvas,{quality='auto',onFailure=()=>{},loadVehicle=loadRX7,onVehicleFailure=()=>{}}={}){
+  constructor(canvas,{quality='auto',onFailure=()=>{},loadVehicle=loadRX7,loadYugoVehicle=loadYugo,onVehicleFailure=()=>{}}={}){
     this.canvas=canvas;this.onFailure=onFailure;
     try{this.renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});}
     catch{this.renderer=new SoftwareRenderer(canvas);}
@@ -84,6 +86,7 @@ export class DriftView3D{
     this.trails=new T.Mesh(this.trailGeo,new T.MeshBasicMaterial({color:0x131b20,transparent:true,opacity:.42,depthWrite:false,side:T.DoubleSide}));this.trails.frustumCulled=false;this.trails.renderOrder=-40;this.scene.add(this.trails);
     this.key='blue';this.distance=1;this.resetCamera();this.setQuality(quality);
     this.assetReady=loadVehicle?loadVehicle().then(template=>{if(this.disposed)return;this.rx7Template=template;if(this.key==='yellow')this.setSkin('yellow',true);}).catch(error=>{if(!this.disposed)onVehicleFailure(error);}):Promise.resolve();
+    this.yugoReady=loadYugoVehicle?loadYugoVehicle().then(template=>{if(this.disposed)return;this.yugoTemplate=template;if(this.key==='yugo')this.setSkin('yugo',true);}).catch(error=>{if(!this.disposed)onVehicleFailure(error);}):Promise.resolve();
     this.contextLost=e=>{e.preventDefault();this.onFailure(new Error('WebGL context lost'));};canvas.addEventListener('webglcontextlost',this.contextLost);
   }
   setQuality(q){this.quality=q;this.low=this.software||q==='low'||(q==='auto'&&(innerWidth<700||navigator.hardwareConcurrency<=4));this.pixelRatio=Math.min(devicePixelRatio||1,this.low?1:1.75);this.renderer.setPixelRatio(this.pixelRatio);this.width=0;this.track=null;}
@@ -91,6 +94,7 @@ export class DriftView3D{
   zoomBy(m){this.distance=clamp(this.distance*m,.65,1.9);}
   build(track){
     disposeGroup(this.world);this.track=track;const r=rng(),b=track.bounds,cx=b.minX+b.w/2,cz=b.minY+b.h/2,half=track.roadHalf;
+    if(track.downhill){buildMountain(track,this.world,this.low);return;}
     const asphaltTexture=noiseTexture(),kerbTexture=curbTexture();
     asphaltTexture.anisotropy=Math.min(8,this.renderer.capabilities?.getMaxAnisotropy()||1);
     kerbTexture.anisotropy=asphaltTexture.anisotropy;
@@ -135,37 +139,49 @@ export class DriftView3D{
   setSkin(key,force=false){
     if(key===this.key&&!force)return;
     this.scene.remove(this.car.root,this.ghostCar.root);disposeGroup(this.car.root);disposeGroup(this.ghostCar.root);
-    this.car=key==='yellow'&&this.rx7Template?createRX7(this.rx7Template):createCar(key);
-    this.ghostCar=key==='yellow'&&this.rx7Template?createRX7(this.rx7Template,true):createCar(key,true);
+    this.car=key==='yugo'&&this.yugoTemplate?createYugo(this.yugoTemplate):key==='yellow'&&this.rx7Template?createRX7(this.rx7Template):createCar(key);
+    this.ghostCar=key==='yugo'&&this.yugoTemplate?createYugo(this.yugoTemplate,true):key==='yellow'&&this.rx7Template?createRX7(this.rx7Template,true):createCar(key,true);
     this.scene.add(this.car.root,this.ghostCar.root);this.key=key;
   }
   placeOnRoad(model,pose,skin,ride=null){
     const contact=ride||globalThis.DriftRoadContact.contacts(this.track,pose,skin);
-    model.body.position.y=contact.height;
+    const mountain=!!this.track.downhill;
+    model.root.position.y=mountain?contact.height:0;
+    model.body.position.y=mountain?0:contact.height;
     model.body.rotation.x=contact.roll;model.body.rotation.z=contact.pitch;
     for(const wheel of model.wheels){
       wheel.baseY??=wheel.steer.position.y;
       const support=contact.wheels.find(p=>(p.x>0)===wheel.front&&(p.z>0)===(wheel.steer.position.z>0));
-      wheel.steer.position.y=wheel.baseY+(support?.height||0);
+      wheel.steer.position.y=wheel.baseY+(support?.height||0)-(mountain?contact.height:0);
     }
     return contact;
   }
   effects(player){
     const particles=player.smoke||[],count=Math.min(particles.length,this.low?140:450),stride=Math.max(1,Math.floor(particles.length/Math.max(1,count)));
-    for(let i=0;i<count;i++){const p=particles[i*stride];this.smokePos[i*3]=p.x;this.smokePos[i*3+1]=.4+p.life*.75;this.smokePos[i*3+2]=p.y;}
+    for(let i=0;i<count;i++){const p=particles[i*stride];this.smokePos[i*3]=p.x;this.smokePos[i*3+1]=(this.track.downhill?this.track.surfaceHeight(p.x,p.y):0)+.4+p.life*.75;this.smokePos[i*3+2]=p.y;}
     this.smokeGeo.setDrawRange(0,count);this.smokeGeo.attributes.position.needsUpdate=true;
     const trails=player.tireTrails||[],start=Math.max(1,trails.length-(this.low?1200:3000));let v=0;
     for(let i=start;i<trails.length;i++){const a=trails[i-1],b=trails[i];if(Math.hypot(b.x1-a.x1,b.y1-a.y1)>3)continue;
       for(const side of [1,2]){const x=a['x'+side],z=a['y'+side],xx=b['x'+side],zz=b['y'+side],d=Math.hypot(xx-x,zz-z)||1,nx=-(zz-z)/d*.1,nz=(xx-x)/d*.1;
-        for(const p of [[x+nx,z+nz],[xx+nx,zz+nz],[x-nx,z-nz],[x-nx,z-nz],[xx+nx,zz+nz],[xx-nx,zz-nz]]){this.trailPos[v++]=p[0];this.trailPos[v++]=.065;this.trailPos[v++]=p[1];}
+        for(const p of [[x+nx,z+nz],[xx+nx,zz+nz],[x-nx,z-nz],[x-nx,z-nz],[xx+nx,zz+nz],[xx-nx,zz-nz]]){this.trailPos[v++]=p[0];this.trailPos[v++]=(this.track.downhill?this.track.surfaceHeight(p[0],p[1]):0)+.065;this.trailPos[v++]=p[1];}
       }
     }this.trailGeo.setDrawRange(0,v/3);this.trailGeo.attributes.position.needsUpdate=true;
   }
   render({track,player,ghost,skin='blue',dt=0,inMenu=false,time=0,camera='chase',motion='full'}){
     if(!track||!player)return;if(this.track!==track){this.build(track);this.resetCamera();}this.setSkin(skin);
     const w=innerWidth,h=innerHeight;if(this.width!==w||this.height!==h){this.width=w;this.height=h;this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();}
-    const p=player.pos,a=player.angle,speed=player.worldSpeed();this.car.root.position.set(p.x,0,p.y);this.car.root.rotation.y=-a;
+    const p=player.pos,a=player.angle,speed=player.worldSpeed();this.car.root.position.set(p.x,0,p.y);this.car.root.rotation.set(0,-a,0,'YXZ');
     const ride=this.placeOnRoad(this.car,player,skin,player.ride);
+    const descent=player.descent,falling=this.track.downhill&&descent?.motion==='falling';
+    if(this.track.downhill&&descent){
+      this.car.body.rotation.z=descent.pitch;
+      if(falling){
+        this.car.body.position.set(0,0,0);this.car.body.rotation.set(0,0,0);this.car.root.rotation.set(descent.roll,-a,descent.pitch,'YXZ');
+        const center=new T.Vector3(0,player.bodyDimensions?.cgHeight||.65,0).applyEuler(this.car.root.rotation);this.car.root.position.set(p.x-center.x,descent.y-center.y,p.y-center.z);
+        for(const wheel of this.car.wheels)wheel.steer.position.y=wheel.baseY;
+      }
+      this.car.root.traverse(o=>{if(o.isMesh&&o.material.transparent&&o.material.opacity===.23)o.visible=!falling;});
+    }
     this.car.body.rotation.x+=motion==='reduced'?0:clamp(player.omega*speed*.002,-.055,.055);
     for(const wheel of this.car.wheels){
       wheel.steer.rotation.y=wheel.front?-player.steerAngle:0;
@@ -183,6 +199,12 @@ export class DriftView3D{
     else if(camera==='aerial'){desired.set(p.x-22*this.distance,38*this.distance,p.y+24*this.distance);target.set(p.x+f.x*4,0,p.y+f.z*4);this.camera.fov=52;}
     else if(camera==='hood'){desired.set(p.x+Math.cos(a)*.65,1.35+ride.height,p.y+Math.sin(a)*.65);target.set(p.x+Math.cos(a)*30,1.1+ride.height,p.y+Math.sin(a)*30);this.camera.fov=76;}
     else{const d=(12.5+Math.min(speed,45)*.075)*this.distance;desired.set(p.x-f.x*d,6.5*this.distance,p.y-f.z*d);target.set(p.x+f.x*7,0.6,p.y+f.z*7);this.camera.fov=58+(motion==='reduced'?0:Math.min(speed*.12,7));}
+    if(this.track.downhill&&!inMenu){
+      const elevation=falling?descent.y:ride.height;
+      if(camera!=='hood'){desired.y+=elevation;target.y+=elevation;}
+      if(falling){desired.set(p.x-f.x*16,elevation+10,p.y-f.z*16);target.set(p.x,elevation,p.y);this.car.root.visible=true;}
+      desired.y=Math.max(desired.y,this.track.terrainHeight(desired.x,desired.z)+1.8);
+    }
     if(!this.cameraReady||inMenu||camera==='hood'||motion==='reduced')this.camera.position.copy(desired);else this.camera.position.lerp(desired,alpha);
     if(!this.look)this.look=target.clone();if(!this.cameraReady||inMenu||camera==='hood'||motion==='reduced')this.look.copy(target);else this.look.lerp(target,alpha);
     this.camera.lookAt(this.look);this.camera.updateProjectionMatrix();this.cameraReady=true;this.renderer.render(this.scene,this.camera);

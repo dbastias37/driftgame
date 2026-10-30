@@ -63,11 +63,11 @@ export class MenuPreview3D extends DriftView3D{
       if(this.track!==track)this.build(track);
       this.car.root.visible=false;this.ghostCar.root.visible=false;this.smoke.visible=false;this.trails.visible=false;
       if(spinning)this.droneAngle+=Math.min(dt,.1)*.055;
-      const b=track.bounds,cx=b.minX+b.w/2,cz=b.minY+b.h/2,radius=Math.hypot(b.w,b.h)/2+track.roadHalf+22;
+      const b=track.bounds,cx=b.minX+b.w/2,cz=b.minY+b.h/2,radius=Math.hypot(b.w,b.h,track.maxHeight||0)/2+track.roadHalf+22,centerY=track.downhill?track.maxHeight/2:0;
       this.camera.fov=43;
       const fov=2*Math.atan(Math.tan(this.camera.fov*Math.PI/360)*Math.min(1,this.camera.aspect)),distance=radius/Math.sin(fov/2)*1.06;
       this.camera.far=distance+radius*8+1500;this.scene.fog=new T.Fog(0x9fb4b6,distance+radius*1.5,distance+radius*6);
-      this.camera.position.set(cx+Math.cos(this.droneAngle)*distance*.45,distance*.89,cz+Math.sin(this.droneAngle)*distance*.45);this.camera.lookAt(cx,0,cz);this.camera.updateProjectionMatrix();
+      this.camera.position.set(cx+Math.cos(this.droneAngle)*distance*(track.downhill?.65:.45),centerY+distance*(track.downhill?.76:.89),cz+Math.sin(this.droneAngle)*distance*(track.downhill?.65:.45));this.camera.lookAt(cx,centerY,cz);this.camera.updateProjectionMatrix();
       this.renderer.render(this.scene,this.camera);
     }
   }

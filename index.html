@@ -2,7 +2,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Drift Racer — 2D + 3D</title>
-<meta name="application-version" content="0.3.4">
+<meta name="application-version" content="0.4.0">
 <meta name="theme-color" content="#111719">
 <style>
   :root{--bg:#0b0b0b;--ink:#e6f1ff;}
@@ -229,7 +229,7 @@
     <div class="row stat">
       <div class="pill">Vidas: <span id="lives">3</span></div>
       <div class="pill">Drift x<span id="multi">1</span></div>
-      <div class="pill">Vuelta: <span id="lap">1/5</span></div>
+      <div class="pill lap-pill">Vuelta: <span id="lap">1/5</span></div>
     </div>
   </div>
 
@@ -307,9 +307,9 @@
     <div class="preparation-shell garage-shell">
       <header class="preparation-header"><div><p class="eyebrow">02 / GARAJE</p><h2>Elige tu máquina</h2></div><span class="preparation-step">PISTA ✓ <b>AUTO</b> CARRERA</span></header>
       <div class="garage-layout">
-        <div class="garage-showcase"><div id="garageStage" class="preview-stage"><span class="preview-status">Preparando garaje 3D…</span></div><div class="preview-controls"><button id="carPrev" class="arrow" aria-label="Auto anterior">‹</button><span id="carCounter">01 / 04</span><button id="carNext" class="arrow" aria-label="Auto siguiente">›</button><button class="text-button spin-button" data-preview-spin>Ⅱ Pausar giro</button><small>ARRASTRA PARA GIRAR</small></div></div>
+        <div class="garage-showcase"><div id="garageStage" class="preview-stage"><span class="preview-status">Preparando garaje 3D…</span></div><div class="preview-controls"><button id="carPrev" class="arrow" aria-label="Auto anterior">‹</button><span id="carCounter">01 / 05</span><button id="carNext" class="arrow" aria-label="Auto siguiente">›</button><button class="text-button spin-button" data-preview-spin>Ⅱ Pausar giro</button><small>ARRASTRA PARA GIRAR</small></div></div>
         <aside class="garage-details">
-          <p class="eyebrow">LISTO PARA SALIR</p><h3 id="carName">—</h3><p id="carDesc">—</p>
+          <p class="eyebrow">LISTO PARA SALIR</p><h3 id="carName">—</h3><p id="carDesc">—</p><dl id="carSpecs" class="car-specs hidden"></dl>
           <div class="garage-stats">
             <div>Aceleración<div class="bar"><i id="barAcc"></i></div></div><div>Torque<div class="bar"><i id="barTrq"></i></div></div><div>Velocidad máxima<div class="bar"><i id="barVmax"></i></div></div><div>Peso<div class="bar"><i id="barMass"></i></div></div>
           </div>
@@ -324,7 +324,7 @@
 
   <div id="mainMenu">
     <div class="menu-card home-card">
-      <header class="home-top"><span class="brand-mark">DR /</span><span>DRIFT RACER</span><span class="edition">DUAL VIEW · 03</span></header>
+      <header class="home-top"><span class="brand-mark">DR /</span><span>DRIFT RACER</span><span class="edition">DUAL VIEW · 04</span></header>
       <div class="home-layout">
         <div class="home-copy">
           <p class="eyebrow">ENCUENTRA TU LÍNEA</p>
@@ -333,11 +333,12 @@
           <button id="btnQuickRace" class="hero-button">ENTRAR A LA PISTA <span>↗</span></button>
           <div class="home-modes">
             <button id="btnModeChallenge"><span class="mode-number">01</span><span>DESAFÍOS<small>20 circuitos. Supera tus límites.</small></span><span>↗</span></button>
-            <button id="btnModeTT"><span class="mode-number">02</span><span>CONTRARRELOJ<small>Tu mejor vuelta, tu próximo rival.</small></span><span>↗</span></button>
-            <button id="btnModeCreative"><span class="mode-number">03</span><span>CREA TU CIRCUITO<small>Dibuja. Corre. Comparte.</small></span><span>↗</span></button>
+            <button id="btnModeDownhill"><span class="mode-number">02</span><span>CERRO ABAJO<small>Sprint de montaña. Puntúa antes de la meta.</small></span><span>↘</span></button>
+              <button id="btnModeTT"><span class="mode-number">03</span><span>CONTRARRELOJ<small>Tu mejor vuelta, tu próximo rival.</small></span><span>↗</span></button>
+            <button id="btnModeCreative"><span class="mode-number">04</span><span>CREA TU CIRCUITO<small>Dibuja. Corre. Comparte.</small></span><span>↗</span></button>
           </div>
         </div>
-        <div class="home-track"><span class="track-label">CIRCUITO / 01</span><div class="hero-line"></div><div class="home-caption"><span>LA CURVA ES TUYA.</span><small>4 AUTOS · 20 DESAFÍOS · INFINITAS LÍNEAS</small></div></div>
+        <div class="home-track"><span class="track-label">CIRCUITO / 01</span><div class="hero-line"></div><div class="home-caption"><span>LA CURVA ES TUYA.</span><small>5 AUTOS · 20 DESAFÍOS · INFINITAS LÍNEAS</small></div></div>
       </div>
       <footer class="home-bottom"><div class="view-segment" aria-label="Vista de conducción"><button data-view="2d">2D CLÁSICA</button><button data-view="3d">3D INMERSIVA</button></div><button id="btnSettings" class="text-button">Configuración</button><button id="btnMenuHelp" class="text-button">Controles</button><button id="btnImport" class="text-button">Importar pista ↗</button></footer>
     </div>
@@ -346,7 +347,7 @@
   <div id="circuitMenu" class="modal hidden preparation">
     <div class="preparation-shell track-shell">
       <header class="preparation-header"><div><p class="eyebrow">01 / RECONOCIMIENTO</p><h2 id="circuitTitle">Selecciona circuito</h2></div><span class="preparation-step"><b>PISTA</b> AUTO CARRERA</span></header>
-      <div class="track-workspace"><div id="circuitList" class="challenge-list track-picker"></div><div class="track-showcase"><div id="circuitStage" class="preview-stage"><span class="preview-status">Preparando vista aérea 3D…</span></div><div class="track-preview-caption"><div><h3 id="circuitPreviewName">—</h3><p id="circuitPreviewDetails">—</p></div><button class="text-button spin-button" data-preview-spin>Ⅱ Pausar giro</button></div></div></div>
+      <div class="track-workspace"><div id="circuitList" class="challenge-list track-picker"></div><div class="track-showcase"><div id="circuitStage" class="preview-stage"><span class="preview-status">Preparando vista aérea 3D…</span></div><div class="track-preview-caption"><div><h3 id="circuitPreviewName">—</h3><p id="circuitPreviewDetails">—</p><p id="circuitPreviewGoal"></p></div><button class="text-button spin-button" data-preview-spin>Ⅱ Pausar giro</button></div></div></div>
       <footer class="preparation-footer"><button id="btnCircuitBack" class="gray">← Menú principal</button><button id="btnCircuitContinue">ELEGIR AUTO ↗</button></footer>
     </div>
   </div>
@@ -364,6 +365,7 @@
   <div id="importMenu" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="importTitle"><div class="card settings-card"><p class="eyebrow">DE PILOTO A PILOTO</p><h2 id="importTitle">Importar circuito</h2><label for="importCode">Código de pista TRK / TRK2</label><textarea id="importCode" placeholder="Pegar código de pista…" rows="4"></textarea><p id="importMessage" role="status"></p><div class="row"><button id="btnImportBack">Volver</button><button id="btnLoadCode">Cargar circuito</button></div></div></div>
   <div id="toast" role="status" aria-live="polite"></div>
   <div id="driveHud"><div class="drive-gear"><small>MARCHA</small><b id="driveGear">1</b><span id="driveTx">AUTO</span></div><div class="drive-speed"><b id="driveSpeed">000</b><small>KM/H</small><div class="rev-track"><i id="revFill"></i></div></div></div>
+  <div id="descentHud" class="hidden"><div class="descent-heading"><span>CERRO ABAJO · <b id="descentName">Mirador</b></span><strong id="descentPercent">0%</strong></div><div class="descent-progress"><i id="descentFill"></i></div><div class="descent-metrics"><span id="descentPoints">0 / 6500 pts</span><span id="descentGrade">—</span><span id="descentRemaining">—</span></div><p id="descentHint">Alcanza el objetivo y cruza la meta.</p></div>
   <div id="viewBadge">3D / SEGUIMIENTO</div>
   <div id="challengeMenu" class="hidden preparation">
     <div class="preparation-shell track-shell">
@@ -388,7 +390,7 @@
     </div>
   </div>
   <button id="btnTouchHUD">TÁCTIL</button>
-  <div id="gameActions"><button id="btnView" title="Cambiar vista (V)">Vista 3D</button><button id="btnCamera" title="Cambiar cámara 3D (C)">Cámara</button><button id="btnPause" aria-label="Pausar">Pausa</button><button id="btnHelp" aria-label="Ver controles">Ayuda</button></div>
+  <div id="gameActions"><button id="btnView" title="Cambiar vista (V)">Vista 3D</button><button id="btnCamera" title="Cambiar cámara 3D (C)">Cámara</button><button id="btnPause" aria-label="Pausar">Pausa</button><button id="btnHelp" aria-label="Ver controles">Ayuda</button><button id="btnRecover" title="Volver al último punto seguro (R)">Recuperar · R</button></div>
 
   <div id="pauseMenu" class="modal hidden">
     <div class="card">
@@ -417,6 +419,8 @@
 
 <script src="js/circuit-layouts.js"></script>
 <script src="js/road-contact.js"></script>
+<script src="js/downhill.js"></script>
+<script src="js/yugo-physics.js"></script>
 <script>
 "use strict";
 
@@ -460,7 +464,7 @@ addEventListener('keydown',e=>{
   if(k==='c') cycleCamera();
   if(k==='r'){
     if(state==='running'){ loseLifeAndRespawn(); }
-    else if(['finished','gameover','challengeWon'].includes(state)){ restartRaceSameTrack(); }
+    else if(['finished','gameover','challengeWon','downhillWon','downhillFailed'].includes(state)){ restartRaceSameTrack(); }
   }
   if(k==='g'){
     if(ghost) ghost.visible = !ghost.visible;
@@ -613,6 +617,7 @@ const CAR_IMG={
   red:    mkLocal('assets/cars/red.png'),
   yellow: mkLocal('assets/cars/yellow.png'),
   gray:   mkLocal('assets/cars/gray.png'),
+  yugo:   mkLocal('assets/cars/yugo.png'),
 };
 
 /* ===== Track ===== */
@@ -680,7 +685,7 @@ function updateTrackIdUI(tr){
   const row = document.getElementById('trackIdRow');
   const input = document.getElementById('trackId');
   if(!row || !input) return;
-  if(!tr){ row.style.display='none'; return; }
+  if(!tr||tr.downhill){ row.style.display='none'; return; }
   const code = encodeSharedTrack(tr);
   input.value = code;
   row.style.display = 'flex';
@@ -725,7 +730,7 @@ function hidePanels(){
   clearInputs();
   for(const id of ['mainMenu','challengeMenu','startPanel','carPanel','pauseMenu','overlay','help','settingsMenu','importMenu','circuitMenu'])document.getElementById(id).classList.add('hidden');
   document.getElementById('help').classList.remove('show');
-  state='menu';syncTouchHUD();document.body.classList.remove('in-game');document.getElementById('gameActions').classList.remove('show');
+  state='menu';syncTouchHUD();document.body.classList.remove('in-game','downhill');$('#descentHud').classList.add('hidden');document.getElementById('gameActions').classList.remove('show');
   document.getElementById('challengeBadge').classList.remove('show');
 }
 function showMainMenu(){hidePanels();mode='race';pendingTrackFactory=null;mainMenu.classList.remove('hidden');}
@@ -989,7 +994,7 @@ function drawGearPanel(g,gear,blink=false){
   }
   g.restore();
 }
-function drawMiniMap(g,track,car){ const compact=view.width<700||view.height<500,w=compact?78:152,h=w,pad=22,x=compact?view.width-w-10:pad,y=compact?135:view.height-h-34; g.save(); g.translate(x,y); g.globalAlpha=.92; fillCard(g,0,0,w,h,16); const b=track.bounds, s=Math.min((w-24)/b.w,(h-24)/b.h), ox=-(b.minX+b.w/2)*s+w/2, oy=-(b.minY+b.h/2)*s+h/2; g.save(); g.translate(ox,oy); g.scale(s,s); g.lineWidth=1/s; g.strokeStyle='rgba(255,255,255,.55)'; g.beginPath(); track.points.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); g.closePath(); g.stroke(); g.fillStyle='#ff2b2b'; g.beginPath(); g.arc(car.pos.x,car.pos.y,2.8/s,0,PI*2); g.fill(); g.restore(); g.restore(); }
+function drawMiniMap(g,track,car){ const compact=view.width<700||view.height<500,w=compact?78:152,h=w,pad=22,x=compact?view.width-w-10:pad,y=compact?135:view.height-h-34; g.save(); g.translate(x,y); g.globalAlpha=.92; fillCard(g,0,0,w,h,16); const b=track.bounds, s=Math.min((w-24)/b.w,(h-24)/b.h), ox=-(b.minX+b.w/2)*s+w/2, oy=-(b.minY+b.h/2)*s+h/2; g.save(); g.translate(ox,oy); g.scale(s,s); g.lineWidth=1/s; g.strokeStyle='rgba(255,255,255,.55)'; g.beginPath(); track.points.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); if(!track.open)g.closePath(); g.stroke(); g.fillStyle='#ff2b2b'; g.beginPath(); g.arc(car.pos.x,car.pos.y,2.8/s,0,PI*2); g.fill(); g.restore(); g.restore(); }
 function fillCard(g,x,y,w,h,r){ g.fillStyle='rgba(0,0,0,.45)'; g.strokeStyle='rgba(255,255,255,.12)'; g.lineWidth=2; roundedRect(g,x,y,w,h,r); g.fill(); g.stroke(); }
 
 /* ===== Pizarra ===== */
@@ -1104,11 +1109,12 @@ function makeTrackFromBoard(){
 
 function startWithTrack(tr, m='race'){
   if(!tr){ alert('Pista inválida.'); return; }
-  mode = m;
+  mode = tr.downhill?'downhill':m;
   track = tr;
   player = new Car(track,'#2b72ff');
   try{ applyChosen?.(); }catch(_){ }
-  DriftRoadContact.reset(track,player,chosen.sprite);
+  if(track.downhill)DriftDownhill.reset(track,player,chosen.sprite);else DriftRoadContact.reset(track,player,chosen.sprite);
+  document.body.classList.toggle('downhill',!!track.downhill);$('#descentHud').classList.toggle('hidden',!track.downhill);
   state='countdown'; countdown=3; countdownTimer=0;
   prevState='countdown';lastTS=performance.now()/1000;simAccumulator=0;wrongTimer=0;nextGate=1;
   challengeCompletedThisRun=false;clearInputs();
@@ -1125,7 +1131,7 @@ function startWithTrack(tr, m='race'){
   if(lapList) lapList.innerHTML='';
   camera.s=camera.targetS=(view.width<700||view.height<500)?Math.max(10,Math.min(18,view.height/30)):22;
   camera.tx=-player.pos.x*camera.s+view.width*.5;camera.ty=-player.pos.y*camera.s+view.height*.6;
-  currentTrackId = encodeTrack(track.points);
+  currentTrackId = track.downhill?'DOWNHILL.v1.'+track.routeLevel:encodeTrack(track.points);
   unlockControls();syncTouchHUD(); // Nueva sesión, mismos autos y datos guardados.
   sceneView?.resetCamera();
   saveRenderPrefs();
@@ -1163,6 +1169,7 @@ function showOverlay({title,msg}){
 }
 
 function gameOver(){
+  if(mode==='downhill'){state='gameover';showOverlay({title:'Se acabaron las vidas',msg:`Cerro abajo · ${Math.floor(player.score).toLocaleString('es-CL')} / ${track.goal.toLocaleString('es-CL')} pts.<br>R para volver a intentar desde la salida.`});return;}
   state='gameover';if(mode==='challenge')saveChallengeBest(activeChallengeLevel,player?.score||0);
   if(mode==='challenge' && !challengeCompletedThisRun){
     showOverlay({
@@ -1209,6 +1216,7 @@ if(typeof DEV!=='undefined' && DEV) document.addEventListener('dblclick',restart
 
 function respawnAtNearestCenter() {
   if (!track || !player) return;
+  if(track.downhill){DriftDownhill.reset(track,player,chosen.sprite,true);camera.shake(6,240);sceneView?.resetCamera();return;}
   const s = track.sample(player.pos.x, player.pos.y);
   player.pos.x = s.cx;
   player.pos.y = s.cy;
@@ -1300,6 +1308,8 @@ function drawWarnings(){
   if(warn) warn.style.display='none';
   if(hint) hint.style.display='none';
 
+  if(mode==='downhill'){if(player.descent?.motion==='falling'&&warn){warn.style.display='block';warn.textContent=`Caída · R para recuperar · Reaparición en ${Math.max(0,4.5-player.descent.fallTime).toFixed(1)} s`;}return;}
+
   // Fuera de pista: 12s para volver
   const OFF_LIMIT = 12;
   if(player.offTimer && player.offTimer>0){
@@ -1370,7 +1380,8 @@ function updateHUD(dt){
     if(elLives) elLives.textContent = player.lives;
     if(elMulti) elMulti.textContent = player.mult.toFixed(0);
     if(elLap){
-      if(mode==='tt') elLap.textContent = `${lap}`;
+      if(mode==='downhill')elLap.textContent=Math.min(100,Math.floor(player.descent.s/track.finishS*100))+'%';
+      else if(mode==='tt') elLap.textContent = `${lap}`;
       else elLap.textContent = `${Math.min(lap,TOTAL_LAPS)}/${TOTAL_LAPS}`;
     }
   }
@@ -1402,6 +1413,11 @@ function simulate(step){
   }
   if(state!=='running'||!player||!track)return;
   raceTime+=step;lapTime+=step;
+  if(mode==='downhill'){
+    const outcome=DriftDownhill.step(track,player,step,input(),chosen.sprite);
+    if(outcome.finished)finishDownhill();else if(outcome.respawn)loseLifeAndRespawn();
+    updateDescentHUD();return;
+  }
   const prevIdx=track.sample(player.pos.x,player.pos.y).i;
   const ret=player.update(step,input(),track);
   DriftRoadContact.update(track,player,step,chosen.sprite);
@@ -1499,6 +1515,7 @@ const CAR_DATA = [
   {name:'Mazda RX-7 FD · RedSuns', sprite:'yellow',         color:'#ffd93b', stripes:0, desc:'Muy veloz y estable.',                   stats:{acc:.90,trq:.82,vmax:1.00,mass:.92}, tune:{engine:1.25,lat:1.05,hand:.90,drag:.95,mass:.92}},
   {name:'Toiota Corona 1990', sprite:'gray',    color:'#9aa0a6', stripes:0, desc:'City car ágil y noble.',                 stats:{acc:.60,trq:.55,vmax:.70,mass:.95}, tune:{engine:.95,lat:1.00,hand:1.00,drag:1.05,mass:.95}},
 ];
+CAR_DATA.push({name:'Yugo Koral 55',sprite:'yugo',color:'#ce362b',stripes:0,desc:'Ligero, corto y de reacciones ágiles. 55 CV · 790 kg · punta ≈145 km/h en llano. Drift adaptado al juego.',stats:{acc:.42,trq:.35,vmax:145/198,mass:790/1380},tune:{engine:1,lat:1,hand:1,drag:1,mass:1},specs:{power:'55 CV',torque:'77,4 Nm',speed:'≈145 km/h',mass:'790 kg'}});
 let carIdx=0, chosen=CAR_DATA[0];
 
 const carPanel=document.getElementById('carPanel');
@@ -1509,7 +1526,8 @@ function drawCarPreview(){ if(typeof syncPreparationPreview==='function')syncPre
 
 function updatePanel(){
   chosen=CAR_DATA[carIdx];
-  $('#carCounter').textContent=String(carIdx+1).padStart(2,'0')+' / 04';
+  $('#carCounter').textContent=String(carIdx+1).padStart(2,'0')+' / '+String(CAR_DATA.length).padStart(2,'0');
+  const specs=$('#carSpecs');specs.classList.toggle('hidden',!chosen.specs);specs.innerHTML=chosen.specs?`<div><dt>Potencia</dt><dd>${chosen.specs.power}</dd></div><div><dt>Par</dt><dd>${chosen.specs.torque}</dd></div><div><dt>Punta en llano</dt><dd>${chosen.specs.speed}</dd></div><div><dt>Masa</dt><dd>${chosen.specs.mass}</dd></div>`:'';
   drawCarPreview();
   const carNameEl = document.getElementById('carName');
   const carDescEl = document.getElementById('carDesc');
@@ -1533,7 +1551,7 @@ function openCarPanel(){
   hidePanels();
   carPanel?.classList.remove('hidden');
   $('#garageTrackName').textContent=preparedTrack.layout?.name||'Circuito personalizado';
-  $('#sessionBrief').textContent=mode==='challenge'?`Desafío ${activeChallengeLevel} · ${activeChallengeGoal.toLocaleString('es-CL')} puntos · 3 vidas`:mode==='tt'?'Contrarreloj · Vueltas libres · Fantasma de tu récord':'Carrera · 5 vueltas · 3 vidas';
+  $('#sessionBrief').textContent=mode==='downhill'?`Sprint · ${preparedTrack.goal.toLocaleString('es-CL')} pts antes de la meta · 3 vidas · R: último punto seguro`:mode==='challenge'?`Desafío ${activeChallengeLevel} · ${activeChallengeGoal.toLocaleString('es-CL')} puntos · 3 vidas`:mode==='tt'?'Contrarreloj · Vueltas libres · Fantasma de tu récord':'Carrera · 5 vueltas · 3 vidas';
   updatePanel();
 }
 addEventListener('resize',()=>{if(carPanel && !carPanel.classList.contains('hidden'))drawCarPreview();});
@@ -1565,6 +1583,7 @@ function applyChosen(){
   player.dragLinear      *= chosen.tune.drag;
   player.mass            *= chosen.tune.mass;
 
+  if(chosen.sprite==='yugo')DriftYugo.configure(player);
   player.auto = (selectedTx() === 'auto');
 }
 

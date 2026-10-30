@@ -45,7 +45,7 @@ export class SoftwareRenderer{
       if(!geo.boundingSphere)geo.computeBoundingSphere();sphere.copy(geo.boundingSphere).applyMatrix4(matrix);if(!frustum.intersectsSphere(sphere))return;
       view.multiplyMatrices(camera.matrixWorldInverse,matrix);normalMatrix.getNormalMatrix(matrix);
       const count=Math.min(idx?idx.count:pos.count,geo.drawRange.count),start=geo.drawRange.start||0,col=material.color.clone().convertLinearToSRGB();
-      const uv=geo.attributes.uv;let tex=null;if(material.map?.image?.getContext){if(!this.textureCache.has(material.map)){const image=material.map.image;this.textureCache.set(material.map,{w:image.width,h:image.height,data:image.getContext('2d').getImageData(0,0,image.width,image.height).data,repeat:material.map.wrapS===T.RepeatWrapping,flipY:material.map.flipY!==false});}tex=this.textureCache.get(material.map);}
+      const vertexColor=material.vertexColors?geo.attributes.color:null;const uv=geo.attributes.uv;let tex=null;if(material.map?.image?.getContext){if(!this.textureCache.has(material.map)){const image=material.map.image;this.textureCache.set(material.map,{w:image.width,h:image.height,data:image.getContext('2d').getImageData(0,0,image.width,image.height).data,repeat:material.map.wrapS===T.RepeatWrapping,flipY:material.map.flipY!==false});}tex=this.textureCache.get(material.map);}
       const vertices=Array.from({length:pos.count},(_,i)=>{const v=new T.Vector3().fromBufferAttribute(pos,i).applyMatrix4(view);v.u=uv?uv.getX(i):0;v.v=uv?uv.getY(i):0;return v;});
       for(let k=start;k<start+count;k+=3){
         const vi=[0,1,2].map(n=>idx?idx.getX(k+n):k+n);if(vi.some(i=>i>=pos.count))break;
@@ -56,7 +56,8 @@ export class SoftwareRenderer{
         const area=(pts[1].x-pts[0].x)*(pts[2].y-pts[0].y)-(pts[1].y-pts[0].y)*(pts[2].x-pts[0].x);if(material.side!==T.DoubleSide&&area>0)continue;
         let light=material.isMeshBasicMaterial?1:.72+.32*Math.max(0,normal.dot(this.sun));if(material.emissive)light+=material.emissiveIntensity*.12;
         const fog=scene.fog?clamp((depth-scene.fog.near)/(scene.fog.far-scene.fog.near),0,1):0,fogColor=scene.fog?.color.clone().convertLinearToSRGB();
-        const rgb=[col.r,col.g,col.b].map((c,i)=>Math.round(255*(clamp(c*light,0,1)*(1-fog)+(fogColor?[fogColor.r,fogColor.g,fogColor.b][i]:0)*fog)));
+        const shade=vertexColor?new T.Color().setRGB(...['getX','getY','getZ'].map(method=>vi.reduce((sum,i)=>sum+vertexColor[method](i),0)/3)).multiply(material.color).convertLinearToSRGB():col;
+        const rgb=[shade.r,shade.g,shade.b].map((c,i)=>Math.round(255*(clamp(c*light,0,1)*(1-fog)+(fogColor?[fogColor.r,fogColor.g,fogColor.b][i]:0)*fog)));
         for(let i=1;i<pts.length-1;i++){const args=[pts[0],pts[i],pts[i+1],rgb,material.opacity,material.depthWrite,tex,material.alphaTest||0];if(material.transparent)transparent.push({args,depth});else raster(...args);}
       }
     };
