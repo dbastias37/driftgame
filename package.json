@@ -1,6 +1,6 @@
 {
   "name": "drift-racer",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "private": true,
   "scripts": {
     "test": "node --test tests/simulation.cjs tests/rendering.cjs tests/track-surface.cjs tests/circuit-layouts.cjs tests/road-contact.cjs tests/rx7-model.cjs tests/menu-flow.cjs tests/menu-preview.cjs tests/downhill.cjs tests/yugo.cjs tests/fujiwara-model.cjs tests/optimization.cjs tests/regression.cjs tests/online.cjs",

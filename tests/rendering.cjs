@@ -17,3 +17,12 @@ test('actual 3D scene, all car models, cameras and geometry leave the simulation
   const oldWorld=view.world.children[0];view.render({track:{...track,roadHalf:8},player,dt:1/60});assert.ok(!view.world.children.includes(oldWorld));
   view.dispose();console.log('Software renderer frame ms (median):',Math.round(timings.sort((a,b)=>a-b)[6]));
 });
+test('two online rivals use separate models, steering and wheel motion; leaving disposes them',async()=>{
+  global.document={createElement:canvas};global.innerWidth=800;global.innerHeight=560;global.devicePixelRatio=1;
+  const {DriftView3D}=await import('../js/view3d.js'),{createTrack,createCar}=await import('../server/engine.js');
+  const oldError=console.error;console.error=()=>{};let view;try{view=new DriftView3D(canvas(),{loadVehicle:null,loadYugoVehicle:null,loadFujiwaraVehicle:null});}finally{console.error=oldError;}
+  const track=createTrack(1),player=createCar(track,'blue',true,0),rivals=['red','gray'].map((skin,i)=>Object.assign(createCar(track,skin,true,i+1),{id:String(i),skin,name:'Rival '+i}));rivals[0].steerAngle=.2;rivals[0].vel.x=12;
+  const before=JSON.stringify(rivals);view.render({track,player,rivals,dt:1/60});assert.equal(view.rivalModels.size,2);assert.equal(JSON.stringify(rivals),before);
+  const model=view.rivalModels.get('0');assert.notEqual(model.root,view.car.root);assert.equal(model.wheels.find(w=>w.front).steer.rotation.y,-.2);assert.notEqual(model.wheels[0].spin.rotation.z,0);
+  const oldRoots=[...view.rivalModels.values()].map(m=>m.root);view.render({track,player,rivals:[],dt:1/60});assert.equal(view.rivalModels.size,0);assert(oldRoots.every(root=>!view.scene.children.includes(root)));view.dispose();
+});

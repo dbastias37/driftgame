@@ -33,7 +33,7 @@ test('arranque, cuatro autos, menú de 20 desafíos y marcha manual',async()=>{
   assert.equal(new Set(names).size,4);await p.check('input[value="manual"]');await p.click('#btnChooseStart');
   const initial=await p.evaluate(()=>({sprites:Object.values(CAR_IMG).every(i=>i.naturalWidth>0),state,auto:player.auto}));
   assert.deepEqual(initial,{sprites:true,state:'countdown',auto:false});
-  await p.keyboard.press('Shift');assert.equal(await p.evaluate(()=>player.gear),2);
+  await p.keyboard.press('e');assert.equal(await p.evaluate(()=>player.gear),2);
   await p.keyboard.press('Control');assert.equal(await p.evaluate(()=>player.gear),1);
   assert.deepEqual(errors,[]);await c.close();
 });

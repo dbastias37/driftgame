@@ -74,15 +74,15 @@ Referencias de implementación: [agrupación de geometría](https://threejs.org/
 
 | Acción | Tecla |
 | --- | --- |
-| Acelerar / frenar | W / S o flechas arriba / abajo |
+| Acelerar / frenar | W o ↑ / Espacio, S o ↓ |
 | Girar | A / D o flechas izquierda / derecha |
-| Freno de mano | Espacio |
-| Subir / bajar marcha manual | Shift / Control |
+| Derrape / freno de mano | Shift |
+| Subir / bajar marcha manual | E / Q (Control también baja) |
 | **Alternar 2D / 3D** | **V** o botón Vista |
 | **Cámara 3D: seguimiento / aérea / capó** | **C** o botón Cámara |
 | Zoom de vista | Rueda del mouse |
 | Pausar / reanudar o volver de un menú | Esc |
-| Volver a la pista, gastando una vida | R durante la carrera |
+| Volver a la pista | R (cuesta una vida en individual; último control en online) |
 | Reintentar al terminar | R |
 | Mostrar / ocultar fantasma | G |
 | Ayuda | H |
@@ -161,3 +161,11 @@ Pruebas de núcleo y geometría ejecutadas. Revisión de interfaz en navegador: 
 ## Render
 
 Sitio estático, directorio público `.` y sin paso de compilación. Mantener el servicio y dominio existentes. Publicar también `js/`, `css/`, `vendor/` y `assets/`; los `.js` deben servirse como JavaScript y no redirigirse a HTML.
+
+## Online beta (0.6.0)
+
+En el menú, abre **Online beta**. Escribe tu nombre y crea una sala, o entra con el código de 6 caracteres de un amigo. El anfitrión elige uno de los 20 circuitos, 1–5 vueltas y el ambiente. Cada piloto elige su auto en el garage y marca **Estoy listo**. Con 2 o 3 pilotos listos, el anfitrión inicia la salida sincronizada.
+
+Las carreras son sin contacto. Se conserva la física de los seis autos y el cambio de vista 2D/3D. Shift activa la función de derrape que antes estaba en Espacio; Espacio frena. E/Q cambian marchas manuales. R vuelve al último control validado. Abrir el menú online no detiene la carrera. El servidor valida las vueltas y muestra la clasificación; al terminar, el anfitrión puede preparar otra carrera.
+
+La conexión usa WebSocket seguro, predicción local e interpolación de los dos rivales. Si se interrumpe, la plaza se conserva 20 segundos. Las salas beta viven en memoria y se pierden al reiniciar el servidor. En el plan gratuito de Render, la primera conexión puede tardar mientras despierta. Ver [operación y protocolo](server/README.md).

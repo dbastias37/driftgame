@@ -221,6 +221,7 @@
 .daytime-control{display:block;max-width:330px;margin:14px 0 8px;font-size:12px;color:#aebbbb}.daytime-control output{float:right;color:#ff7544}.daytime-control input{display:block;width:100%;margin:10px 0;accent-color:#ff7544;cursor:pointer}.daytime-ends{display:flex;justify-content:space-between;font-size:10px;color:#829597}
 </style>
 <link rel="stylesheet" href="css/experience.css">
+<link rel="stylesheet" href="css/online.css?v=0.6.0">
 </head>
 <body>
   <div id="ui">
@@ -236,9 +237,9 @@
 
   <div id="help" role="dialog" aria-label="Controles">
     <b>Controles</b><br>
-    A/← Izq · D/→ Der · W/↑ Acelerar · S/↓ Freno · Espacio Mano<br>
+    A/← Izq · D/→ Der · W/↑ Acelerar · Espacio / S / ↓ Freno · Shift Derrape<br>
     R Volver a la pista (cuesta 1 vida) · Al terminar: reintentar<br>
-    Escape Pausa · Shift/Ctrl Cambiar marcha · G Fantasma · H Ayuda<br>V Cambiar 2D / 3D · C Cámara 3D<br>
+    Escape Menú · E / Q Subir / bajar marcha · G Fantasma · H Ayuda<br>V Cambiar 2D / 3D · C Cámara 3D<br>
     Rueda = Zoom (arriba acerca, abajo aleja)<br><button id="btnHelpClose" class="text-button">Cerrar ayuda</button>
   </div>
 
@@ -325,7 +326,7 @@
 
   <div id="mainMenu">
     <div class="menu-card home-card">
-      <header class="home-top"><span class="brand-mark">DR /</span><span>DRIFT RACER</span><span class="edition">DUAL VIEW · 05</span></header>
+      <header class="home-top"><span class="brand-mark">DR /</span><span>DRIFT RACER</span><span class="edition">ONLINE BETA · 06</span></header>
       <div class="home-layout">
         <div class="home-copy">
           <p class="eyebrow">ENCUENTRA TU LÍNEA</p>
@@ -333,6 +334,7 @@
           <p class="home-intro">El mismo asfalto. Otra perspectiva.<br>Domina el derrape en 2D y 3D.</p>
           <button id="btnQuickRace" class="hero-button">ENTRAR A LA PISTA <span>↗</span></button>
           <div class="home-modes">
+            <button id="btnModeOnline" class="online-entry"><span class="mode-number">●</span><span>ONLINE <small>Crea una sala. Hasta 3 pilotos.</small></span><span class="beta-tag">BETA ↗</span></button>
             <button id="btnModeChallenge"><span class="mode-number">01</span><span>DESAFÍOS<small>20 circuitos. Supera tus límites.</small></span><span>↗</span></button>
             <button id="btnModeDownhill"><span class="mode-number">02</span><span>CERRO ABAJO<small>Sprint de montaña. Puntúa antes de la meta.</small></span><span>↘</span></button>
               <button id="btnModeTT"><span class="mode-number">03</span><span>CONTRARRELOJ<small>Tu mejor vuelta, tu próximo rival.</small></span><span>↗</span></button>
@@ -352,6 +354,33 @@
       <footer class="preparation-footer"><button id="btnCircuitBack" class="gray">← Menú principal</button><button id="btnCircuitContinue">ELEGIR AUTO ↗</button></footer>
     </div>
   </div>
+  <div id="onlineMenu" class="modal hidden preparation" role="dialog" aria-modal="true" aria-labelledby="onlineTitle">
+    <div class="preparation-shell online-shell">
+      <header class="preparation-header"><div><p class="eyebrow">MULTIJUGADOR / BETA</p><h2 id="onlineTitle">Comparte la línea.</h2></div><span class="online-connection" id="onlineConnection">HASTA 3 PILOTOS</span></header>
+      <div class="online-body">
+        <div id="onlineEntry">
+          <p class="online-intro">Una pista. Tres pilotos. Tu mejor vuelta.<br><span>Carreras sin contacto, con los autos y el manejo de siempre.</span></p>
+          <label class="online-label" for="onlineName">TU NOMBRE</label><input id="onlineName" maxlength="18" autocomplete="nickname" placeholder="Piloto" value="Piloto">
+          <div class="online-entry-grid">
+            <section><span class="eyebrow">01 / ORGANIZA</span><h3>Abre tu sala</h3><p>Elige el circuito e invita con un código.</p><button id="onlineCreate">CREAR SALA ↗</button></section>
+            <section><span class="eyebrow">02 / ÚNETE</span><h3>Te están esperando</h3><label class="online-label" for="onlineCodeInput">CÓDIGO DE 6 CARACTERES</label><div class="online-join"><input id="onlineCodeInput" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC234"><button id="onlineJoin">ENTRAR ↗</button></div></section>
+          </div>
+          <p class="online-note">Beta · 2–3 jugadores · Sin cuenta · El primer acceso puede tardar mientras despierta el servidor.</p>
+        </div>
+        <div id="onlineLobby" class="hidden">
+          <div class="online-room-heading"><div><span class="online-label">CÓDIGO DE SALA</span><div class="online-code-row"><strong id="onlineRoomCode">—</strong><button id="onlineCopy" class="text-button">Copiar código ↗</button></div></div><div class="online-room-caption"><b id="onlineRoomCount">1 / 3 pilotos</b><span>Sin contacto · Vista 2D / 3D</span></div></div>
+          <div id="onlinePlayers" class="online-players"></div>
+          <div class="online-race-config"><canvas id="onlineTrackMap" width="360" height="180" aria-label="Trazado del circuito"></canvas><div><label class="online-label" for="onlineTrack">CIRCUITO</label><select id="onlineTrack"></select><div class="online-options"><label for="onlineLaps">Vueltas<select id="onlineLaps"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></label><label for="onlineDay">Ambiente<select id="onlineDay"><option value="0">Día</option><option value="0.5">Atardecer</option><option value="1">Noche</option></select></label></div></div><div class="online-garage-action"><span class="eyebrow">TU AUTO, AL FINAL</span><button id="onlineGarage" class="gray">ELEGIR EN EL GARAJE ↗</button><button id="onlineReady">ESTOY LISTO ✓</button></div></div>
+          <p id="onlineLobbyHint" class="online-note">Comparte el código y espera a tus amigos.</p>
+        </div>
+        <div id="onlineResults" class="hidden"><p class="eyebrow">BANDERA A CUADROS</p><h3>Así cruzaron la meta.</h3><ol id="onlineResultList"></ol><p class="online-note">La sala sigue abierta. El anfitrión puede preparar otra carrera.</p><button id="onlineRematch">OTRA CARRERA ↗</button></div>
+        <p id="onlineStatus" role="status" aria-live="polite"></p>
+      </div>
+      <footer class="preparation-footer"><button id="onlineBack" class="gray">← Menú principal</button><button id="onlineStart" class="hidden">INICIAR CARRERA ↗</button></footer>
+    </div>
+  </div>
+  <aside id="onlineHud" class="hidden" aria-label="Clasificación online"><div><b>ONLINE <span>BETA</span></b><span id="onlinePing">Conectando…</span></div><ol id="onlineStandings"></ol><p id="onlineRaceNotice"></p></aside>
+
   <div id="settingsMenu" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
     <div class="card settings-card"><p class="eyebrow">A TU MEDIDA</p><h2 id="settingsTitle">Configuración</h2>
       <div class="setting"><span>Vista al conducir</span><div class="view-segment"><button data-view="2d">2D clásica</button><button data-view="3d">3D inmersiva</button></div></div>
@@ -387,7 +416,7 @@
     <div class="touch-wrap" id="gasZone">
       <button id="btnGas">GAS</button>
       <button id="btnBrake" class="pedal">FRENO</button>
-      <button id="btnHand" class="pedal">MANO</button>
+      <button id="btnHand" class="pedal">DRIFT</button>
       <div id="touchGears"><button id="btnGearDown" aria-label="Bajar marcha">−</button><button id="btnGearUp" aria-label="Subir marcha">+</button></div>
     </div>
   </div>
@@ -396,8 +425,8 @@
 
   <div id="pauseMenu" class="modal hidden">
     <div class="card">
-      <p class="eyebrow">TÓMATE UN RESPIRO</p><h2>Pausa</h2>
-      <p>W / flechas: conducir · S: frenar · Espacio: freno de mano · Shift / Ctrl: marchas</p>
+      <p class="eyebrow">TÓMATE UN RESPIRO</p><h2 id="pauseTitle">Pausa</h2>
+      <p>W / flechas: conducir · Espacio / S: frenar · Shift: derrape · E / Q: marchas</p>
       <div class="row" style="gap:8px;margin-top:10px">
         <button id="btnResume">Seguir</button>
         <button id="btnRestart">Reiniciar</button>
@@ -419,10 +448,11 @@
   
   <audio id="radio" preload="none" crossorigin="anonymous"></audio>
 
-<script src="js/circuit-layouts.js?v=0.5.1"></script>
-<script src="js/road-contact.js?v=0.5.1"></script>
-<script src="js/downhill.js?v=0.5.1"></script>
-<script src="js/yugo-physics.js?v=0.5.1"></script>
+<script src="js/circuit-layouts.js?v=0.6.0"></script>
+<script src="js/road-contact.js?v=0.6.0"></script>
+<script src="js/downhill.js?v=0.6.0"></script>
+<script src="js/yugo-physics.js?v=0.6.0"></script>
+<script src="js/online-rules.js?v=0.6.0"></script>
 <script>
 "use strict";
 
@@ -455,6 +485,7 @@ addEventListener('resize',resize);
 resize();
 
 /* ===== Entrada ===== */
+let online=null;
 const keys=new Set();
 addEventListener('keydown',e=>{
   const k=e.key.toLowerCase();
@@ -464,6 +495,7 @@ addEventListener('keydown',e=>{
   if(k==='h') toggleHelp();
   if(k==='v') setRenderView(renderPrefs.view==='3d'?'2d':'3d');
   if(k==='c') cycleCamera();
+  if(k==='r'&&mode==='online'){online?.recover();return;}
   if(k==='r'){
     if(state==='running'){ loseLifeAndRespawn(); }
     else if(['finished','gameover','challengeWon','downhillWon','downhillFailed'].includes(state)){ restartRaceSameTrack(); }
@@ -480,20 +512,21 @@ addEventListener('keydown',e=>{
     else if(state==='running'||state==='countdown'){ setPaused(true); }
     else if(!$('#carPanel').classList.contains('hidden')) $('#btnCarBack').click();
     else if(!$('#circuitMenu').classList.contains('hidden')) $('#btnCircuitBack').click();
+    else if(mode==='online'&&online?.inRoom) online.showLobby();
     else if(state==='menu') showMainMenu();
   }
   if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) e.preventDefault();
 });
 addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 
-// Manual gears: Shift up / Ctrl down
+// Manual gears: E up / Q down. Shift retains the former Space drift action.
 addEventListener('keydown',e=>{
   const k=e.key.toLowerCase();
   if(e.repeat || e.target.closest?.('input,textarea,select,[contenteditable]')) return;
   if(!player || (state!=='running'&&state!=='countdown')) return;
   if(player.auto) return; // en auto, no responder a cambios manuales
-  if(k==='shift'){ e.preventDefault(); shiftManual(1); }
-  else if(k==='control'){ e.preventDefault(); shiftManual(-1); }
+  if(k==='e'){ e.preventDefault(); shiftManual(1); }
+  else if(k==='q'||k==='control'){ e.preventDefault(); shiftManual(-1); }
 });
 
 let pendingTrackFactory = null;
@@ -521,6 +554,7 @@ const btnOvChooseTrack = document.getElementById('btnOvChooseTrack');
 
 let pausedState='menu';
 function setPaused(v){
+  $('#pauseTitle').textContent=mode==='online'?'La carrera sigue en línea':'Pausa';
   if(v){
     if(state==='running' || state==='countdown'){
       pausedState = state;
@@ -546,6 +580,7 @@ addEventListener('blur', ()=>{clearInputs();setPaused(true);});
 document.addEventListener('visibilitychange', ()=>{if(document.hidden){clearInputs();setPaused(true);}});
 function shiftManual(direction){
   if(!player || player.auto || !['running','countdown'].includes(state)) return;
+  if(mode==='online'){online?.shift(direction);return;}
   player.gear=clamp(player.gear+direction,1,player.gearCount);player.shiftTimer=player.shiftDur;
 }
 
@@ -731,14 +766,15 @@ function safeAddListener(id, event, handler) {
 
 function hidePanels(){
   clearInputs();
-  for(const id of ['mainMenu','challengeMenu','startPanel','carPanel','pauseMenu','overlay','help','settingsMenu','importMenu','circuitMenu'])document.getElementById(id).classList.add('hidden');
+  for(const id of ['mainMenu','challengeMenu','startPanel','carPanel','pauseMenu','overlay','help','settingsMenu','importMenu','circuitMenu','onlineMenu'])document.getElementById(id).classList.add('hidden');
   document.getElementById('help').classList.remove('show');
   state='menu';syncTouchHUD();document.body.classList.remove('in-game','downhill');$('#descentHud').classList.add('hidden');document.getElementById('gameActions').classList.remove('show');
   document.getElementById('challengeBadge').classList.remove('show');
 }
-function showMainMenu(){hidePanels();mode='race';pendingTrackFactory=null;mainMenu.classList.remove('hidden');}
+function showMainMenu(){online?.leave();$('#onlineHud')?.classList.add('hidden');hidePanels();mode='race';pendingTrackFactory=null;mainMenu.classList.remove('hidden');}
 function showBoard(){hidePanels();garageOrigin='board';pendingTrackFactory=null;mode='race';startPanel.classList.remove('hidden');resizeBoard();}
 function showTrackSelection(){
+  if(mode==='online'&&online?.inRoom){online.showLobby();return;}
   if(mode==='challenge'){garageOrigin='challenge';hidePanels();challengeMenu.classList.remove('hidden');buildChallengeMenu();}
   else{showCircuitMenu();}
 }
@@ -997,7 +1033,7 @@ function drawGearPanel(g,gear,blink=false){
   }
   g.restore();
 }
-function drawMiniMap(g,track,car){ const compact=view.width<700||view.height<500,w=compact?78:152,h=w,pad=22,x=compact?view.width-w-10:pad,y=compact?135:view.height-h-34; g.save(); g.translate(x,y); g.globalAlpha=.92; fillCard(g,0,0,w,h,16); const b=track.bounds, s=Math.min((w-24)/b.w,(h-24)/b.h), ox=-(b.minX+b.w/2)*s+w/2, oy=-(b.minY+b.h/2)*s+h/2; g.save(); g.translate(ox,oy); g.scale(s,s); g.lineWidth=1/s; g.strokeStyle='rgba(255,255,255,.55)'; g.beginPath(); track.points.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); if(!track.open)g.closePath(); g.stroke(); g.fillStyle='#ff2b2b'; g.beginPath(); g.arc(car.pos.x,car.pos.y,2.8/s,0,PI*2); g.fill(); g.restore(); g.restore(); }
+function drawMiniMap(g,track,car){ const compact=view.width<700||view.height<500,w=compact?78:152,h=w,pad=22,x=compact?view.width-w-10:pad,y=compact?135:view.height-h-34; g.save(); g.translate(x,y); g.globalAlpha=.92; fillCard(g,0,0,w,h,16); const b=track.bounds, s=Math.min((w-24)/b.w,(h-24)/b.h), ox=-(b.minX+b.w/2)*s+w/2, oy=-(b.minY+b.h/2)*s+h/2; g.save(); g.translate(ox,oy); g.scale(s,s); g.lineWidth=1/s; g.strokeStyle='rgba(255,255,255,.55)'; g.beginPath(); track.points.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); if(!track.open)g.closePath(); g.stroke(); if(mode==='online')for(const rival of online?.rivals()||[]){g.fillStyle='#79e4d0';g.beginPath();g.arc(rival.pos.x,rival.pos.y,2.5/s,0,PI*2);g.fill();} g.fillStyle='#ff2b2b'; g.beginPath(); g.arc(car.pos.x,car.pos.y,2.8/s,0,PI*2); g.fill(); g.restore(); g.restore(); }
 function fillCard(g,x,y,w,h,r){ g.fillStyle='rgba(0,0,0,.45)'; g.strokeStyle='rgba(255,255,255,.12)'; g.lineWidth=2; roundedRect(g,x,y,w,h,r); g.fill(); g.stroke(); }
 
 /* ===== Pizarra ===== */
@@ -1206,7 +1242,8 @@ function restart(){
   unlockControls(); // NUEVO: liberar controles al volver
 }
 
-function restartRaceSameTrack(){ 
+function restartRaceSameTrack(){
+  if(mode==='online'){online?.recover();return;}
   if(track) startWithTrack(track, mode); 
 }
 
@@ -1231,6 +1268,7 @@ function respawnAtNearestCenter() {
 }
 
 function loseLifeAndRespawn() {
+  if(mode==='online'){online?.recover();return;}
   if(!player || state!=='running' || player.lives<=0)return;
   player.lives=Math.max(0,player.lives-1);
   if(elLives) elLives.textContent = player.lives;
@@ -1251,8 +1289,8 @@ function input(){
   const kLeft  = keys.has('a') || keys.has('arrowleft');
   const kRight = keys.has('d') || keys.has('arrowright');
   const kAccel = keys.has('w') || keys.has('arrowup');
-  const kBrake = keys.has('s') || keys.has('arrowdown');
-  const kHand  = keys.has(' ');
+  const kBrake = keys.has(' ') || keys.has('s') || keys.has('arrowdown');
+  const kHand  = keys.has('shift');
 
   const hudOn = touchHUD?.classList.contains('show');
   const steerAxisTouch = (hudOn) ? touch.steerAxis : 0;
@@ -1408,6 +1446,7 @@ function advanceLap(prevIdx,currentIdx){
   }
 }
 function simulate(step){
+  if(mode==='online'&&online?.racing){online.simulate(step);return;}
   if(state==='countdown'){
     countdownTimer+=step;
     while(countdownTimer>=1 && countdown>0){countdown--;countdownTimer-=1;}
@@ -1438,10 +1477,11 @@ let lastScenePresentation=null,lastSceneFrame=0;
 function loop(ms){
   try{
     const now=ms/1000;perfNow=now;dt=clamp(now-lastTS,0,.25);lastTS=now;
-    if(['running','countdown'].includes(state)){
+    if(['running','countdown'].includes(state)||(mode==='online'&&online?.racing)){
       simAccumulator+=dt;
       while(simAccumulator>=SIM_DT){simulate(SIM_DT);simAccumulator-=SIM_DT;}
     }else{simAccumulator=0;}
+    online?.frame(dt);
     if(player) camera.update(player);
     else camera.update({pos:{x:0,y:0}});
     
@@ -1454,11 +1494,11 @@ function loop(ms){
     $('#scene3d').style.visibility=draw3D?'visible':'hidden';
     if(draw3D){
       const revision=[state,inSession,track,player,chosen.sprite,renderPrefs.camera,renderPrefs.motion,renderPrefs.timeOfDay,renderPrefs.quality,innerWidth,innerHeight,sceneView.distance,sceneView.car,sceneView.rx7Template,sceneView.yugoTemplate,sceneView.fujiwaraTemplate];
-      const changed=!lastScenePresentation||revision.some((v,i)=>v!==lastScenePresentation[i]),active=['running','countdown'].includes(state);
+      const changed=!lastScenePresentation||revision.some((v,i)=>v!==lastScenePresentation[i]),active=['running','countdown'].includes(state)||(mode==='online'&&online?.racing);
       const shouldRender=inSession?(active||changed):(changed||now-lastSceneFrame>=1/(sceneView.software?10:30));
       if(shouldRender){
         const presentationDt=inSession?(active?dt:0):Math.min(.1,now-lastSceneFrame);lastScenePresentation=revision;lastSceneFrame=now;
-        try{sceneView.render({track:inSession?track:attractTrack,player:inSession?player:attractCar,ghost:inSession?ghost:null,skin:chosen.sprite,dt:presentationDt,inMenu:!inSession,time:now,camera:renderPrefs.camera,motion:renderPrefs.motion,timeOfDay:renderPrefs.timeOfDay});}
+        try{sceneView.render({track:inSession?track:attractTrack,player:inSession?player:attractCar,ghost:inSession?ghost:null,rivals:mode==='online'?online?.rivals():[],skin:chosen.sprite,dt:presentationDt,inMenu:!inSession,time:now,camera:renderPrefs.camera,motion:renderPrefs.motion,timeOfDay:renderPrefs.timeOfDay});}
         catch(error){fail3D(error);}
       }
     }else if(!preparing){
@@ -1466,8 +1506,10 @@ function loop(ms){
       ctx.fillStyle=bgPat;ctx.fillRect(0,0,view.width,view.height);
       if(inSession && track) track.draw(ctx,camera);
       if(inSession && ghost) ghost.draw(ctx,camera);
+      if(inSession && mode==='online')online?.draw2D(ctx,camera);
       if(inSession && player) player.draw(ctx,camera);
     }
+    if(draw3D&&inSession&&mode==='online'){ctx.save();ctx.font='600 12px system-ui';ctx.textAlign='center';for(const label of sceneView.rivalLabels||[]){ctx.fillStyle='#101c22d9';const width=ctx.measureText(label.name).width+16;ctx.fillRect(label.x-width/2,label.y-15,width,22);ctx.fillStyle='#e8f5ef';ctx.fillText(label.name,label.x,label.y);}ctx.restore();}
     if(inSession && player){drawMiniMap(ctx,track,player);updateDriveHUD();}
     if(state==='countdown'){ 
       ctx.save(); 
@@ -1563,7 +1605,9 @@ function openCarPanel(){
   hidePanels();
   carPanel?.classList.remove('hidden');
   $('#garageTrackName').textContent=preparedTrack.layout?.name||'Circuito personalizado';
-  $('#sessionBrief').textContent=mode==='downhill'?`Sprint · ${preparedTrack.goal.toLocaleString('es-CL')} pts antes de la meta · 3 vidas · R: último punto seguro`:mode==='challenge'?`Desafío ${activeChallengeLevel} · ${activeChallengeGoal.toLocaleString('es-CL')} puntos · 3 vidas`:mode==='tt'?'Contrarreloj · Vueltas libres · Fantasma de tu récord':'Carrera · 5 vueltas · 3 vidas';
+  $('#btnChooseStart').textContent=mode==='online'?'CONFIRMAR AUTO ✓':'A LA PISTA ↗';
+  $('#btnCarBack').textContent=mode==='online'?'← Volver a la sala':'← Volver a la pista';
+  $('#sessionBrief').textContent=mode==='online'?'Online beta · Hasta 3 pilotos · Confirma tu auto y marca listo en la sala':mode==='downhill'?`Sprint · ${preparedTrack.goal.toLocaleString('es-CL')} pts antes de la meta · 3 vidas · R: último punto seguro`:mode==='challenge'?`Desafío ${activeChallengeLevel} · ${activeChallengeGoal.toLocaleString('es-CL')} puntos · 3 vidas`:mode==='tt'?'Contrarreloj · Vueltas libres · Fantasma de tu récord':'Carrera · 5 vueltas · 3 vidas';
   updatePanel();
 }
 addEventListener('resize',()=>{if(carPanel && !carPanel.classList.contains('hidden'))drawCarPreview();});
@@ -1608,6 +1652,7 @@ safeAddListener('btnStart', 'click', ()=>{
 });
 
 safeAddListener('btnChooseStart', 'click', ()=>{
+  if(mode==='online'&&online?.inRoom){online.confirmCar();return;}
   const tr = preparedTrack;
   if(!tr){ alert('Pista inválida. Dibuja o elige otra.'); return; }
   updateTrackIdUI(tr);
@@ -1857,5 +1902,7 @@ function checkChallengeProgress(){
 }
 
 </script>
-<script src="js/experience.js?v=0.5.1"></script>
+<script src="js/experience.js?v=0.6.0"></script>
+<script src="js/online-config.js?v=0.6.0"></script>
+<script src="js/online-client.js?v=0.6.0"></script>
 </body></html>
