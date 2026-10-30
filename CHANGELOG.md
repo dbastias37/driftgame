@@ -1,3 +1,11 @@
+# 0.5.0 — Pista limpia, render por zonas y día/noche
+
+- Terreno de montaña recortado alrededor de la pista, sin superficies sobrepuestas. Planos de cámara ajustados en el reconocimiento aéreo.
+- Mallas agrupadas por material/zona, vegetación por sectores y descarte tras niebla opaca. Cumbre pasa de 3.198 a 601 mallas de escenario antes de añadir farolas. Caché de alturas de huellas, búsqueda de terreno lejano reducida y resolución automática gradual.
+- Barra persistente día/atardecer/noche; cielo, ambiente y niebla sincronizados. Farolas con halos y luz sobre el terreno; faros transparentes con una sola luz dinámica, sin sombras ni postprocesado.
+- Fujiwara integrado como sexto auto con texturas originales, cuatro ruedas, apoyo independiente, huellas y humo alineados. Mecánicas de los cinco anteriores intactas.
+- 59 pruebas de física, menús, geometría, modelos y render. Revisión visual en navegador compatible; rendimiento GPU/dispositivo real pendiente.
+
 # 0.4.0 — Cerro abajo y Yugo Koral 55
 
 - Nuevo challenge de sprint: tres descensos abiertos con altura real, horquillas, ladera, barrancos, guardarraíles parciales, salida y meta separadas.

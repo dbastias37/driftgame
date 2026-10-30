@@ -26,7 +26,7 @@ Referencia geométrica suministrada: `yugo_koral_55.glb`, 18.043.124 bytes y 478
 
 Resultado: `yugo-koral-55-pixel.glb` (84.904 bytes; 764 triángulos), con atlas incrustado y copia editable `yugo-pixel-atlas.png`. Cinco mallas, una textura y un material `KHR_materials_unlit`; filtro NEAREST en ambos ejes, como en las referencias del usuario. La adaptación del Yugo y su atlas se distribuyen con atribución bajo CC BY 4.0.
 
-Referencia de estilo adicional, no incluida en la descarga del juego: `ae86_low_poly_fujiwara_tofu_shop_version_2.glb` de **Pudim Abestado**, https://sketchfab.com/3d-models/ae86-low-poly-fujiwara-tofu-shop-version-2-9ec1194ab2d1441bb8f8bae8d83fb204 (licencia declarada SKETCHFAB Standard). Se estudiaron su material sin iluminación, atlas de 512×512, paleta de vidrio, detalles en píxeles y complejidad de malla. No se redistribuye el AE86 ni se copian sus texturas; las licencias del AE86/RX-7 no se amplían.
+Referencia de estilo adicional: el AE86 Fujiwara de **Pudim Abestado**, integrado como auto independiente desde 0.5.0. El atlas del Yugo sigue siendo original y no copia las texturas del AE86; las licencias de los tres modelos son independientes.
 
 Autoría reproducible (offline; Node y `@napi-rs/canvas`, sin dependencia adicional en el juego):
 
@@ -36,3 +36,13 @@ node tools/render-yugo.mjs
 ```
 
 `YUGO_CANVAS_MODULE` puede apuntar al módulo Canvas ya instalado. El primer comando construye la malla y el atlas; el segundo produce el sprite con el renderer real del juego y admite un directorio de salida para vistas frontal, lateral y trasera. `tools/export-yugo-source.mjs <original.glb> <parts.json>` permite volver a medir la geometría de referencia; la malla de juego se retopologiza con paneles compartidos para evitar las grietas de la reducción automática de piezas CAD independientes.
+
+
+# Toyota AE86 Fujiwara — modelo suministrado
+
+- Archivo: `ae86-fujiwara.glb`, original `ae86_low_poly_fujiwara_tofu_shop_version_2.glb` del usuario, 145.452 bytes.
+- Autor: **Pudim Abestado** — https://sketchfab.com/pudimabestado
+- Fuente: https://sketchfab.com/3d-models/ae86-low-poly-fujiwara-tofu-shop-version-2-9ec1194ab2d1441bb8f8bae8d83fb204
+- Licencia declarada en los metadatos: **SKETCHFAB Standard** — https://sketchfab.com/licenses. Se conservan los créditos; la integración no amplía ni concede derechos adicionales sobre el modelo.
+- Adaptación runtime `js/fujiwara-model.js`: frente +X, largo visual 4,215 m; 1.349 triángulos, carrocería agrupada en una malla y cuatro ruedas independientes con pivotes centrados. Se conservan los dos atlas originales, UV, filtro de píxel y material base sin PBR. La iluminación de noche aplica un tinte ambiental sin modificar el atlas.
+- Sprite superior producido por `tools/render-fujiwara.mjs` desde el mismo modelo. `FUJIWARA_CANVAS_MODULE` permite indicar la instalación local de `@napi-rs/canvas`.

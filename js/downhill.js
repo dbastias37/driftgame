@@ -40,11 +40,13 @@ globalThis.DriftDownhill=(()=>{
       for(const a of local){const t=clamp(((x-a.p.x)*a.dx+(y-a.p.y)*a.dy)/a.l2,0,1),cx=a.p.x+t*a.dx,cy=a.p.y+t*a.dy,d2=(x-cx)**2+(y-cy)**2;if(d2<best){best=d2;const tang=Math.atan2(a.dy,a.dx);result={cx,cy,tang,dist:((a.i===0&&t===0)||(a.i===segments.length-1&&t===1))?Math.sign((x-cx)*Math.sin(tang)-(y-cy)*Math.cos(tang)||1)*Math.sqrt(d2):(x-cx)*Math.sin(tang)-(y-cy)*Math.cos(tang),distance:Math.sqrt(d2),i:a.i,s:mix(a.p.s,a.q.s,t),h:mix(a.p.h,a.q.h,t),grade:(a.p.h-a.q.h)/Math.sqrt(a.l2)};}}
       return result;
     };
+    tr.sampleNearby=(x,y)=>grid.has(Math.floor(x/cell)+','+Math.floor(y/cell))?tr.sample(x,y):null;
     tr.nearestIndex=(x,y)=>tr.sample(x,y).i;
     tr.atDistance=distance=>{const i=clamp(Math.floor(distance/total*count),0,count-1),a=points[i],b=points[i+1],t=clamp((distance-a.s)/(b.s-a.s),0,1);return{x:mix(a.x,b.x,t),y:mix(a.y,b.y,t),h:mix(a.h,b.h,t),i,s:mix(a.s,b.s,t)};};
     tr.baseHeight=(x,y)=>tr.maxHeight-drop*(y/points.at(-1).y)+9*Math.sin(x*.009)*Math.sin(y*.008)-12;
     tr.terrainHeight=(x,y)=>{
-      const q=tr.sample(x,y),d=q.distance,road=q.h;
+      const q=tr.sampleNearby(x,y);if(!q)return tr.baseHeight(x,y);
+      const d=q.distance,road=q.h;
       // Cut a flat shoulder into the hillside, then blend back into the valley.
       const t=smooth(clamp((d-tr.roadHalf-1.3)/30,0,1));
       return mix(road,tr.baseHeight(x,y),t);

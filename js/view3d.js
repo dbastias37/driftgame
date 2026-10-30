@@ -4,8 +4,11 @@ import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles} from './tr
 import {buildMountain} from './mountain-scene.js';
 import {loadRX7,createRX7} from './rx7-model.js';
 import {loadYugo,createYugo} from './yugo-model.js';
+import {loadFujiwara,createFujiwara} from './fujiwara-model.js';
+import {batchWorld,updateWorldVisibility} from './world-optimization.js';
+import {Atmosphere,buildStreetLights} from './atmosphere.js';
 const TAU=Math.PI*2;
-const SKINS={yugo:{color:0xce362b,roof:1.335,length:3.49},blue:{color:0x276bdb,roof:1.28,length:4.2,spoiler:true},red:{color:0xd54232,roof:1.16,length:4.5,stripes:true},yellow:{color:0xe6b52b,roof:.95,length:4.45,spoiler:true},gray:{color:0x85979a,roof:1.35,length:3.85}};
+const SKINS={fujiwara:{color:0xe8e8da,roof:1.335,length:4.215},yugo:{color:0xce362b,roof:1.335,length:3.49},blue:{color:0x276bdb,roof:1.28,length:4.2,spoiler:true},red:{color:0xd54232,roof:1.16,length:4.5,stripes:true},yellow:{color:0xe6b52b,roof:.95,length:4.45,spoiler:true},gray:{color:0x85979a,roof:1.35,length:3.85}};
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 function rng(seed=812){return()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};}
 export function disposeGroup(group){
@@ -69,14 +72,14 @@ function curbTexture(){
 }
 function smokeTexture(){const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'#ffffffb0');gr.addColorStop(.3,'#ffffff65');gr.addColorStop(1,'#ffffff00');g.fillStyle=gr;g.fillRect(0,0,64,64);return new T.CanvasTexture(c);}
 export class DriftView3D{
-  constructor(canvas,{quality='auto',onFailure=()=>{},loadVehicle=loadRX7,loadYugoVehicle=loadYugo,onVehicleFailure=()=>{}}={}){
+  constructor(canvas,{quality='auto',onFailure=()=>{},loadVehicle=loadRX7,loadYugoVehicle=loadYugo,loadFujiwaraVehicle=loadFujiwara,onVehicleFailure=()=>{}}={}){
     this.canvas=canvas;this.onFailure=onFailure;
     try{this.renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});}
     catch{this.renderer=new SoftwareRenderer(canvas);}
     this.software=!!this.renderer.software;
     this.renderer.outputColorSpace=T.SRGBColorSpace;this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.25;
     this.scene=new T.Scene();this.scene.background=new T.Color(0x9fb4b6);this.scene.fog=new T.Fog(0x9fb4b6,160,700);
-    this.scene.add(new T.HemisphereLight(0xc7e4ee,0x56634a,2.3));const sun=new T.DirectionalLight(0xffe4c6,3.1);sun.position.set(-110,180,60);this.scene.add(sun);
+    const hemi=new T.HemisphereLight(0xc7e4ee,0x56634a,2.3);this.scene.add(hemi);const sun=new T.DirectionalLight(0xffe4c6,3.1);sun.position.set(-110,180,60);this.scene.add(sun);this.atmosphere=new Atmosphere(this.scene,hemi,sun);this.atmosphere.set(0);
     this.camera=new T.PerspectiveCamera(58,1,.5,1200);this.world=new T.Group();this.scene.add(this.world);
     this.car=createCar('blue');this.scene.add(this.car.root);this.ghostCar=createCar('blue',true);this.scene.add(this.ghostCar.root);
     this.smokeTexture=smokeTexture();this.smokeGeo=new T.BufferGeometry();this.smokePos=new Float32Array(450*3);this.smokeGeo.setAttribute('position',new T.BufferAttribute(this.smokePos,3).setUsage(T.DynamicDrawUsage));
@@ -87,14 +90,24 @@ export class DriftView3D{
     this.key='blue';this.distance=1;this.resetCamera();this.setQuality(quality);
     this.assetReady=loadVehicle?loadVehicle().then(template=>{if(this.disposed)return;this.rx7Template=template;if(this.key==='yellow')this.setSkin('yellow',true);}).catch(error=>{if(!this.disposed)onVehicleFailure(error);}):Promise.resolve();
     this.yugoReady=loadYugoVehicle?loadYugoVehicle().then(template=>{if(this.disposed)return;this.yugoTemplate=template;if(this.key==='yugo')this.setSkin('yugo',true);}).catch(error=>{if(!this.disposed)onVehicleFailure(error);}):Promise.resolve();
+    this.fujiwaraReady=loadFujiwaraVehicle?loadFujiwaraVehicle().then(template=>{if(this.disposed)return;this.fujiwaraTemplate=template;if(this.key==='fujiwara')this.setSkin('fujiwara',true);}).catch(error=>{if(!this.disposed)onVehicleFailure(error);}):Promise.resolve();
+    this.trailCache=new WeakMap();
     this.contextLost=e=>{e.preventDefault();this.onFailure(new Error('WebGL context lost'));};canvas.addEventListener('webglcontextlost',this.contextLost);
   }
-  setQuality(q){this.quality=q;this.low=this.software||q==='low'||(q==='auto'&&(innerWidth<700||navigator.hardwareConcurrency<=4));this.pixelRatio=Math.min(devicePixelRatio||1,this.low?1:1.75);this.renderer.setPixelRatio(this.pixelRatio);this.width=0;this.track=null;}
+  setQuality(q){this.quality=q;this.low=this.software||q==='low'||(q==='auto'&&(innerWidth<700||navigator.hardwareConcurrency<=4));this.pixelRatio=Math.min(devicePixelRatio||1,this.low?1:1.5);this.renderer.setPixelRatio(this.pixelRatio);this.width=0;this.track=null;}
+  setTimeOfDay(value){this.atmosphere.set(value);}
+  adaptResolution(dt){
+    if(this.quality!=='auto'||this.software||!(dt>0&&dt<.2))return;
+    this.frameAverage=(this.frameAverage||1/60)*.97+dt*.03;this.qualityTime=(this.qualityTime||0)+dt;
+    if(this.qualityTime<3)return;this.qualityTime=0;
+    const next=clamp(this.pixelRatio+(this.frameAverage>1/42?-.15:this.frameAverage<1/58?.1:0),.65,Math.min(devicePixelRatio||1,this.low?1:1.5));
+    if(Math.abs(next-this.pixelRatio)>.01){this.pixelRatio=next;this.renderer.setPixelRatio(next);this.width=0;}
+  }
   resetCamera(){this.cameraReady=false;}
   zoomBy(m){this.distance=clamp(this.distance*m,.65,1.9);}
   build(track){
-    disposeGroup(this.world);this.track=track;const r=rng(),b=track.bounds,cx=b.minX+b.w/2,cz=b.minY+b.h/2,half=track.roadHalf;
-    if(track.downhill){buildMountain(track,this.world,this.low);return;}
+    disposeGroup(this.world);this.trailCache=new WeakMap();this.track=track;const r=rng(),b=track.bounds,cx=b.minX+b.w/2,cz=b.minY+b.h/2,half=track.roadHalf;
+    if(track.downhill){buildMountain(track,this.world,this.low);this.streetLights=buildStreetLights(track,this.world);batchWorld(this.world);return;}
     const asphaltTexture=noiseTexture(),kerbTexture=curbTexture();
     asphaltTexture.anisotropy=Math.min(8,this.renderer.capabilities?.getMaxAnisotropy()||1);
     kerbTexture.anisotropy=asphaltTexture.anisotropy;
@@ -134,13 +147,13 @@ export class DriftView3D{
     for(const p of layout.markers){o.position.set(p.x,.6,p.z);o.rotation.set(0,0,0);o.scale.set(1,1,1);o.updateMatrix();posts.setMatrixAt(pi++,o.matrix);}posts.count=pi;this.world.add(posts);
     const pit=new T.Group();pit.position.set(start.x,0,start.y);pit.rotation.y=-a;this.world.add(pit);
     for(let i=0;i<4;i++){const z=half+16;box(pit,mat(i%2?0x647774:0x334c56),-13+i*9,2.5,z,7,5,8);box(pit,metal,-13+i*9,5.15,z,7.6,.35,8.6);box(pit,mat(0x17282f),-13+i*9,2,z-4.02,5,3.6,.06);box(pit,orange,-13+i*9,4.3,z-4.05,5,.2,.06);}
-    for(let i=0;i<Math.min(8,layout.markers.length);i++){const p=layout.markers[Math.floor(i/8*layout.markers.length)],x=p.x,z=p.z;box(this.world,metal,x,6,z,.15,12,.15);box(this.world,white,x,12,z,2,.35,.6);}
+    this.streetLights=buildStreetLights(track,this.world);batchWorld(this.world);
   }
   setSkin(key,force=false){
     if(key===this.key&&!force)return;
     this.scene.remove(this.car.root,this.ghostCar.root);disposeGroup(this.car.root);disposeGroup(this.ghostCar.root);
-    this.car=key==='yugo'&&this.yugoTemplate?createYugo(this.yugoTemplate):key==='yellow'&&this.rx7Template?createRX7(this.rx7Template):createCar(key);
-    this.ghostCar=key==='yugo'&&this.yugoTemplate?createYugo(this.yugoTemplate,true):key==='yellow'&&this.rx7Template?createRX7(this.rx7Template,true):createCar(key,true);
+    this.car=key==='fujiwara'&&this.fujiwaraTemplate?createFujiwara(this.fujiwaraTemplate):key==='yugo'&&this.yugoTemplate?createYugo(this.yugoTemplate):key==='yellow'&&this.rx7Template?createRX7(this.rx7Template):createCar(key);
+    this.ghostCar=key==='fujiwara'&&this.fujiwaraTemplate?createFujiwara(this.fujiwaraTemplate,true):key==='yugo'&&this.yugoTemplate?createYugo(this.yugoTemplate,true):key==='yellow'&&this.rx7Template?createRX7(this.rx7Template,true):createCar(key,true);
     this.scene.add(this.car.root,this.ghostCar.root);this.key=key;
   }
   placeOnRoad(model,pose,skin,ride=null){
@@ -161,14 +174,24 @@ export class DriftView3D{
     for(let i=0;i<count;i++){const p=particles[i*stride];this.smokePos[i*3]=p.x;this.smokePos[i*3+1]=(this.track.downhill?this.track.surfaceHeight(p.x,p.y):0)+.4+p.life*.75;this.smokePos[i*3+2]=p.y;}
     this.smokeGeo.setDrawRange(0,count);this.smokeGeo.attributes.position.needsUpdate=true;
     const trails=player.tireTrails||[],start=Math.max(1,trails.length-(this.low?1200:3000));let v=0;
-    for(let i=start;i<trails.length;i++){const a=trails[i-1],b=trails[i];if(Math.hypot(b.x1-a.x1,b.y1-a.y1)>3)continue;
-      for(const side of [1,2]){const x=a['x'+side],z=a['y'+side],xx=b['x'+side],zz=b['y'+side],d=Math.hypot(xx-x,zz-z)||1,nx=-(zz-z)/d*.1,nz=(xx-x)/d*.1;
-        for(const p of [[x+nx,z+nz],[xx+nx,zz+nz],[x-nx,z-nz],[x-nx,z-nz],[xx+nx,zz+nz],[xx-nx,zz-nz]]){this.trailPos[v++]=p[0];this.trailPos[v++]=(this.track.downhill?this.track.surfaceHeight(p[0],p[1]):0)+.065;this.trailPos[v++]=p[1];}
+    const range=this.drawFar||400;
+    for(let i=start;i<trails.length;i++){
+      const a=trails[i-1],b=trails[i];if(Math.hypot(b.x1-a.x1,b.y1-a.y1)>3||Math.hypot(b.x1-player.pos.x,b.y1-player.pos.y)>range)continue;
+      let data=this.trailCache.get(b);
+      if(!data){
+        data=new Float32Array(36);let j=0;
+        for(const side of [1,2]){const x=a['x'+side],z=a['y'+side],xx=b['x'+side],zz=b['y'+side],d=Math.hypot(xx-x,zz-z)||1,nx=-(zz-z)/d*.1,nz=(xx-x)/d*.1;
+          for(const p of [[x+nx,z+nz],[xx+nx,zz+nz],[x-nx,z-nz],[x-nx,z-nz],[xx+nx,zz+nz],[xx-nx,zz-nz]]){data[j++]=p[0];data[j++]=(this.track.downhill?this.track.surfaceHeight(p[0],p[1]):0)+.065;data[j++]=p[1];}
+        }
+        this.trailCache.set(b,data);
       }
-    }this.trailGeo.setDrawRange(0,v/3);this.trailGeo.attributes.position.needsUpdate=true;
+      this.trailPos.set(data,v);v+=data.length;
+    }
+    this.trailGeo.setDrawRange(0,v/3);this.trailGeo.attributes.position.needsUpdate=true;
   }
-  render({track,player,ghost,skin='blue',dt=0,inMenu=false,time=0,camera='chase',motion='full'}){
-    if(!track||!player)return;if(this.track!==track){this.build(track);this.resetCamera();}this.setSkin(skin);
+
+  render({track,player,ghost,skin='blue',dt=0,inMenu=false,time=0,camera='chase',motion='full',timeOfDay=0}){
+    if(!track||!player)return;this.setTimeOfDay(timeOfDay);this.adaptResolution(dt);if(this.track!==track){this.build(track);this.resetCamera();}this.setSkin(skin);
     const w=innerWidth,h=innerHeight;if(this.width!==w||this.height!==h){this.width=w;this.height=h;this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();}
     const p=player.pos,a=player.angle,speed=player.worldSpeed();this.car.root.position.set(p.x,0,p.y);this.car.root.rotation.set(0,-a,0,'YXZ');
     const ride=this.placeOnRoad(this.car,player,skin,player.ride);
@@ -191,6 +214,7 @@ export class DriftView3D{
     if(this.car.tailmat)this.car.tailmat.emissiveIntensity=player.handbrake?2:.65;
     this.ghostCar.root.visible=!!(ghost?.visible&&ghost.data?.samples?.length&&!inMenu);
     if(this.ghostCar.root.visible){const gp=ghost._sample();this.ghostCar.root.position.set(gp.x,0,gp.y);this.ghostCar.root.rotation.y=-gp.angle;this.placeOnRoad(this.ghostCar,{pos:gp,angle:gp.angle},skin);}
+    this.camera.near=.3;this.drawFar=this.low?290:440;this.scene.fog.near=this.drawFar*.38;this.scene.fog.far=this.drawFar;this.camera.far=this.drawFar+80;
     this.effects(player);this.car.root.visible=camera!=='hood'||inMenu;
     const desired=new T.Vector3(),target=new T.Vector3(),alpha=1-Math.exp(-Math.min(dt,.1)*5),angleDelta=Math.atan2(Math.sin(a-(this.yaw??a)),Math.cos(a-(this.yaw??a)));
     this.yaw=this.cameraReady?(this.yaw+angleDelta*(motion==='reduced'?1:alpha)):a;
@@ -207,7 +231,9 @@ export class DriftView3D{
     }
     if(!this.cameraReady||inMenu||camera==='hood'||motion==='reduced')this.camera.position.copy(desired);else this.camera.position.lerp(desired,alpha);
     if(!this.look)this.look=target.clone();if(!this.cameraReady||inMenu||camera==='hood'||motion==='reduced')this.look.copy(target);else this.look.lerp(target,alpha);
-    this.camera.lookAt(this.look);this.camera.updateProjectionMatrix();this.cameraReady=true;this.renderer.render(this.scene,this.camera);
+    this.camera.lookAt(this.look);this.camera.updateProjectionMatrix();this.cameraReady=true;
+    updateWorldVisibility(this.world,this.camera,this.drawFar);this.atmosphere.update(this.camera,this.car,track,this.streetLights,{far:this.drawFar});this.atmosphere.tintCar(this.car);
+    this.renderer.render(this.scene,this.camera);
   }
-  dispose(){this.disposed=true;this.canvas.removeEventListener('webglcontextlost',this.contextLost);disposeGroup(this.scene);this.renderer.dispose();}
+  dispose(){this.disposed=true;this.canvas.removeEventListener('webglcontextlost',this.contextLost);this.atmosphere.dispose();disposeGroup(this.scene);this.renderer.dispose();}
 }

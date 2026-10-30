@@ -1,6 +1,6 @@
-# Drift Racer 0.4.0 — 2D + 3D
+# Drift Racer 0.5.0 — 2D + 3D
 
-Juego de drift estático para navegador, con dos vistas intercambiables de **una misma simulación**. Incluye cinco autos, veinte desafíos, editor de circuitos, transmisión manual/automática y contrarreloj con fantasma local.
+Juego de drift estático para navegador, con dos vistas intercambiables de **una misma simulación**. Incluye seis autos, veinte desafíos, editor de circuitos, transmisión manual/automática y contrarreloj con fantasma local.
 
 [Jugar en Render](https://driftgame.onrender.com)
 
@@ -19,7 +19,7 @@ Abrir `http://localhost:8000`. No necesita compilación ni instalar dependencias
 - **Desafíos:** vista aérea del circuito → garaje → objetivo de puntos → reconocimiento del siguiente desafío. Se pueden explorar los bloqueados, pero solo jugar los desbloqueados.
 - **Contrarreloj:** elegir y previsualizar uno de los veinte circuitos → garaje → vueltas libres con el fantasma del récord.
 - **Creativo:** dibujar circuito cerrado → vista aérea 3D → garaje → carrera. Los códigos `TRK` y `TRK2` siguen siendo compatibles.
-- **Configuración:** vista, cámara, calidad, movimiento reducido y controles táctiles automáticos/forzados.
+- **Configuración:** vista, cámara, calidad, barra día/atardecer/noche, movimiento reducido y controles táctiles automáticos/forzados.
 
 El garaje es el último paso: modelo 3D sobre una tarima giratoria, estadísticas originales, transmisión, vista 2D/3D y resumen del circuito. Arrastrar o usar las flechas con el visor enfocado cambia el ángulo; «Pausar giro» detiene la rotación. «Volver a la pista» conserva la selección. Los circuitos importados y enlaces compartidos también pasan por la vista aérea antes del garaje.
 
@@ -56,6 +56,18 @@ Quinto auto, sin reemplazar los cuatro anteriores. Carrocería retopologizada a 
 
 ![Yugo Koral 55 en el garaje, render compatible](docs/yugo-garage-0.4.0.jpg)
 
+## Rendimiento, cielo y Fujiwara (0.5)
+
+- El terreno de Cerro abajo se recorta contra el contorno exacto de las bermas: no existen triángulos del cerro cruzando el asfalto. Carretera, líneas, bordillos y bermas son franjas contiguas. La cámara de reconocimiento ajusta el plano cercano a la distancia del circuito para mejorar la precisión de profundidad.
+- Geometría estática agrupada por material y zona de 128 m; vegetación instanciada por zona. Se ocultan sectores completos solo después de la niebla opaca: 290 m en Ligera y 440 m en Alta/Automática. Al reconocer la pista se muestra el escenario completo. No se descarga la física ni se alteran puntos de apoyo.
+- Medición reproducible de los escenarios de montaña sin farolas: Mirador 2.039 → 419 mallas; Quebrada 2.594 → 505; Cumbre 3.198 → 601 (81% menos en Cumbre). En la salida de Cumbre, 113 de esos sectores están dentro de la distancia de dibujo ligera, antes del descarte por encuadre. Son contadores de escena, **no una promesa de FPS**. La triangulación precisa del borde aumenta ligeramente los triángulos totales, pero evita solapamientos y reduce llamadas de dibujo.
+- Alturas de huellas persistentes calculadas una sola vez; terreno lejano omite búsquedas de carretera que no pueden influir en la altura. Resolución automática entre 0,65× y 1,5× según el tiempo de cuadro, con ajustes graduales cada tres segundos; simulación siempre a 60 Hz. Vistas previas limitadas a 30 FPS (12 en modo compatible); una vista detenida no se redibuja hasta cambiar. La escena de carrera se congela al pausar o terminar; el fondo del menú se limita a 30 FPS (10 en compatible).
+- Barra día/atardecer/noche en Configuración y en la selección de descenso/circuito. Preferencia guardada. Cielo degradado, luz ambiental y niebla coordinados. Farolas con halos y manchas de luz suaves adaptadas al suelo, que se desvanecen con la distancia. Faros de todos los autos con haces transparentes, luz sobre el pavimento y una sola luz dinámica sin sombras; sin bloom ni postprocesado. La iluminación no afecta la simulación.
+- Toyota AE86 Fujiwara como sexto auto: GLB suministrado de 145.452 bytes, 1.349 triángulos agrupados en carrocería y cuatro ruedas, atlas original y sprite 2D. Los pivotes, suspensión, humo y marcas de neumáticos corresponden al modelo. Ajuste jugable usando la física existente; no se presenta como simulación exacta de la ficha de un AE86 real.
+- 59 pruebas de regresión y revisión visual en navegador con render compatible. El navegador de revisión no ofrece WebGL: quedan pendientes mediciones de FPS en GPU real y teléfono físico.
+
+Referencias de implementación: [agrupación de geometría](https://threejs.org/manual/en/optimize-lots-of-objects.html), [niebla](https://threejs.org/manual/en/fog.html), [instancias](https://threejs.org/docs/#api/en/objects/InstancedMesh) de Three.js. Se usa la versión local r170 del proyecto.
+
 ## Controles
 
 | Acción | Tecla |
@@ -83,7 +95,7 @@ La ayuda pausa la conducción. Cambiar de pestaña o perder foco también pausa 
 - `js/mountain-scene.js`: relieve, carretera abierta, vegetación, barreras y salida/meta del sprint.
 - `js/circuit-layouts.js`: veinte trazados originales con rectas, arcos tangentes, horquillas y enlaces; progresión de 720 a 2550 m en cinco etapas. El generador usa recetas de sectores y muestreo por distancia, sin ondulaciones radiales.
 - `js/road-contact.js`: perfil redondeado del borde (14 cm × 70 cm) y respuesta vertical por rueda, calculada con el mismo paso fijo en 2D y 3D. Agrega altura, inclinación y amortiguación; no altera dirección, tracción, frenado ni puntuación.
-- `js/view3d.js`: Three.js r170, modelos de los cinco autos, ruedas orientables, humo, huellas, cámaras y entorno. La decoración no añade colisiones a las reglas originales.
+- `js/view3d.js`: Three.js r170, modelos de los seis autos, ruedas orientables, humo, huellas, cámaras y entorno. La decoración no añade colisiones a las reglas originales.
 - `js/rx7-model.js`: adaptación del RX-7 FD RedSuns suministrado para el auto amarillo; conserva cuatro ruedas independientes, texturas y movimiento del juego. Créditos y procedencia en `assets/models/README.md`.
 - `js/track-surface.js`: une el área del circuito antes de triangular. Asfalto, línea de borde, piano y escapatoria son regiones contiguas sin superposición. El piano se eleva con seis bandas unidas y conserva sus franjas naranjas/blancas; utiliza el mismo campo de alturas que las ruedas. Se divide en sectores para descartar geometría fuera de cámara. No modifica puntos, ancho ni muestreo de físicas.
 - `js/software-renderer.js`: proyección 3D con búfer de profundidad sobre Canvas para equipos sin WebGL. Reduce resolución y detalle; es más lenta que WebGL y se recomienda 2D si no resulta fluida.

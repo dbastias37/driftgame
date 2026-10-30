@@ -218,6 +218,7 @@
   }
   @media(max-width:480px){.menu-grid{grid-template-columns:1fr}.challenge-list{grid-template-columns:repeat(2,minmax(0,1fr))}.challenge-item button{width:100%;padding:9px 4px;font-size:12px}}
   @media(max-height:500px){#carPreview{height:110px} #carPanel h2{font-size:19px} #times{top:122px} #ui{max-width:330px} #stickZone{width:120px;height:120px} #gasZone{height:135px}}
+.daytime-control{display:block;max-width:330px;margin:14px 0 8px;font-size:12px;color:#aebbbb}.daytime-control output{float:right;color:#ff7544}.daytime-control input{display:block;width:100%;margin:10px 0;accent-color:#ff7544;cursor:pointer}.daytime-ends{display:flex;justify-content:space-between;font-size:10px;color:#829597}
 </style>
 <link rel="stylesheet" href="css/experience.css">
 </head>
@@ -324,7 +325,7 @@
 
   <div id="mainMenu">
     <div class="menu-card home-card">
-      <header class="home-top"><span class="brand-mark">DR /</span><span>DRIFT RACER</span><span class="edition">DUAL VIEW · 04</span></header>
+      <header class="home-top"><span class="brand-mark">DR /</span><span>DRIFT RACER</span><span class="edition">DUAL VIEW · 05</span></header>
       <div class="home-layout">
         <div class="home-copy">
           <p class="eyebrow">ENCUENTRA TU LÍNEA</p>
@@ -338,7 +339,7 @@
             <button id="btnModeCreative"><span class="mode-number">04</span><span>CREA TU CIRCUITO<small>Dibuja. Corre. Comparte.</small></span><span>↗</span></button>
           </div>
         </div>
-        <div class="home-track"><span class="track-label">CIRCUITO / 01</span><div class="hero-line"></div><div class="home-caption"><span>LA CURVA ES TUYA.</span><small>5 AUTOS · 20 DESAFÍOS · INFINITAS LÍNEAS</small></div></div>
+        <div class="home-track"><span class="track-label">CIRCUITO / 01</span><div class="hero-line"></div><div class="home-caption"><span>LA CURVA ES TUYA.</span><small>6 AUTOS · 20 DESAFÍOS · INFINITAS LÍNEAS</small></div></div>
       </div>
       <footer class="home-bottom"><div class="view-segment" aria-label="Vista de conducción"><button data-view="2d">2D CLÁSICA</button><button data-view="3d">3D INMERSIVA</button></div><button id="btnSettings" class="text-button">Configuración</button><button id="btnMenuHelp" class="text-button">Controles</button><button id="btnImport" class="text-button">Importar pista ↗</button></footer>
     </div>
@@ -347,7 +348,7 @@
   <div id="circuitMenu" class="modal hidden preparation">
     <div class="preparation-shell track-shell">
       <header class="preparation-header"><div><p class="eyebrow">01 / RECONOCIMIENTO</p><h2 id="circuitTitle">Selecciona circuito</h2></div><span class="preparation-step"><b>PISTA</b> AUTO CARRERA</span></header>
-      <div class="track-workspace"><div id="circuitList" class="challenge-list track-picker"></div><div class="track-showcase"><div id="circuitStage" class="preview-stage"><span class="preview-status">Preparando vista aérea 3D…</span></div><div class="track-preview-caption"><div><h3 id="circuitPreviewName">—</h3><p id="circuitPreviewDetails">—</p><p id="circuitPreviewGoal"></p></div><button class="text-button spin-button" data-preview-spin>Ⅱ Pausar giro</button></div></div></div>
+      <div class="track-workspace"><div id="circuitList" class="challenge-list track-picker"></div><div class="track-showcase"><div id="circuitStage" class="preview-stage"><span class="preview-status">Preparando vista aérea 3D…</span></div><div class="track-preview-caption"><div><h3 id="circuitPreviewName">—</h3><p id="circuitPreviewDetails">—</p><p id="circuitPreviewGoal"></p><label class="daytime-control">Día / noche <output data-daytime-label>Día</output><input type="range" min="0" max="100" value="0" step="1" data-daytime aria-label="Ambiente: día, atardecer o noche"><span class="daytime-ends"><span>Día</span><span>Atardecer</span><span>Noche</span></span></label></div><button class="text-button spin-button" data-preview-spin>Ⅱ Pausar giro</button></div></div></div>
       <footer class="preparation-footer"><button id="btnCircuitBack" class="gray">← Menú principal</button><button id="btnCircuitContinue">ELEGIR AUTO ↗</button></footer>
     </div>
   </div>
@@ -356,6 +357,7 @@
       <div class="setting"><span>Vista al conducir</span><div class="view-segment"><button data-view="2d">2D clásica</button><button data-view="3d">3D inmersiva</button></div></div>
       <label class="setting">Cámara 3D<select id="cameraSetting"><option value="chase">Seguimiento</option><option value="aerial">Aérea</option><option value="hood">Capó</option></select></label>
       <label class="setting">Calidad 3D<select id="qualitySetting"><option value="auto">Automática</option><option value="high">Alta</option><option value="low">Ligera</option></select></label>
+      <label class="daytime-control">Día / noche <output data-daytime-label>Día</output><input type="range" min="0" max="100" value="0" step="1" data-daytime aria-label="Ambiente: día, atardecer o noche"><span class="daytime-ends"><span>Día</span><span>Atardecer</span><span>Noche</span></span></label>
       <label class="setting">Controles táctiles<select id="touchSetting"><option value="auto">Automáticos</option><option value="on">Activados</option><option value="off">Desactivados</option></select></label>
       <label class="setting">Movimiento de cámara<select id="motionSetting"><option value="full">Suave y dinámico</option><option value="reduced">Reducido</option></select></label>
       <p class="muted">V cambia entre 2D y 3D durante la carrera. C cambia la cámara 3D. Tus preferencias se guardan en este navegador.</p>
@@ -618,6 +620,7 @@ const CAR_IMG={
   yellow: mkLocal('assets/cars/yellow.png'),
   gray:   mkLocal('assets/cars/gray.png'),
   yugo:   mkLocal('assets/cars/yugo.png'),
+  fujiwara: mkLocal('assets/cars/fujiwara.png'),
 };
 
 /* ===== Track ===== */
@@ -1431,6 +1434,7 @@ function simulate(step){
   if(state==='running')advanceLap(prevIdx,ret.sIndex);
   if(state==='running'&&(player.offTimer>=12||wrongTimer>=5))loseLifeAndRespawn();
 }
+let lastScenePresentation=null,lastSceneFrame=0;
 function loop(ms){
   try{
     const now=ms/1000;perfNow=now;dt=clamp(now-lastTS,0,.25);lastTS=now;
@@ -1449,9 +1453,16 @@ function loop(ms){
     const draw3D=!preparing && sceneView && !sceneFailed && (renderPrefs.view==='3d'||!inSession);
     $('#scene3d').style.visibility=draw3D?'visible':'hidden';
     if(draw3D){
-      try{sceneView.render({track:inSession?track:attractTrack,player:inSession?player:attractCar,ghost:inSession?ghost:null,skin:chosen.sprite,dt,inMenu:!inSession,time:now,camera:renderPrefs.camera,motion:renderPrefs.motion});}
-      catch(error){fail3D(error);}
+      const revision=[state,inSession,track,player,chosen.sprite,renderPrefs.camera,renderPrefs.motion,renderPrefs.timeOfDay,renderPrefs.quality,innerWidth,innerHeight,sceneView.distance,sceneView.car,sceneView.rx7Template,sceneView.yugoTemplate,sceneView.fujiwaraTemplate];
+      const changed=!lastScenePresentation||revision.some((v,i)=>v!==lastScenePresentation[i]),active=['running','countdown'].includes(state);
+      const shouldRender=inSession?(active||changed):(changed||now-lastSceneFrame>=1/(sceneView.software?10:30));
+      if(shouldRender){
+        const presentationDt=inSession?(active?dt:0):Math.min(.1,now-lastSceneFrame);lastScenePresentation=revision;lastSceneFrame=now;
+        try{sceneView.render({track:inSession?track:attractTrack,player:inSession?player:attractCar,ghost:inSession?ghost:null,skin:chosen.sprite,dt:presentationDt,inMenu:!inSession,time:now,camera:renderPrefs.camera,motion:renderPrefs.motion,timeOfDay:renderPrefs.timeOfDay});}
+        catch(error){fail3D(error);}
+      }
     }else if(!preparing){
+      lastScenePresentation=null;
       ctx.fillStyle=bgPat;ctx.fillRect(0,0,view.width,view.height);
       if(inSession && track) track.draw(ctx,camera);
       if(inSession && ghost) ghost.draw(ctx,camera);
@@ -1516,6 +1527,7 @@ const CAR_DATA = [
   {name:'Toiota Corona 1990', sprite:'gray',    color:'#9aa0a6', stripes:0, desc:'City car ágil y noble.',                 stats:{acc:.60,trq:.55,vmax:.70,mass:.95}, tune:{engine:.95,lat:1.00,hand:1.00,drag:1.05,mass:.95}},
 ];
 CAR_DATA.push({name:'Yugo Koral 55',sprite:'yugo',color:'#ce362b',stripes:0,desc:'Ligero, corto y de reacciones ágiles. 55 CV · 790 kg · punta ≈145 km/h en llano. Drift adaptado al juego.',stats:{acc:.42,trq:.35,vmax:145/198,mass:790/1380},tune:{engine:1,lat:1,hand:1,drag:1,mass:1},specs:{power:'55 CV',torque:'77,4 Nm',speed:'≈145 km/h',mass:'790 kg'}});
+CAR_DATA.push({name:'Toyota AE86 · Fujiwara',sprite:'fujiwara',color:'#e8e8da',stripes:0,desc:'El clásico panda de Fujiwara. Ligero, progresivo y ágil para enlazar las curvas del descenso.',stats:{acc:.76,trq:.62,vmax:.84,mass:.76},tune:{engine:1.08,lat:1.02,hand:.88,drag:1,mass:.82}});
 let carIdx=0, chosen=CAR_DATA[0];
 
 const carPanel=document.getElementById('carPanel');
@@ -1584,6 +1596,7 @@ function applyChosen(){
   player.mass            *= chosen.tune.mass;
 
   if(chosen.sprite==='yugo')DriftYugo.configure(player);
+  if(chosen.sprite==='fujiwara'){player.bodyDimensions={length:4.215,width:1.7,height:1.335,cgHeight:.62};DriftRoadContact.alignWheelEffects(player,'fujiwara');}
   player.auto = (selectedTx() === 'auto');
 }
 
