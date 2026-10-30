@@ -34,3 +34,9 @@ html,body{font-family:Arial,Helvetica,sans-serif;background:#0e161a}button,selec
 
 body.downhill #times>div:nth-of-type(n+2),body.downhill #lapList{display:none}
 .car-specs{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin:12px 0 16px;padding:12px 0;border-block:1px solid #ffffff17}.car-specs div{display:grid;gap:4px}.car-specs dt{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}.car-specs dd{margin:0;font-size:16px;font-weight:700}.car-specs.hidden{display:none}
+
+/* Mobile: progress lives beside the tachometer, keeping the road unobstructed. */
+#downhillTarget{display:none;font:9px/1.4 monospace;color:var(--muted);letter-spacing:0;text-transform:none}
+#descentCompact{display:none;font:700 18px/1 monospace;color:var(--orange);letter-spacing:-1px}
+#descentCompact.complete,#downhillTarget.complete{color:#a6dfb8}
+@media(max-width:700px),(max-height:500px){body.downhill #descentHud{display:none}body.downhill #downhillTarget{display:block}body.downhill #descentCompact{display:block}body.downhill #driveHud{gap:10px}body.downhill #cWarn{max-width:80vw;font-size:11px}}

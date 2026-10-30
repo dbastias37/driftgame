@@ -1,0 +1,8 @@
+import {fileURLToPath} from 'node:url';
+const root=fileURLToPath(new URL('../',import.meta.url)).replace(/\/$/,'');
+global.document={createElement(){return {width:128,height:128,getContext:()=>({createImageData:(w,h)=>({data:new Uint8ClampedArray(w*h*4)}),putImageData(){},fillRect(){},fillText(){}})}}};
+await import(root+'/js/road-contact.js');await import(root+'/js/downhill.js');
+const T=await import(root+'/vendor/three.module.min.js'),{buildMountain}=await import(root+'/js/mountain-scene.js');
+class Track{constructor(points){this.points=points;const xs=points.map(p=>p.x),ys=points.map(p=>p.y);this.bounds={minX:Math.min(...xs),maxX:Math.max(...xs),minY:Math.min(...ys),maxY:Math.max(...ys)};this.bounds.w=this.bounds.maxX-this.bounds.minX;this.bounds.h=this.bounds.maxY-this.bounds.minY;}}
+const rows=[];for(const level of (process.argv[2]||'1,3,12,20').split(',').map(Number)){const start=performance.now(),track=DriftDownhill.createTrack(Track,level),world=new T.Group();buildMountain(track,world);let bytes=0,vertices=0,triangles=0,meshes=0;const seen=new Set();world.traverse(o=>{if(!o.geometry)return;meshes++;if(seen.has(o.geometry))return;seen.add(o.geometry);for(const a of Object.values(o.geometry.attributes))bytes+=a.array.byteLength;if(o.geometry.index)bytes+=o.geometry.index.array.byteLength;vertices+=o.geometry.attributes.position.count;triangles+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3;});rows.push({level,length:Math.round(track.length),ms:Math.round(performance.now()-start),bytes,vertices,triangles,meshes});}
+console.log(JSON.stringify(rows,null,2));

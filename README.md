@@ -1,4 +1,4 @@
-# Drift Racer 0.5.1 — 2D + 3D
+# Drift Racer 0.7.0 — 2D + 3D
 
 Juego de drift estático para navegador, con dos vistas intercambiables de **una misma simulación**. Incluye seis autos, veinte desafíos, editor de circuitos, transmisión manual/automática y contrarreloj con fantasma local.
 
@@ -25,24 +25,66 @@ El garaje es el último paso: modelo 3D sobre una tarima giratoria, estadística
 
 ## Cerro abajo
 
-Tres rutas originales inspiradas en las referencias de carreteras de montaña aportadas por el usuario: horquillas, enlaces, cortes en la ladera, barrancos, árboles, guardarraíles parciales y meta independiente de la salida. No cierran el trazado como una vuelta de circuito.
+Veinte rutas abiertas: las tres primeras rediseñadas y diecisiete nuevas. Cada alineación combina rectas, arcos amplios, contracurvas y horquillas con radios y separaciones propios. Las transiciones de curvatura son suaves; la pendiente varía dentro de cada recorrido. La ladera sigue un plano ajustado al trazado real. Se mantienen colores, árboles, barreras, pianos, autos y dinámica de conducción.
 
-| Descenso | Sprint | Desnivel de la carretera | Objetivo |
-| --- | --- | --- | --- |
-| Mirador | 1,68 km | 135 m | 6.500 pts |
-| Quebrada | 2,49 km | 246 m | 11.000 pts |
-| Cumbre | 3,34 km | 383 m | 17.000 pts |
+| Ruta | Sprint | Desnivel | Pendiente media | Objetivo |
+| --- | --- | --- | --- | --- |
+| Mirador | 1.66 km | 118 m | 6.8% | 7,000 pts |
+| Quebrada | 2.15 km | 189 m | 8.5% | 9,000 pts |
+| Cumbre | 2.41 km | 259 m | 10.5% | 10,500 pts |
+| Las Lajas | 2.34 km | 141 m | 5.8% | 10,500 pts |
+| Alto Rehue | 2.08 km | 259 m | 12.1% | 9,500 pts |
+| Santa Elvira | 2.23 km | 175 m | 7.7% | 10,500 pts |
+| Ramal del Litre | 2.38 km | 235 m | 9.6% | 11,500 pts |
+| La Viñuela | 2.44 km | 163 m | 6.5% | 12,000 pts |
+| Paso Cardenal | 2.52 km | 346 m | 13.4% | 13,000 pts |
+| Los Maitenes | 2.50 km | 205 m | 8.0% | 13,000 pts |
+| Cuesta Bellavista | 2.83 km | 335 m | 11.6% | 15,000 pts |
+| Filo del Arrayán | 2.79 km | 422 m | 14.7% | 15,000 pts |
+| Las Vertientes | 2.89 km | 211 m | 7.2% | 16,000 pts |
+| Portal del Coihue | 3.15 km | 399 m | 12.4% | 18,000 pts |
+| El Resguardo | 3.12 km | 289 m | 9.1% | 18,000 pts |
+| Abra Lucero | 3.42 km | 550 m | 15.8% | 20,500 pts |
+| La Herradura Vieja | 3.25 km | 334 m | 10.1% | 19,500 pts |
+| Camino de Antul | 3.12 km | 265 m | 8.3% | 19,500 pts |
+| Portezuelo Seco | 3.48 km | 515 m | 14.5% | 22,000 pts |
+| Travesía del Cóndor | 4.64 km | 612 m | 13.0% | 29,500 pts |
 
-El desnivel incluye la zona de frenado tras la meta. Las tres rutas están disponibles para experimentar. El HUD muestra progreso, puntaje/objetivo, pendiente y metros restantes. Llegar al puntaje antes del 100% no termina la partida: hay que llegar a la meta. Llegar sin puntos suficientes produce un resultado fallido y permite reintentar.
+El desnivel incluye la zona de frenado tras la meta. Las veinte rutas están disponibles. En escritorio el HUD mantiene progreso, objetivo, pendiente y distancia restante. En móvil solo aparece el porcentaje junto al tacómetro; el objetivo queda pequeño bajo los puntos. Alcanzar el puntaje no termina el sprint: hay que cruzar el 100%.
 
 - Gravedad de 9,81 m/s² proyectada sobre la pendiente; el auto rueda sin acelerar. La masa conserva su efecto en aceleración y frenado, pero no aumenta artificialmente la aceleración gravitatoria. Los frenos mantienen el auto detenido en la pendiente.
 - Contacto de cuatro ruedas con altura real, suspensión, inclinación de carrocería y transferencia longitudinal aproximada. El piso, los pianos y las alturas renderizadas proceden del mismo trazado.
 - Salidas a la ladera: caída bajo gravedad, cuerpo rígido aproximado con inercia de caja y ocho puntos de contacto, impulsos, fricción y vuelcos. La cámara muestra el auto durante la caída, incluso si se conducía desde el capó.
 - **R** o **Recuperar** devuelve el auto al último punto seguro y consume una de tres vidas. Después de 4,5 s de caída se recupera automáticamente. El punto seguro avanza cada 60 m estando dentro de la carretera; no se elige la curva inferior más cercana.
-- La validación exige continuidad de avance sobre la carretera. Los atajos por el barranco no adelantan el sprint; volver sobre un tramo ya recorrido no permite repetir sus puntos. Los récords usan `downhill:v1:*`, separados de Challenge y TT.
+- La validación exige continuidad de avance sobre la carretera. Los atajos por el barranco no adelantan el sprint; volver sobre un tramo ya recorrido no permite repetir sus puntos. Los trazados revisados usan récords `downhill:v2:*`, separados de Challenge y TT. Los registros anteriores se conservan almacenados y no se comparan con carreteras distintas.
 - Ambos modos visuales usan la misma simulación. 2D conserva su vista cenital; 3D muestra el relieve y el vuelco. Las físicas de los circuitos anteriores permanecen intactas.
 
 Es una física jugable aproximada, no un simulador de neumáticos/deformación. Referencias técnicas: [componentes de gravedad en una pendiente, OpenStax](https://openstax.org/books/physics/pages/5-4-inclined-planes), [fricción y fuerza normal, OpenStax](https://openstax.org/books/university-physics-volume-1/pages/6-2-friction) y [modelo de masa apoyada por rueda, Unity](https://docs.unity3d.com/es/530/ScriptReference/WheelCollider-sprungMass.html). El código es propio y no utiliza Unity.
+
+## Continuidad de drift y móvil (0.7.0)
+
+- El combo acumula puntos a través de x1 → x2 → x3. Un cambio de dirección o la interrupción visual de las marcas de neumáticos no lo reinicia.
+- Hasta 0,45 s de transición sin deslizamiento conservan la cadena, sin generar puntos durante ese intervalo. Una histéresis de entrada/salida evita oscilaciones cerca del umbral. Salirse, detenerse, circular hacia atrás/en sentido contrario, colisionar o perder el derrape durante más tiempo corta puntos activos y multiplicador juntos. El total de la sesión conserva sus reglas anteriores.
+- Caída, recuperación y rechazo de avance no pueden restaurar un combo perdido. El control físico de motor, dirección, frenos, transmisión y efectos de neumáticos se compara con el fixture original.
+- Mantener **DRIFT** táctil activa también el acelerador, sin otra etiqueta ni pulsación. El freno tiene prioridad sobre esa asistencia; soltar/cancelar un dedo no suelta el otro pedal. Teclado: W/acelerador, Shift/drift, Espacio/freno, E/Q/cambios, sin asistencia añadida.
+- Anuncio de combo al 46% de la escala de escritorio en pantallas compactas; porcentaje de descenso junto al velocímetro, tanto vertical como horizontal.
+
+## Optimización de montañas (0.7.0)
+
+Las miniaturas reutilizan alineaciones ligeras y no construyen índices de colisión. El muestreo calcula raíz y ángulo solo para el segmento ganador. El recorte del terreno usa primero el contorno local de cada baldosa; se comparten vértices y se conserva el sombreado plano por triángulo. No se simplifican caras, alturas, bordillos ni colisiones. Las señales reutilizan una textura y los límites de visibilidad del escenario estático se calculan una sola vez.
+
+Comparación de los mismos cuatro trazados, calidad alta, buffers de atributos e índices de geometrías únicas (excluye texturas y matrices de instancias):
+
+| Ruta | Antes | Después | Reducción | Triángulos, sin cambios |
+| --- | ---: | ---: | ---: | ---: |
+| Mirador | 6,460,420 B | 2,819,560 B | 56.4% | 95,556 |
+| Cumbre | 7,332,768 B | 3,385,278 B | 53.8% | 109,693 |
+| Filo del Arrayán | 8,236,844 B | 3,853,652 B | 53.2% | 124,462 |
+| Travesía del Cóndor | 16,833,344 B | 6,706,352 B | 60.2% | 225,672 |
+
+Reproducir métricas actuales: `node scripts/benchmark-descent.mjs`. Pasar niveles separados por comas para otros recorridos. Estas cifras miden memoria de geometría, no una mejora equivalente de FPS ni del tamaño de descarga. Los 17 descensos nuevos se describen en código; no añaden modelos ni texturas descargables.
+
+Validación: `npm run test:core` (77 pruebas), incluidas las veinte geometrías, diferencias de silueta y pendiente, terreno sin caras sobre el asfalto en cinco rutas representativas, continuidad del combo, pedales táctiles, recuperación, suspensión y regresión online. Revisión de interfaz en 390×844, 844×390 y escritorio. El navegador de revisión utiliza render compatible; falta medir FPS en teléfonos físicos con WebGL.
 
 ## Yugo Koral 55
 

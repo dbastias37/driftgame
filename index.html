@@ -220,12 +220,12 @@
   @media(max-height:500px){#carPreview{height:110px} #carPanel h2{font-size:19px} #times{top:122px} #ui{max-width:330px} #stickZone{width:120px;height:120px} #gasZone{height:135px}}
 .daytime-control{display:block;max-width:330px;margin:14px 0 8px;font-size:12px;color:#aebbbb}.daytime-control output{float:right;color:#ff7544}.daytime-control input{display:block;width:100%;margin:10px 0;accent-color:#ff7544;cursor:pointer}.daytime-ends{display:flex;justify-content:space-between;font-size:10px;color:#829597}
 </style>
-<link rel="stylesheet" href="css/experience.css">
-<link rel="stylesheet" href="css/online.css?v=0.6.0">
+<link rel="stylesheet" href="css/experience.css?v=0.7.0">
+<link rel="stylesheet" href="css/online.css?v=0.7.0">
 </head>
 <body>
   <div id="ui">
-    <div class="stat big">Puntos: <span id="score">0</span></div>
+    <div class="stat big">Puntos: <span id="score">0</span><small id="downhillTarget"></small></div>
     <div class="stat">Velocidad: <span id="speed">0</span> km/h</div>
     <div id="challengeBadge" class="stat">Objetivo: <b id="challengeGoal">—</b> pts • Nivel <b id="challengeLevel">—</b></div>
     <div class="row stat">
@@ -326,7 +326,7 @@
 
   <div id="mainMenu">
     <div class="menu-card home-card">
-      <header class="home-top"><span class="brand-mark">DR /</span><span>DRIFT RACER</span><span class="edition">ONLINE BETA · 06</span></header>
+      <header class="home-top"><span class="brand-mark">DR /</span><span>DRIFT RACER</span><span class="edition">CERRO ABAJO · 07</span></header>
       <div class="home-layout">
         <div class="home-copy">
           <p class="eyebrow">ENCUENTRA TU LÍNEA</p>
@@ -336,7 +336,7 @@
           <div class="home-modes">
             <button id="btnModeOnline" class="online-entry"><span class="mode-number">●</span><span>ONLINE <small>Crea una sala. Hasta 3 pilotos.</small></span><span class="beta-tag">BETA ↗</span></button>
             <button id="btnModeChallenge"><span class="mode-number">01</span><span>DESAFÍOS<small>20 circuitos. Supera tus límites.</small></span><span>↗</span></button>
-            <button id="btnModeDownhill"><span class="mode-number">02</span><span>CERRO ABAJO<small>Sprint de montaña. Puntúa antes de la meta.</small></span><span>↘</span></button>
+            <button id="btnModeDownhill"><span class="mode-number">02</span><span>CERRO ABAJO<small>20 rutas de montaña. Puntúa antes de la meta.</small></span><span>↘</span></button>
               <button id="btnModeTT"><span class="mode-number">03</span><span>CONTRARRELOJ<small>Tu mejor vuelta, tu próximo rival.</small></span><span>↗</span></button>
             <button id="btnModeCreative"><span class="mode-number">04</span><span>CREA TU CIRCUITO<small>Dibuja. Corre. Comparte.</small></span><span>↗</span></button>
           </div>
@@ -395,7 +395,7 @@
   </div>
   <div id="importMenu" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="importTitle"><div class="card settings-card"><p class="eyebrow">DE PILOTO A PILOTO</p><h2 id="importTitle">Importar circuito</h2><label for="importCode">Código de pista TRK / TRK2</label><textarea id="importCode" placeholder="Pegar código de pista…" rows="4"></textarea><p id="importMessage" role="status"></p><div class="row"><button id="btnImportBack">Volver</button><button id="btnLoadCode">Cargar circuito</button></div></div></div>
   <div id="toast" role="status" aria-live="polite"></div>
-  <div id="driveHud"><div class="drive-gear"><small>MARCHA</small><b id="driveGear">1</b><span id="driveTx">AUTO</span></div><div class="drive-speed"><b id="driveSpeed">000</b><small>KM/H</small><div class="rev-track"><i id="revFill"></i></div></div></div>
+  <div id="driveHud"><strong id="descentCompact" aria-label="Progreso del descenso">0%</strong><div class="drive-gear"><small>MARCHA</small><b id="driveGear">1</b><span id="driveTx">AUTO</span></div><div class="drive-speed"><b id="driveSpeed">000</b><small>KM/H</small><div class="rev-track"><i id="revFill"></i></div></div></div>
   <div id="descentHud" class="hidden"><div class="descent-heading"><span>CERRO ABAJO · <b id="descentName">Mirador</b></span><strong id="descentPercent">0%</strong></div><div class="descent-progress"><i id="descentFill"></i></div><div class="descent-metrics"><span id="descentPoints">0 / 6500 pts</span><span id="descentGrade">—</span><span id="descentRemaining">—</span></div><p id="descentHint">Alcanza el objetivo y cruza la meta.</p></div>
   <div id="viewBadge">3D / SEGUIMIENTO</div>
   <div id="challengeMenu" class="hidden preparation">
@@ -448,11 +448,11 @@
   
   <audio id="radio" preload="none" crossorigin="anonymous"></audio>
 
-<script src="js/circuit-layouts.js?v=0.6.0"></script>
-<script src="js/road-contact.js?v=0.6.0"></script>
-<script src="js/downhill.js?v=0.6.0"></script>
-<script src="js/yugo-physics.js?v=0.6.0"></script>
-<script src="js/online-rules.js?v=0.6.0"></script>
+<script src="js/circuit-layouts.js?v=0.7.0"></script>
+<script src="js/road-contact.js?v=0.7.0"></script>
+<script src="js/downhill.js?v=0.7.0"></script>
+<script src="js/yugo-physics.js?v=0.7.0"></script>
+<script src="js/online-rules.js?v=0.7.0"></script>
 <script>
 "use strict";
 
@@ -884,17 +884,20 @@ class Car{
     const harshSteer=Math.abs(this.steerVel)>2.266, harshYaw=Math.abs(this.yawRate)>2.678; if(this.trailOn&&(harshSteer||harshYaw)) this.trailOn=false,this.trailGrace=0;
     if(this.trailOn&&this.offTrack) this.trailOn=false;
 
-    if(this.trailOn){ this.driftTime+=dt; this.driftBreakTimer=0; if(!this._lastTrailOn) this.comboPoints=0; }
-    else { this.driftBreakTimer+=dt; if(this.driftBreakTimer>.25){ this.driftTime=0; this.comboState=0; this.comboPhrase=''; this.comboPoints=0; } }
+    // Tire effects and countersteering do not define combo continuity. A brief
+    // neutral slip during a left/right link pauses earnings, preserving the chain.
+    const forward=this.vel.x*f.x+this.vel.y*f.y;
+    const broken=this.offTrack||this.wrongWay||kmh<10||forward<0;
+    const drifting=!broken&&kmh>16&&slip>(this.driftTime>0?.14:ENTER);
+    if(broken)this.breakFlow();
+    else if(drifting){this.driftTime+=dt;this.driftBreakTimer=0;}
+    else {this.driftBreakTimer+=dt;if(this.driftBreakTimer>.45)this.breakFlow();}
     const newM=this.driftTime>=5?3:this.driftTime>=2?2:1;
-    if(newM>this.mult){ this.comboState=newM; this.comboFlashTime=.5; this.comboPhrase=newM===2?PH2[(Math.random()*PH2.length)|0]:PH3[(Math.random()*PH3.length)|0]; this.comboPoints=0; }
+    if(newM>this.mult){this.comboState=newM;this.comboFlashTime=.5;this.comboPhrase=newM===2?PH2[(Math.random()*PH2.length)|0]:PH3[(Math.random()*PH3.length)|0];}
     this.mult=newM;
-
-    let base=(this.trailOn&&!this.offTrack&&kmh>16&&slip>0.08)?(1+A(Math.abs(vlat),Math.abs(kmh/3.6)+.1)*2.4)*(1+kmh/120):0;
-    if(this.wrongWay) base = 0;
-
+    const base=drifting?(1+slip*2.4)*(1+kmh/120):0;
     const points=base*this.mult*dt*60;
-    this.score+=points; if(this.trailOn&&!this.offTrack) this.comboPoints+=points;
+    this.score+=points;this.comboPoints+=points;
     return s;
   }
   update(dt,input,track){
@@ -928,7 +931,12 @@ class Car{
     if(this.trailOn) this.spawnTrails(f,r,dt,Math.min(.9,.35+Math.abs(vlat))); this._lastTrailOn=this.trailOn;
     return {sIndex:s.i, tang:s.tang};
   }
-  hit(track,s){ this.invuln=1; this.best=Math.max(this.best,this.score|0); this.score=0; this.comboState=0; this.driftTime=0; this.comboBreak=.8; this.pos.x=s.cx; this.pos.y=s.cy; this.vel.x*=-.25; this.vel.y*=.4; this.gear=Math.max(1,this.gear-1); camera.shake(8,280); }
+  breakFlow(){
+    if(this.comboState>=2)this.comboBreak=.8;
+    this.driftTime=0;this.driftBreakTimer=0;this.mult=1;this.comboState=0;
+    this.comboPoints=0;this.comboPhrase='';this.comboFlashTime=0;
+  }
+  hit(track,s){ this.invuln=1; this.best=Math.max(this.best,this.score|0); this.score=0; this.breakFlow(); this.comboBreak=.8; this.pos.x=s.cx; this.pos.y=s.cy; this.vel.x*=-.25; this.vel.y*=.4; this.gear=Math.max(1,this.gear-1); camera.shake(8,280); }
   spawnTrails(f,r,dt,int){ const ro=-this.length*.5, rc={x:this.pos.x+f.x*ro,y:this.pos.y+f.y*ro}, ht=.9, lw={x:rc.x-r.x*ht,y:rc.y-r.y*ht}, rw={x:rc.x+r.x*ht,y:rc.y+r.y*ht}, a=clamp(.18+(int||0)*.1,.18,.9); this.tireTrails.push({x1:lw.x,y1:lw.y,x2:rw.x,y2:rw.y,a}); const MAX_TR=isTouchDevice?2500:4000; if(this.tireTrails.length>MAX_TR) this.tireTrails.splice(0,this.tireTrails.length-MAX_TR); }
   updateSmoke(dt,f,r,slip,kmh,vlat){
     const nearRed1=(this.gear===1&&this.throttleSm>0.6&&kmh>this.gearMax[0]*0.9);
@@ -1170,7 +1178,7 @@ function startWithTrack(tr, m='race'){
   if(lapList) lapList.innerHTML='';
   camera.s=camera.targetS=(view.width<700||view.height<500)?Math.max(10,Math.min(18,view.height/30)):22;
   camera.tx=-player.pos.x*camera.s+view.width*.5;camera.ty=-player.pos.y*camera.s+view.height*.6;
-  currentTrackId = track.downhill?'DOWNHILL.v1.'+track.routeLevel:encodeTrack(track.points);
+  currentTrackId = track.downhill?'DOWNHILL.v2.'+track.routeLevel:encodeTrack(track.points);
   unlockControls();syncTouchHUD(); // Nueva sesión, mismos autos y datos guardados.
   sceneView?.resetCamera();
   saveRenderPrefs();
@@ -1262,7 +1270,7 @@ function respawnAtNearestCenter() {
   player.pos.y = s.cy;
   player.angle = track.tangentAt(s.i);
   player.vel.x=0;player.vel.y=0;player.omega=0;player.throttleSm=0;player.gear=1;
-  player.steerAngle=0;player.driftTime=0;player.mult=1;player.comboState=0;
+  player.steerAngle=0;player.breakFlow();
   DriftRoadContact.reset(track,player,chosen.sprite);
   camera.shake(6, 240);
 }
@@ -1296,7 +1304,7 @@ function input(){
   const steerAxisTouch = (hudOn) ? touch.steerAxis : 0;
   const steerDigital = (kLeft?-1:0) + (kRight?1:0);
   const steerAxis = Math.abs(steerDigital) > 0 ? steerDigital : steerAxisTouch;
-  const accel     = ((hudOn) ? touch.accel : false) || kAccel;
+  const accel     = ((hudOn) ? (touch.accel || (touch.handbrake && !touch.brake && !kBrake)) : false) || kAccel;
 
   return {left:kLeft,right:kRight,accel,brake:kBrake || (hudOn&&touch.brake),handbrake:kHand || (hudOn&&touch.handbrake),steerAxis};
 }
@@ -1309,21 +1317,22 @@ function computeDeltaIndex(p,c,L){
 }
 
 function drawComboOverlay(){ 
-  if(!player) return; 
+  if(!player) return;
+  const compact=view.width<=700||view.height<=500;
   if(player.comboBreak>0){ 
     const t=player.comboBreak, a=clamp(t/.8,0,1); 
     ctx.save(); 
     ctx.globalAlpha=a; 
     ctx.fillStyle='#ff5050'; 
-    ctx.font='bold 64px system-ui'; 
+    ctx.font=compact?'bold 22px system-ui':'bold 64px system-ui';
     ctx.textAlign='center'; 
-    ctx.fillText('COMBO BREAK!',view.width/2,view.height*.24);
+    ctx.fillText('COMBO BREAK!',view.width/2,compact?view.height*.33:view.height*.24);
     ctx.restore(); 
     player.comboBreak-=dt; 
     return; 
   } 
   if(player.comboState<2) return; 
-  const cx=view.width/2, cy=view.height*.22, color=player.comboState===2?'#2eff88':'#ff4444', pulse=player.comboState===3?1+.08*Math.sin(perfNow*10):1, flash=player.comboFlashTime>0?.35*(player.comboFlashTime/.5):0, scale=pulse+flash;
+  const cx=view.width/2, cy=compact?view.height*.31:view.height*.22, color=player.comboState===2?'#2eff88':'#ff4444', pulse=player.comboState===3?1+.08*Math.sin(perfNow*10):1, flash=player.comboFlashTime>0?.35*(player.comboFlashTime/.5):0, scale=(pulse+flash)*(compact?.46:1);
   ctx.save(); 
   ctx.translate(cx,cy); 
   ctx.scale(scale,scale); 
@@ -1902,7 +1911,7 @@ function checkChallengeProgress(){
 }
 
 </script>
-<script src="js/experience.js?v=0.6.0"></script>
-<script src="js/online-config.js?v=0.6.0"></script>
-<script src="js/online-client.js?v=0.6.0"></script>
+<script src="js/experience.js?v=0.7.0"></script>
+<script src="js/online-config.js?v=0.7.0"></script>
+<script src="js/online-client.js?v=0.7.0"></script>
 </body></html>

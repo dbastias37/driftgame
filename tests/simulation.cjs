@@ -38,6 +38,14 @@ test('ghost sampling and recording are unchanged across views',()=>{
 test('3D failure preserves the race and exposes 2D fallback',()=>{
   const run=harness();run("startWithTrack(presetTrack(1),'tt');state='running';keys.add('w');for(let i=0;i<90;i++)simulate(SIM_DT)");const before=run(snapshot);run("fail3D(new Error('test'))");assert.equal(run('renderPrefs.view'),'2d');assert.deepEqual(run(snapshot),before);
 });
-test('Car implementation remains identical to the baseline',()=>{
-  const baseline=fs.readFileSync(path.join(__dirname,'fixtures/car-v0.2.txt'),'utf8');const car=source.slice(source.indexOf('class Car{'),source.indexOf('class GhostCar{')).trim();assert.equal(car,baseline.trim());
+test('drivetrain, steering, integration and tire effects remain identical to the physics baseline',()=>{
+  const baseline=fs.readFileSync(path.join(__dirname,'fixtures/car-v0.2.txt'),'utf8');
+  const car=source.slice(source.indexOf('class Car{'),source.indexOf('class GhostCar{'));
+  for(const [start,end] of [['  constructor(', '  _updateScoreAndTrail('],['  update(dt,input,track){','  hit(track,s){'],['  spawnTrails(',null]]){
+    const section=text=>text.slice(text.indexOf(start),end?text.indexOf(end):undefined).replace(/  breakFlow\(\)\{[\s\S]*?\n  \}\n/,'').trim();
+    assert.equal(section(car),section(baseline));
+  }
+  // Physical edge resistance is inside the scoring sampler; verify it separately.
+  const contact=text=>text.slice(text.indexOf('    const ENTER='),text.indexOf('    const slip='));
+  assert.equal(contact(car),contact(baseline));
 });

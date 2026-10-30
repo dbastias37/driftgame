@@ -8,11 +8,27 @@ export function roadFootprint(track){
 // Terrain is cut out underneath the shoulder instead of trying to hide a
 // coarse heightfield by lowering selected vertices. Both boundaries coincide.
 export function buildMountainTerrain(track,world,material){
-  const b=track.bounds,tile=64,step=8,footprint=roadFootprint(track),cache=new Map();
+  const b=track.bounds,tile=64,step=8,footprint=roadFootprint(track),cache=new Map(),palette=[new T.Color(0x526253),new T.Color(0x728a84)];
   const sample=(x,z)=>{const key=x+','+z;if(!cache.has(key)){const q=track.sampleNearby(x,z);let h=track.baseHeight(x,z);if(q){const t=Math.max(0,Math.min(1,(q.distance-track.roadHalf-1.3)/30));h=q.h+(h-q.h)*t*t*(3-2*t);}cache.set(key,{q,h});}return cache.get(key);};
   for(let x=Math.floor((b.minX-160)/tile)*tile;x<b.maxX+160;x+=tile)for(let z=Math.floor((b.minY-180)/tile)*tile;z<b.maxY+180;z+=tile){
-    const vertices=[],colors=[];
-    const vertex=p=>{const px=p.X/SCALE,pz=p.Y/SCALE,{q,h}=sample(px,pz);vertices.push(px,h,pz);const slope=q?Math.abs(track.baseHeight(px,pz)-q.h)/Math.max(8,q.distance):0;const c=new T.Color(slope>.6?0x728a84:0x526253);colors.push(c.r,c.g,c.b);};
+    const vertices=[],colors=[],indices=[],shared=new Map();let localFootprint;
+    const clippingPaths=()=>{
+      if(localFootprint)return localFootprint;
+      const clip=new C.Clipper(),tree=new C.PolyTree();
+      clip.AddPath(footprint,C.PolyType.ptSubject,true);
+      clip.AddPath([[x,z],[x+tile,z],[x+tile,z+tile],[x,z+tile]].map(([px,pz])=>({X:px*SCALE,Y:pz*SCALE})),C.PolyType.ptClip,true);
+      clip.Execute(C.ClipType.ctIntersection,tree,C.PolyFillType.pftNonZero,C.PolyFillType.pftNonZero);
+      return localFootprint=C.Clipper.PolyTreeToPaths(tree);
+    };
+    const vertex=p=>{
+      const px=p.X/SCALE,pz=p.Y/SCALE,{q,h}=sample(px,pz),slope=q?Math.abs(track.baseHeight(px,pz)-q.h)/Math.max(8,q.distance):0,color=slope>.6?1:0;
+      // Exact Float32 coordinates, not a tolerance/32-bit spatial hash: distant
+      // vertices must never alias. Keep every original triangle and face color.
+      const key=[Math.fround(px),Math.fround(h),Math.fround(pz),color].join(',');
+      let index=shared.get(key);
+      if(index===undefined){index=vertices.length/3;shared.set(key,index);vertices.push(px,h,pz);const c=palette[color];colors.push(c.r,c.g,c.b);}
+      indices.push(index);
+    };
     const triangulate=node=>{
       if(!node.IsHole()&&node.Contour().length>=3){
         const outer=node.Contour(),holes=node.Childs().filter(n=>n.IsHole()).map(n=>n.Contour());
@@ -25,8 +41,11 @@ export function buildMountainTerrain(track,world,material){
       const xx=x+i,zz=z+j,ring=[[xx,zz],[xx+step,zz],[xx+step,zz+step],[xx,zz+step]].map(([x,z])=>({X:Math.round(x*SCALE),Y:Math.round(z*SCALE)}));
       const {q}=sample(xx+step/2,zz+step/2);
       if(!q||q.distance>track.roadHalf+1.3+step*Math.SQRT2){for(const n of [0,2,1,0,3,2])vertex(ring[n]);continue;}
-      const clip=new C.Clipper(),tree=new C.PolyTree();clip.AddPath(ring,C.PolyType.ptSubject,true);clip.AddPath(footprint,C.PolyType.ptClip,true);clip.Execute(C.ClipType.ctDifference,tree,C.PolyFillType.pftNonZero,C.PolyFillType.pftNonZero);triangulate(tree);
+      const clip=new C.Clipper(),tree=new C.PolyTree();clip.AddPath(ring,C.PolyType.ptSubject,true);clip.AddPaths(clippingPaths(),C.PolyType.ptClip,true);clip.Execute(C.ClipType.ctDifference,tree,C.PolyFillType.pftNonZero,C.PolyFillType.pftNonZero);triangulate(tree);
     }
-    const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(vertices,3));g.setAttribute('color',new T.Float32BufferAttribute(colors,3));g.computeVertexNormals();const mesh=new T.Mesh(g,material);mesh.name='mountain-terrain';world.add(mesh);
+    // Derivative flat shading preserves the original per-triangle normals
+    // while positions and colors can be shared at identical vertices.
+    const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(vertices,3));g.setAttribute('color',new T.Float32BufferAttribute(colors,3));g.setIndex(indices);
+    const mesh=new T.Mesh(g,material);mesh.name='mountain-terrain';world.add(mesh);
   }
 }
