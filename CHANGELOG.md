@@ -1,3 +1,7 @@
+# 0.5.1 — Carga coherente tras publicar
+
+- Versionar las entradas y dependencias JavaScript evita que la caché de Render mezcle menús antiguos con la escena nueva. Corrige la barra día/noche inactiva durante la propagación.
+
 # 0.5.0 — Pista limpia, render por zonas y día/noche
 
 - Terreno de montaña recortado alrededor de la pista, sin superficies sobrepuestas. Planos de cámara ajustados en el reconocimiento aéreo.
