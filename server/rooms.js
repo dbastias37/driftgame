@@ -54,7 +54,7 @@ export class Rooms {
         if(r.phase!=='lobby'||r.host!==p.id)return;
         if(r.players.size<2||![...r.players.values()].every(p=>p.ready&&p.peer?.open)){this.send(p,error('Se necesitan al menos 2 pilotos conectados y todos listos.'));return;}
         r.track=createTrack(r.level);r.phase='race';r.race++;r.startAt=this.now()+this.countdown;r.finishBy=0;r.order=[];
-        [...r.players.values()].forEach((p,slot)=>{p.car=createCar(r.track,p.skin,p.auto,slot);p.queue=[];p.ack=p.received=p.applied=p.gates=p.finished=p.place=0;p.lastIndex=0;p.recoveryAt=0;p.epoch=0;});
+        [...r.players.values()].forEach((p,slot)=>{p.car=createCar(r.track,p.skin,p.auto,slot);p.queue=[];p.ack=p.received=p.applied=p.gates=p.finished=p.place=p.progress=0;p.lastIndex=0;p.recoveryAt=0;p.epoch=0;});
         this.broadcast(r);for(const p of r.players.values())this.send(p,this.snapshot(r,p));break;
       case 'inputs':
         if(r.phase!=='race'||p.finished||m.race!==r.race||m.epoch!==p.epoch||!Array.isArray(m.commands)||m.commands.length>12)return;
@@ -69,7 +69,7 @@ export class Rooms {
     }
   }
   recover(r,p){
-    const i=Math.floor((p.gates%16)*r.track.points.length/16),a=r.track.point(i);p.car.pos={x:a.x,y:a.y};p.car.angle=r.track.tangentAt(i);p.car.vel={x:0,y:0};p.car.omega=p.car.throttleSm=p.car.offTimer=0;p.lastIndex=i;
+    const i=Math.floor((p.gates%16)*r.track.points.length/16),a=r.track.point(i);p.car.pos={x:a.x,y:a.y};p.car.angle=r.track.tangentAt(i);p.car.vel={x:0,y:0};p.car.omega=p.car.throttleSm=p.car.offTimer=0;p.lastIndex=i;p.progress=p.gates;
     p.queue=[];p.received=p.ack;p.epoch++;p.recoveryAt=this.now()+2000;
     this.send(p,{type:'reset',race:r.race,epoch:p.epoch,ack:p.ack,state:Net.capture(p.car)});
   }
@@ -80,7 +80,7 @@ export class Rooms {
       p.gates++;if(p.gates>=r.laps*16){p.finished=Math.max(1,this.now()-r.startAt);p.place=r.order.push(p.id);p.car.vel.x=p.car.vel.y=0;p.queue=[];if(!r.finishBy)r.finishBy=this.now()+90000;this.broadcast(r);}
     }
   }
-  snapshot(r,self){return {type:'snapshot',now:this.now(),race:r.race,epoch:self.epoch,ack:self.ack,state:Net.capture(self.car),players:[...r.players.values()].filter(p=>p.car).map(p=>({id:p.id,pose:Net.pose(p.car).map(n=>Math.round(n*1000)/1000),gates:p.gates,finished:p.finished,place:p.place,connected:!!p.peer?.open}))};}
+  snapshot(r,self){return {type:'snapshot',now:this.now(),race:r.race,epoch:self.epoch,ack:self.ack,state:Net.capture(self.car),players:[...r.players.values()].filter(p=>p.car).map(p=>({id:p.id,pose:Net.pose(p.car).map(n=>Math.round(n*1000)/1000),gates:p.gates,progress:p.progress,finished:p.finished,place:p.place,connected:!!p.peer?.open}))};}
   tick(){
     const now=this.now();
     for(const r of this.rooms.values()){
@@ -94,6 +94,7 @@ export class Rooms {
         for(let n=0;n<6&&p.queue.length&&p.applied<budget;n++){
           const c=p.queue.shift(),before=r.track.nearestIndex(p.car.pos.x,p.car.pos.y);
           Net.step(p.car,c,r.track,false);p.ack=c[0];p.applied++;const current=r.track.nearestIndex(p.car.pos.x,p.car.pos.y);this.advance(r,p,before,current);p.lastIndex=current;
+          const L=r.track.points.length,base=Math.round((p.gates%16)*L/16),along=(current-base+L)%L;p.progress=p.gates+Math.max(0,Math.min(.99,along/(L/16)));
           if(p.finished)break;
           if(p.car.offTimer>=12){this.recover(r,p);break;}
         }

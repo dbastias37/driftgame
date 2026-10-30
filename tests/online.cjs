@@ -16,3 +16,28 @@ test('real WebSockets: 3 clients join, ready, start, exchange authoritative snap
   const a=await connect();a.send(JSON.stringify({type:'create',name:'A'}));const welcome=await wait(a,'welcome');const b=await connect(),c=await connect(),d=await connect();for(const ws of [b,c]){ws.send(JSON.stringify({type:'join',code:welcome.room.code,name:'B'}));await wait(ws,'welcome');}d.send(JSON.stringify({type:'join',code:welcome.room.code}));assert.match((await wait(d,'error')).message,/llena/);
   for(const ws of [a,b,c])ws.send(JSON.stringify({type:'ready',ready:true}));await new Promise(r=>setTimeout(r,25));a.send(JSON.stringify({type:'start'}));const snap=await wait(b,'snapshot');assert.equal(snap.players.length,3);await new Promise(r=>setTimeout(r,50));a.send(JSON.stringify({type:'inputs',race:snap.race,epoch:0,commands:[[1,1,0,0],[2,1,0,0],[3,1,0,0]]}));await new Promise(r=>setTimeout(r,80));assert(a.messages.some(m=>m.type==='snapshot'&&m.ack===3));const health=await fetch(`http://127.0.0.1:${app.server.address().port}/health`);assert.equal(health.status,200);
 }finally{for(const ws of clients)ws.terminate();await app.close();}});
+test('actual client flow: lobby → garage → predicted race → results → rematch → offline',()=>{
+ const {harness}=require('./harness.cjs'),run=harness({onlineTest:true});
+ run("online.open();document.getElementById('onlineCreate').click();testWS.openNow();testWS.receive({type:'hello',version:1,now:Date.now()})");
+ assert.equal(run('testWS.sent.at(-1).type'),'create');
+ run("globalThis.testRoom={type:'room',code:'ABC234',host:'a',phase:'lobby',level:1,laps:2,day:.5,race:0,players:[{id:'a',name:'Host',skin:'blue',auto:true,ready:false,connected:true},{id:'b',name:'Guest',skin:'fujiwara',auto:true,ready:false,connected:true}]};testWS.receive({type:'welcome',id:'a',token:'private',room:testRoom,now:Date.now()})");
+ assert.equal(run('online.inRoom'),true);run("document.getElementById('onlineGarage').click();carIdx=5;updatePanel();document.getElementById('btnChooseStart').click()");assert.equal(run("testWS.sent.findLast(m=>m.type==='choose').skin"),'fujiwara');assert.equal(run('state'),'menu');
+ run("testRoom.phase='race';testRoom.race=1;testRoom.startAt=Date.now()-50;testWS.receive(testRoom);keys.add('w');simulate(1/60);onlineIntervals[0]()");assert.equal(run('mode'),'online');assert.equal(run('state'),'running');assert.equal(run('testWS.sent.at(-1).type'),'inputs');assert.equal(run('player.lives'),3);
+ run("keys.clear();keys.add('shift')");assert.deepEqual(run('({handbrake:input().handbrake,brake:!!input().brake})'),{handbrake:true,brake:false});run("keys.clear();keys.add(' ')");assert.deepEqual(run('({handbrake:input().handbrake,brake:!!input().brake})'),{handbrake:false,brake:true});
+ run('loseLifeAndRespawn()');assert.equal(run('testWS.sent.at(-1).type'),'recover');assert.equal(run('player.lives'),3);
+ run("setPaused(true);simulate(1/60);onlineIntervals[0]()");assert.equal(run('testWS.sent.at(-1).commands.at(-1)[1]'),2);
+ run("testRoom.phase='results';testRoom.players[0].finished=52000;testRoom.players[0].place=1;testWS.receive(testRoom)");assert.equal(run('online.racing'),false);assert.equal(run("document.getElementById('onlineResults').classList.contains('hidden')"),false);
+ run("testRoom.phase='lobby';testWS.receive(testRoom);document.getElementById('onlineRematch').click();showMainMenu()");assert.equal(run('online.inRoom'),false);assert.equal(run('TOTAL_LAPS'),5);assert.equal(run('mode'),'race');
+});
+test('three simulated drivers complete a full physical lap, receive unique results and can rematch',async()=>{
+ const s=await lobby(),{Net}=await engine;s.rooms.handle(s.peers[0],{type:'settings',level:1,laps:1,day:0});start(s);s.advance(1000);
+ for(let tick=0;tick<6000&&s.room.phase==='race';tick++){
+  s.advance(1000/60);
+  for(const peer of s.peers){const p=s.room.players.get(peer.player);if(p.finished)continue;const car=p.car,tr=s.room.track,speed=car.worldSpeed(),i=tr.nearestIndex(car.pos.x,car.pos.y),target=tr.point(i+Math.max(4,Math.round(speed*.9/4))),dx=target.x-car.pos.x,dy=target.y-car.pos.y,error=Math.atan2(Math.sin(Math.atan2(dy,dx)-car.angle),Math.cos(Math.atan2(dy,dx)-car.angle));
+   const steering=Math.atan(2*Math.sin(error)*car.length/Math.max(1,Math.hypot(dx,dy)))*1.344,axis=Math.max(-1,Math.min(1,steering/(car.maxSteer*Math.max(.25,1/(1+speed*.08)))));
+   s.rooms.handle(peer,{type:'inputs',race:s.room.race,epoch:p.epoch,commands:[Net.encode({accel:speed<12,brake:speed>13,steerAxis:axis},p.received+1)]});
+  }s.rooms.tick();
+ }
+ assert.equal(s.room.phase,'results');assert.equal(new Set([...s.room.players.values()].map(p=>p.place)).size,3);for(const p of s.room.players.values()){assert.equal(p.gates,16);assert(p.finished>50000&&p.finished<90000);}
+ s.rooms.handle(s.peers[0],{type:'rematch'});start(s);assert.equal(s.room.race,2);assert([...s.room.players.values()].every(p=>p.gates===0&&p.ack===0&&!p.finished));
+});
