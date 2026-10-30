@@ -81,7 +81,7 @@ globalThis.DriftRoadContact ||= (()=>{
       const t=i/count;
       target=contacts(track,{pos:{x:r.lastX+(car.pos.x-r.lastX)*t,y:r.lastY+(car.pos.y-r.lastY)*t},angle:r.lastAngle+da*t},skin);
       for(const [axis,velocity,k,damping] of [['height','vy',180,22],['roll','vr',140,20],['pitch','vp',140,20]]){
-        r[velocity]+=(k*(target[axis]-r[axis])-damping*r[velocity])*h;
+        r[velocity]+=(k*(car.suspensionTune?.stiffness||1)*(target[axis]-r[axis])-damping*(car.suspensionTune?.damping||1)*r[velocity])*h;
         r[axis]+=r[velocity]*h;
       }
       if(r.height<0){r.height=0;r.vy=Math.max(0,r.vy);}

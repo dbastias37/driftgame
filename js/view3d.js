@@ -1,13 +1,13 @@
 import * as T from '../vendor/three.module.min.js';
-import {SoftwareRenderer} from './software-renderer.js?v=0.9.0';
-import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles} from './track-surface.js?v=0.9.0';
-import {buildMountain} from './mountain-scene.js?v=0.9.0';
-import {loadRX7,createRX7} from './rx7-model.js?v=0.9.0';
-import {loadYugo,createYugo} from './yugo-model.js?v=0.9.0';
-import {loadFujiwara,createFujiwara} from './fujiwara-model.js?v=0.9.0';
-import {batchWorld,updateWorldVisibility} from './world-optimization.js?v=0.9.0';
-import {Atmosphere,buildStreetLights} from './atmosphere.js?v=0.9.0';
-import {CinematicDirector} from './cinematic-camera.js?v=0.9.0';
+import {SoftwareRenderer} from './software-renderer.js?v=1.0.0-prealpha.1';
+import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles} from './track-surface.js?v=1.0.0-prealpha.1';
+import {buildMountain} from './mountain-scene.js?v=1.0.0-prealpha.1';
+import {loadRX7,createRX7} from './rx7-model.js?v=1.0.0-prealpha.1';
+import {loadYugo,createYugo} from './yugo-model.js?v=1.0.0-prealpha.1';
+import {loadFujiwara,createFujiwara} from './fujiwara-model.js?v=1.0.0-prealpha.1';
+import {batchWorld,updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.1';
+import {Atmosphere,buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.1';
+import {CinematicDirector} from './cinematic-camera.js?v=1.0.0-prealpha.1';
 const TAU=Math.PI*2;
 const SKINS={fujiwara:{color:0xe8e8da,roof:1.335,length:4.215},yugo:{color:0xce362b,roof:1.335,length:3.49},blue:{color:0x276bdb,roof:1.28,length:4.2,spoiler:true},red:{color:0xd54232,roof:1.16,length:4.5,stripes:true},yellow:{color:0xe6b52b,roof:.95,length:4.45,spoiler:true},gray:{color:0x85979a,roof:1.35,length:3.85}};
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -158,6 +158,14 @@ export class DriftView3D{
     this.ghostCar=key==='fujiwara'&&this.fujiwaraTemplate?createFujiwara(this.fujiwaraTemplate,true):key==='yugo'&&this.yugoTemplate?createYugo(this.yugoTemplate,true):key==='yellow'&&this.rx7Template?createRX7(this.rx7Template,true):createCar(key,true);
     this.scene.add(this.car.root,this.ghostCar.root);this.key=key;
   }
+  applyCosmetics(model,cosmetics={}){
+    const color=cosmetics?.neon;
+    if(color&&!model.neon){
+      const m=new T.MeshBasicMaterial({color,transparent:true,opacity:.7,map:this.smokeTexture.clone(),depthWrite:false,side:T.DoubleSide});
+      model.neon=new T.Mesh(new T.PlaneGeometry(4.3,2.3),m);model.neon.rotation.x=-Math.PI/2;model.neon.position.y=.035;model.neon.renderOrder=2;model.root.add(model.neon);
+    }
+    if(model.neon){model.neon.visible=!!color;if(color)model.neon.material.color.set(color);}
+  }
   updateRivals(rivals,dt){
     const ids=new Set(rivals.map(p=>p.id));
     for(const [id,model] of this.rivalModels)if(!ids.has(id)){this.scene.remove(model.root);disposeGroup(model.root);this.rivalModels.delete(id);}
@@ -188,6 +196,7 @@ export class DriftView3D{
     return contact;
   }
   effects(player){
+    this.smokeMat.color.set(player.cosmetics?.smokeColor||'#dde8e8');this.smokeMat.size=2.8*Math.sqrt(player.cosmetics?.smokeVolume||1);
     const particles=player.smoke||[],count=Math.min(particles.length,this.low?140:450),stride=Math.max(1,Math.floor(particles.length/Math.max(1,count)));
     for(let i=0;i<count;i++){const p=particles[i*stride];this.smokePos[i*3]=p.x;this.smokePos[i*3+1]=(this.track.downhill?this.track.surfaceHeight(p.x,p.y):0)+.4+p.life*.75;this.smokePos[i*3+2]=p.y;}
     this.smokeGeo.setDrawRange(0,count);this.smokeGeo.attributes.position.needsUpdate=true;
@@ -212,6 +221,7 @@ export class DriftView3D{
     if(!track||!player)return;this.setTimeOfDay(timeOfDay);this.adaptResolution(frameDt);if(this.track!==track){this.build(track);this.resetCamera();}this.setSkin(skin);
     const w=innerWidth,h=innerHeight;if(this.width!==w||this.height!==h){this.width=w;this.height=h;this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();}
     const p=player.pos,a=player.angle,speed=player.worldSpeed();this.car.root.position.set(p.x,0,p.y);this.car.root.rotation.set(0,-a,0,'YXZ');
+    this.applyCosmetics(this.car,player.cosmetics);
     const ride=this.placeOnRoad(this.car,player,skin,player.ride);
     const descent=player.descent,falling=this.track.downhill&&descent?.motion==='falling';
     if(this.track.downhill&&descent){
@@ -223,6 +233,7 @@ export class DriftView3D{
       }
       this.car.root.traverse(o=>{if(o.isMesh&&o.material.transparent&&o.material.opacity===.23)o.visible=!falling;});
     }
+    if(this.car.neon)this.car.neon.visible=!!player.cosmetics?.neon&&!falling;
     this.car.body.rotation.x+=motion==='reduced'?0:clamp(player.omega*speed*.002,-.055,.055);
     for(const wheel of this.car.wheels){
       wheel.steer.rotation.y=wheel.front?-player.steerAngle:0;

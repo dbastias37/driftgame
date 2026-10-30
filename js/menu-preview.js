@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
-import {DriftView3D,disposeGroup} from './view3d.js?v=0.9.0';
-import {updateWorldVisibility} from './world-optimization.js?v=0.9.0';
+import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.1';
+import {updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.1';
 
 const material=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.82,...extra});
 function box(parent,m,x,y,z,w,h,d){const mesh=new T.Mesh(new T.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);parent.add(mesh);return mesh;}
@@ -48,16 +48,16 @@ export class MenuPreview3D extends DriftView3D{
     this.car.root.removeFromParent();this.ghostCar.root.removeFromParent();super.setSkin(key,force);
   }
   rotateBy(amount){if(this.previewMode==='garage')this.garageAngle+=amount;else this.droneAngle+=amount;}
-  renderPreview({kind,track,skin='blue',dt=0,spinning=true,timeOfDay=0}){
+  renderPreview({kind,track,skin='blue',dt=0,spinning=true,timeOfDay=0,cosmetics={}}){
     this.setTimeOfDay(timeOfDay);
     const width=Math.max(1,this.canvas.clientWidth||800),height=Math.max(1,this.canvas.clientHeight||500);
     if(this.width!==width||this.height!==height){this.width=width;this.height=height;this.renderer.setSize(width,height,false);this.camera.aspect=width/height;}
-    const revision=[kind,track,skin,spinning,this.garageAngle,this.droneAngle,timeOfDay,width,height,this.car,this.rx7Template,this.yugoTemplate,this.fujiwaraTemplate,this.quality];
+    const revision=[cosmetics.neon,cosmetics.smokeColor,cosmetics.smokeVolume,kind,track,skin,spinning,this.garageAngle,this.droneAngle,timeOfDay,width,height,this.car,this.rx7Template,this.yugoTemplate,this.fujiwaraTemplate,this.quality];
     if(!spinning&&this.previewRevision&&revision.every((v,i)=>v===this.previewRevision[i]))return;
     this.previewRevision=revision;
     this.previewMode=kind;this.camera.near=.1;
     if(kind==='garage'){
-      this.setSkin(skin);this.garage.platform.add(this.car.root);
+      this.setSkin(skin);this.applyCosmetics(this.car,cosmetics);this.garage.platform.add(this.car.root);
       if(spinning)this.garageAngle+=Math.min(dt,.1)*.24;
       this.garage.platform.rotation.y=this.garageAngle;
       this.car.root.visible=true;this.car.root.position.set(0,.28,0);this.car.root.rotation.set(0,0,0);this.car.body.position.set(0,0,0);this.car.body.rotation.set(0,0,0);

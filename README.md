@@ -1,6 +1,6 @@
-# Drift Racer 0.9.0 — 2D + 3D
+# Drift Racer 1.0 pre-alpha
 
-Juego de drift estático para navegador, con dos vistas intercambiables de **una misma simulación**. Incluye seis autos, veinte desafíos, editor de circuitos, transmisión manual/automática y contrarreloj con fantasma local.
+Juego de drift 3D para navegador. Seis autos, campaña de veinte etapas y sesenta objetivos, taller por vehículo, veinte descensos, carreras online de hasta tres jugadores, editor y contrarreloj con fantasma local. Versión técnica: `1.0.0-prealpha.1`.
 
 [Jugar en Render](https://driftgame.onrender.com)
 
@@ -16,12 +16,29 @@ Abrir `http://localhost:8000`. No necesita compilación ni instalar dependencias
 
 - **Carrera rápida:** circuito con vista aérea 3D → garaje → carrera de cinco vueltas.
 - **Cerro abajo:** elegir descenso → reconocimiento 3D → garaje → sprint de 0 a 100%. Hay que alcanzar el objetivo de drift y cruzar la meta; el resultado se decide al terminar.
-- **Desafíos:** vista aérea del circuito → garaje → objetivo de puntos → reconocimiento del siguiente desafío. Se pueden explorar los bloqueados, pero solo jugar los desbloqueados.
+- **Campaña:** reconocimiento → garaje/taller → una vuelta con tres objetivos acumulables entre intentos → siguiente etapa al completar los tres. Se pueden explorar las etapas bloqueadas.
 - **Contrarreloj:** elegir y previsualizar uno de los veinte circuitos → garaje → vueltas libres con el fantasma del récord.
 - **Creativo:** dibujar circuito cerrado → vista aérea 3D → garaje → carrera. Los códigos `TRK` y `TRK2` siguen siendo compatibles.
-- **Configuración:** vista, cámara, calidad, barra día/atardecer/noche, movimiento reducido y controles táctiles automáticos/forzados.
+- **Configuración:** cámara, calidad, barra día/atardecer/noche, movimiento reducido y controles táctiles automáticos/forzados.
 
-El garaje es el último paso: modelo 3D sobre una tarima giratoria, estadísticas originales, transmisión, vista 2D/3D y resumen del circuito. Arrastrar o usar las flechas con el visor enfocado cambia el ángulo; «Pausar giro» detiene la rotación. «Volver a la pista» conserva la selección. Los circuitos importados y enlaces compartidos también pasan por la vista aérea antes del garaje.
+El garaje es el último paso: modelo 3D sobre una tarima giratoria, estadísticas, transmisión, taller con comparación de serie/actual/vista previa y resumen del circuito. Arrastrar o usar las flechas con el visor enfocado cambia el ángulo; «Pausar giro» detiene la rotación. «Volver a la pista» conserva la selección. Los circuitos importados y enlaces compartidos también pasan por la vista aérea antes del garaje.
+
+## Campaña y taller (1.0 pre-alpha)
+
+- Cada etapa exige puntaje total, vuelta sin salidas/choques/recuperaciones y un combo de drift largo. Los objetivos crecen de 12.860 a 71.000 puntos y de 2.250 a 10.800 puntos de combo. Los tres se pueden conseguir en intentos separados; solo se guardan al completar una vuelta válida con las puertas de control existentes. No se termina la carrera al alcanzar el puntaje.
+- Primera obtención de cada objetivo: `650 + 100 × etapa` CR. Primera etapa completa: `1200 + 150 × etapa` CR adicionales. Repetición con objetivo de score: `450 + 40 × etapa` CR. Carrera rápida terminada: 900 CR. Descenso ganado: `1200 + 90 × ruta` CR. Victoria online confirmada por clasificación del servidor: 1500 CR; recibos locales evitan repetir el premio al reconectar.
+- Taller dentro del garaje: **20 módulos por cada uno de los seis autos**. Motor, admisión, alimentación, encendido, escape, volante motor, relación final, embrague, diferencial, neumáticos, frenos, refuerzos, aligeramiento, muelles, amortiguadores, dirección, control e impulso de drift, neón y humo. Tres niveles por módulo; neón tiene uno. El nivel 2 requiere seis objetivos de campaña; el 3, dieciocho. Cada vehículo tiene precios, denominaciones y coeficientes propios.
+- Las barras comparan serie, preparación instalada y próxima compra. Se añade un indicador específico cuando la pieza modifica respuesta, cambios, suspensión o drift. Son valores del juego, no mediciones de banco ni promesas de prestaciones reales. Los niveles comprados se pueden desactivar o volver a montar sin coste.
+- Las piezas se aplican una vez al crear el auto; reiniciar no acumula multiplicadores. La función física de serie conserva el código original. El impulso mecánico de drift se añade únicamente al auto preparado mediante una envoltura con rampa gradual; no altera el impulso visual de cámara. Suspensión conserva contactos y pivotes originales, ajustando rigidez/amortiguación. **Online mantiene preparación de serie para todos**; los premios financian el taller individual. Los récords TT de autos preparados usan una clave distinta por auto y configuración.
+- Neón opcional de seis colores, sin luces dinámicas adicionales. Humo: volumen visual ×2, ×3 y color; no aumenta la capacidad de los buffers ni el multiplicador de puntos. El estilo y geometría de las carrocerías no cambian. La repetición conserva los efectos del auto grabado.
+- El perfil se guarda en `drift:career:v1` del navegador. Migra desbloqueos anteriores sin inventar dinero ni objetivos. Compras y premios solo se confirman si el guardado funciona. No hay cuenta ni sincronización en nube; borrar datos del navegador elimina este progreso.
+- **Solo 3D:** se retiran selectores, atajo V, sprites PNG y cámara de la vista plana del flujo activo. El código 2D queda bajo `LEGACY_2D_ENABLED=false`; no dibuja el mundo debajo de 3D. HUD y minimapa siguen usando Canvas. Si falla el entorno 3D, la carrera se pausa y ofrece recarga; el render compatible continúa siendo tridimensional.
+- El dron toma una dirección continua sobre la carretera, con una cuerda de 12 m hacia atrás y 20 m hacia delante, en lugar de saltar entre tangentes de vértices.
+- Créditos accesibles desde el menú: Diego Bastias A. a través de ChatGPT 6 Astra; Pudim Abestado (RX-7 RedSuns y AE86 Fujiwara versión 2, licencia Sketchfab Standard declarada en los GLB originales), 3DDomino (Yugo Koral 55, CC BY 4.0; retopología/UV/atlas/pivotes adaptados), y licencias de las bibliotecas. No se atribuye una licencia abierta a los modelos Standard.
+
+Referencia funcional: [manual original de Need for Speed Underground 2, EA, pp. 5–7](https://oldgamesdownload.com/wp-content/uploads/manuals/need-for-speed-underground-2_win_manual_en_5rt.pdf), relación carreras/dinero/preparación y comparación de aceleración, velocidad y manejo. No se incorporan recursos gráficos de ese juego.
+
+Validación 1.0: 111 pruebas de núcleo aprobadas, incluidas 16 nuevas de campaña, economía, perfiles por auto, mejoras, ausencia de render 2D, créditos y continuidad del dron, más una prueba de render de neón/humo. Revisión en navegador de compra, montaje/desmontaje, colores, cambio de vehículo, tarjetas de campaña y taller en 390×844. El navegador de revisión usa render compatible sin WebGL; la medición de FPS en GPU y el tacto en teléfono físico siguen pendientes. La dificultad y la economía son un primer balance pre-alpha para ajustar con partidas humanas.
 
 ## Inicio, menú raw y continuidad (0.9.0)
 
@@ -33,7 +50,7 @@ El garaje es el último paso: modelo 3D sobre una tarima giratoria, estadística
 
 ## Cinemática, pianos y chat (0.8.0)
 
-- **Drift visual:** pulsar Shift o DRIFT produce una apertura suave del campo de visión (zoom leve en 2D), con ataque y regreso amortiguados. No cambia aceleración, adherencia, dirección ni suspensión. Mantener el botón no repite el impulso.
+- **Drift visual:** pulsar Shift o DRIFT produce una apertura suave del campo de visión , con ataque y regreso amortiguados. No cambia aceleración, adherencia, dirección ni suspensión. Mantener el botón no repite el impulso.
 - **Líneas manga:** vectores animados en la periferia, con centro despejado y densidad menor en móvil. Configuración permite seguir el auto, fijar el centro o desactivarlas; el impulso tiene un ajuste independiente. Movimiento reducido desactiva ambos efectos.
 - **Piano x5:** con el drift ya en x3, al menos una rueda debe tocar la parte elevada del piano. Se usan las cuatro posiciones de ruedas de cada modelo y el perfil físico de la pista. Al perder contacto o entrar en la transición de derrape vuelve a x3 sin borrar el combo. Colisión, salida o pérdida real del drift conservan las reglas de ruptura anteriores.
 - **Dron:** disponible al conducir con C o en Configuración. Hace pasadas y arcos acotados, con altura adaptada a la ladera.
@@ -75,7 +92,7 @@ El desnivel incluye la zona de frenado tras la meta. Las veinte rutas están dis
 - Salidas a la ladera: caída bajo gravedad, cuerpo rígido aproximado con inercia de caja y ocho puntos de contacto, impulsos, fricción y vuelcos. La cámara muestra el auto durante la caída, incluso si se conducía desde el capó.
 - **R** o **Recuperar** devuelve el auto al último punto seguro y consume una de tres vidas. Después de 4,5 s de caída se recupera automáticamente. El punto seguro avanza cada 60 m estando dentro de la carretera; no se elige la curva inferior más cercana.
 - La validación exige continuidad de avance sobre la carretera. Los atajos por el barranco no adelantan el sprint; volver sobre un tramo ya recorrido no permite repetir sus puntos. Los trazados revisados usan récords `downhill:v2:*`, separados de Challenge y TT. Los registros anteriores se conservan almacenados y no se comparan con carreteras distintas.
-- Ambos modos visuales usan la misma simulación. 2D conserva su vista cenital; 3D muestra el relieve y el vuelco. Las físicas de los circuitos anteriores permanecen intactas.
+- La simulación compartida sigue intacta. La vista 3D muestra el relieve y el vuelco; el render 2D está retirado de la interfaz desde 1.0. Las físicas de los circuitos anteriores permanecen intactas.
 
 Es una física jugable aproximada, no un simulador de neumáticos/deformación. Referencias técnicas: [componentes de gravedad en una pendiente, OpenStax](https://openstax.org/books/physics/pages/5-4-inclined-planes), [fricción y fuerza normal, OpenStax](https://openstax.org/books/university-physics-volume-1/pages/6-2-friction) y [modelo de masa apoyada por rueda, Unity](https://docs.unity3d.com/es/530/ScriptReference/WheelCollider-sprungMass.html). El código es propio y no utiliza Unity.
 
@@ -138,7 +155,6 @@ Referencias de implementación: [agrupación de geometría](https://threejs.org/
 | Girar | A / D o flechas izquierda / derecha |
 | Derrape / freno de mano | Shift |
 | Subir / bajar marcha manual | E / Q (Control también baja) |
-| **Alternar 2D / 3D** | **V** o botón Vista |
 | **Cámara 3D: seguimiento / aérea / capó** | **C** o botón Cámara |
 | Zoom de vista | Rueda del mouse |
 | Pausar / reanudar o volver de un menú | Esc |
@@ -160,7 +176,7 @@ La ayuda pausa la conducción. Cambiar de pestaña o perder foco también pausa 
 - `js/view3d.js`: Three.js r170, modelos de los seis autos, ruedas orientables, humo, huellas, cámaras y entorno. La decoración no añade colisiones a las reglas originales.
 - `js/rx7-model.js`: adaptación del RX-7 FD RedSuns suministrado para el auto amarillo; conserva cuatro ruedas independientes, texturas y movimiento del juego. Créditos y procedencia en `assets/models/README.md`.
 - `js/track-surface.js`: une el área del circuito antes de triangular. Asfalto, línea de borde, piano y escapatoria son regiones contiguas sin superposición. El piano se eleva con seis bandas unidas y conserva sus franjas naranjas/blancas; utiliza el mismo campo de alturas que las ruedas. Se divide en sectores para descartar geometría fuera de cámara. No modifica puntos, ancho ni muestreo de físicas.
-- `js/software-renderer.js`: proyección 3D con búfer de profundidad sobre Canvas para equipos sin WebGL. Reduce resolución y detalle; es más lenta que WebGL y se recomienda 2D si no resulta fluida.
+- `js/software-renderer.js`: proyección 3D con búfer de profundidad sobre Canvas para equipos sin WebGL. Reduce resolución y detalle; es más lenta que WebGL y se recomienda calidad ligera si no resulta fluida.
 - `js/menu-preview.js`: garaje original inspirado en la referencia del usuario y vista aérea del circuito real; una sola instancia de previsualización, encuadre según el trazado y render detenido cuando el menú está oculto.
 - `js/experience.js`: navegación, configuración, preferencias y HUD.
 - `css/experience.css`: interfaz adaptable y estilo visual.
@@ -226,6 +242,6 @@ Sitio estático, directorio público `.` y sin paso de compilación. Mantener el
 
 En el menú, abre **Online beta**. Escribe tu nombre y crea una sala, o entra con el código de 6 caracteres de un amigo. El anfitrión elige uno de los 20 circuitos, 1–5 vueltas y el ambiente. Cada piloto elige su auto en el garage y marca **Estoy listo**. Con 2 o 3 pilotos listos, el anfitrión inicia la salida sincronizada.
 
-Las carreras son sin contacto. Se conserva la física de los seis autos y el cambio de vista 2D/3D. Shift activa la función de derrape que antes estaba en Espacio; Espacio frena. E/Q cambian marchas manuales. R vuelve al último control validado. Abrir el menú online no detiene la carrera. El servidor valida las vueltas y muestra la clasificación; al terminar, el anfitrión puede preparar otra carrera.
+Las carreras son sin contacto. Se conserva la física de los seis autos en vista 3D. Shift activa la función de derrape que antes estaba en Espacio; Espacio frena. E/Q cambian marchas manuales. R vuelve al último control validado. Abrir el menú online no detiene la carrera. El servidor valida las vueltas y muestra la clasificación; al terminar, el anfitrión puede preparar otra carrera.
 
 La conexión usa WebSocket seguro, predicción local e interpolación de los dos rivales. Si se interrumpe, la plaza se conserva 20 segundos. Las salas beta viven en memoria y se pierden al reiniciar el servidor. En el plan gratuito de Render, la primera conexión puede tardar mientras despierta. Ver [operación y protocolo](server/README.md).

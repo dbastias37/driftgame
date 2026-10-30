@@ -13,7 +13,7 @@ test('locked challenges can be previewed but cannot open the garage or start a r
  const r=harness();r("$('#btnModeChallenge').click();previewCircuit(20,true)");assert.equal(r(visible('challengeMenu')),true);assert.equal(r("$('#btnChallengeContinue').disabled"),true);
  r('confirmTrackPreview()');assert.equal(r(visible('carPanel')),false);assert.equal(r('player'),null);
  r('previewCircuit(1,true);confirmTrackPreview()');assert.equal(r(visible('carPanel')),true);assert.equal(r('activeChallengeLevel'),1);
- r("$('#btnChooseStart').click();state='running';player.score=activeChallengeGoal;checkChallengeProgress();$('#btnNextChallenge').click()");
+ r("$('#btnChooseStart').click();state='running';player.score=activeChallengeGoal;player.comboPoints=DriftCareer.objectives(1)[2].target;careerRun.observe(player,30);finished();$('#btnNextChallenge').click()");
  assert.equal(r(visible('challengeMenu')),true);assert.equal(r('previewSelection.level'),2);assert.equal(r(visible('carPanel')),false);
 });
 test('editor and import previews preserve geometry, origin, and selected car on back navigation',()=>{

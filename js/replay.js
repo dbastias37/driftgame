@@ -16,7 +16,7 @@ globalThis.DriftReplay=(()=>{
       const slot=this.head;this.times[slot]=time;
       for(const [id,car,skin] of [['self',player,this.meta.skin],...rivals.slice(0,2).map(c=>[c.id,c,c.skin])]){
         let channel=this.channels.get(id);
-        if(!channel){channel={id,skin,name:car.name||'',color:car.color,dimensions:car.bodyDimensions?{...car.bodyDimensions}:null,data:new Float32Array(this.capacity*STRIDE),last:null,travel:0,first:time};this.channels.set(id,channel);}
+        if(!channel){channel={id,skin,name:car.name||'',color:car.color,cosmetics:car.cosmetics?{...car.cosmetics}:null,dimensions:car.bodyDimensions?{...car.bodyDimensions}:null,data:new Float32Array(this.capacity*STRIDE),last:null,travel:0,first:time};this.channels.set(id,channel);}
         const r=car.ride||{},d=car.descent||{},a=channel.data,k=slot*STRIDE,last=channel.last;
         const cut=last&&(Math.hypot(car.pos.x-last.x,car.pos.y-last.y)>18||(last.falling&&d.motion!=='falling'))?1:0;
         const rolling=car.vel.x*Math.cos(car.angle)+car.vel.y*Math.sin(car.angle);
@@ -37,7 +37,7 @@ globalThis.DriftReplay=(()=>{
         if(time<c.first)continue;const a=i*STRIDE,b=j*STRIDE,buffer=c.data;if(!buffer[a+29])continue;
         const t=buffer[b+25]||!buffer[b+29]?0:u;
         const get=n=>buffer[a+n]+(buffer[b+n]-buffer[a+n])*t,pick=n=>buffer[(t<.5?a:b)+n],rot=n=>angle(buffer[a+n],buffer[b+n],t);
-        const pose={id:c.id,skin:c.skin,name:c.name,color:c.color,bodyDimensions:c.dimensions,pos:{x:get(0),y:get(1)},angle:rot(2),vel:{x:get(3),y:get(4)},steerAngle:get(5),omega:get(6),gear:pick(7),handbrake:!!pick(8),score:get(20),mult:pick(21),comboState:pick(21),comboPoints:get(22),driftTime:get(23),redBlink:!!pick(24),trailOn:!!pick(28),wheelTravel:get(30),smoke:[],tireTrails:[],worldSpeed(){return Math.hypot(this.vel.x,this.vel.y);}};
+        const pose={id:c.id,skin:c.skin,cosmetics:c.cosmetics,name:c.name,color:c.color,bodyDimensions:c.dimensions,pos:{x:get(0),y:get(1)},angle:rot(2),vel:{x:get(3),y:get(4)},steerAngle:get(5),omega:get(6),gear:pick(7),handbrake:!!pick(8),score:get(20),mult:pick(21),comboState:pick(21),comboPoints:get(22),driftTime:get(23),redBlink:!!pick(24),trailOn:!!pick(28),wheelTravel:get(30),smoke:[],tireTrails:[],worldSpeed(){return Math.hypot(this.vel.x,this.vel.y);}};
         pose.ride={height:get(9),roll:rot(10),pitch:rot(11),wheels:DriftRoadContact.wheelOffsets(c.skin).map((p,n)=>({...p,height:get(12+n)}))};
         if(pick(27))pose.descent={motion:pick(16)?'falling':'driving',y:get(17),roll:rot(18),pitch:rot(19),s:get(26)};
         poses.push(pose);
