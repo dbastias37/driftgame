@@ -1,4 +1,4 @@
-# Drift Racer 0.8.0 — 2D + 3D
+# Drift Racer 0.9.0 — 2D + 3D
 
 Juego de drift estático para navegador, con dos vistas intercambiables de **una misma simulación**. Incluye seis autos, veinte desafíos, editor de circuitos, transmisión manual/automática y contrarreloj con fantasma local.
 
@@ -22,6 +22,14 @@ Abrir `http://localhost:8000`. No necesita compilación ni instalar dependencias
 - **Configuración:** vista, cámara, calidad, barra día/atardecer/noche, movimiento reducido y controles táctiles automáticos/forzados.
 
 El garaje es el último paso: modelo 3D sobre una tarima giratoria, estadísticas originales, transmisión, vista 2D/3D y resumen del circuito. Arrastrar o usar las flechas con el visor enfocado cambia el ángulo; «Pausar giro» detiene la rotación. «Volver a la pista» conserva la selección. Los circuitos importados y enlaces compartidos también pasan por la vista aérea antes del garaje.
+
+## Inicio, menú raw y continuidad (0.9.0)
+
+- Portada con **Jugar ahora** antes del menú. Exhibición 3D precargada de tres pilotos (Fujiwara, RX-7 y GTI), con circuito y día/noche aleatorios, líneas de drift, contravolante, ruedas y humo. Usa una repetición de trayectorias preparadas: no conecta a online ni avanza la carrera del usuario. Pausa independiente de la demo y pausa de trabajo cuando queda oculta.
+- La demo reutiliza modelos y cámaras existentes; se precalcula a 20 muestras/s, con buffers inferiores a 2 MB en los veinte circuitos. Render limitado a 30 fps en portada (10 en el modo compatible por software). No descarga un video.
+- Pantallas completas, tipografía gruesa, navegación vertical y tira horizontal de pistas. Flechas arriba/abajo recorren modos, Enter selecciona y Escape retrocede. Se mantienen garaje final, estadísticas, transmisión, importación, editor, online y chat.
+- Líneas manga más visibles, intensidad persistente **0–300%** y modos auto/centro/desactivado. Cámara con resorte amortiguado y apertura muy pequeña; no modifica motor, adherencia ni suspensión. Movimiento reducido anula los efectos.
+- En Cerro abajo, el seguimiento de ruta continúa por el arcén sin conceder puntos fuera del asfalto. Volver a la carretera reanuda porcentaje y puntuación sin R. Saltar a una curva inferior sigue sin adelantar el sprint; una reincorporación inválida activa la recuperación al último punto seguro, con la penalización habitual, en vez de dejar el progreso bloqueado. Avisos de caída y salida muestran el tiempo de recuperación correcto.
 
 ## Cinemática, pianos y chat (0.8.0)
 

@@ -2,7 +2,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Drift Racer — 2D + 3D</title>
-<meta name="application-version" content="0.4.0">
+<meta name="application-version" content="0.9.0">
 <meta name="theme-color" content="#111719">
 <style>
   :root{--bg:#0b0b0b;--ink:#e6f1ff;}
@@ -220,8 +220,9 @@
   @media(max-height:500px){#carPreview{height:110px} #carPanel h2{font-size:19px} #times{top:122px} #ui{max-width:330px} #stickZone{width:120px;height:120px} #gasZone{height:135px}}
 .daytime-control{display:block;max-width:330px;margin:14px 0 8px;font-size:12px;color:#aebbbb}.daytime-control output{float:right;color:#ff7544}.daytime-control input{display:block;width:100%;margin:10px 0;accent-color:#ff7544;cursor:pointer}.daytime-ends{display:flex;justify-content:space-between;font-size:10px;color:#829597}
 </style>
-<link rel="stylesheet" href="css/experience.css?v=0.8.0">
-<link rel="stylesheet" href="css/online.css?v=0.8.0">
+<link rel="stylesheet" href="css/experience.css?v=0.9.0">
+<link rel="stylesheet" href="css/online.css?v=0.9.0">
+<link rel="stylesheet" href="css/raw-menu.css?v=0.9.0">
 </head>
 <body>
   <div id="ui">
@@ -324,26 +325,24 @@
     </div>
   </div>
 
-  <div id="mainMenu">
-    <div class="menu-card home-card">
-      <header class="home-top"><span class="brand-mark">DR /</span><span>DRIFT RACER</span><span class="edition">CINEMÁTICA · 08</span></header>
-      <div class="home-layout">
-        <div class="home-copy">
-          <p class="eyebrow">ENCUENTRA TU LÍNEA</p>
-          <h1>CONTROL.<br><em>DESCONTROL.</em></h1>
-          <p class="home-intro">El mismo asfalto. Otra perspectiva.<br>Domina el derrape en 2D y 3D.</p>
-          <button id="btnQuickRace" class="hero-button">ENTRAR A LA PISTA <span>↗</span></button>
-          <div class="home-modes">
-            <button id="btnModeOnline" class="online-entry"><span class="mode-number">●</span><span>ONLINE <small>Crea una sala. Hasta 3 pilotos.</small></span><span class="beta-tag">BETA ↗</span></button>
-            <button id="btnModeChallenge"><span class="mode-number">01</span><span>DESAFÍOS<small>20 circuitos. Supera tus límites.</small></span><span>↗</span></button>
-            <button id="btnModeDownhill"><span class="mode-number">02</span><span>CERRO ABAJO<small>20 rutas de montaña. Puntúa antes de la meta.</small></span><span>↘</span></button>
-              <button id="btnModeTT"><span class="mode-number">03</span><span>CONTRARRELOJ<small>Tu mejor vuelta, tu próximo rival.</small></span><span>↗</span></button>
-            <button id="btnModeCreative"><span class="mode-number">04</span><span>CREA TU CIRCUITO<small>Dibuja. Corre. Comparte.</small></span><span>↗</span></button>
-          </div>
-        </div>
-        <div class="home-track"><span class="track-label">CIRCUITO / 01</span><div class="hero-line"></div><div class="home-caption"><span>LA CURVA ES TUYA.</span><small>6 AUTOS · 20 DESAFÍOS · INFINITAS LÍNEAS</small></div></div>
-      </div>
-      <footer class="home-bottom"><div class="view-segment" aria-label="Vista de conducción"><button data-view="2d">2D CLÁSICA</button><button data-view="3d">3D INMERSIVA</button></div><button id="btnSettings" class="text-button">Configuración</button><button id="btnMenuHelp" class="text-button">Controles</button><button id="btnImport" class="text-button">Importar pista ↗</button></footer>
+  <section id="titleScreen" aria-label="Pantalla de inicio">
+    <div class="title-top"><span>DR / 09</span><span>DEMO · ELITE</span></div>
+    <div class="title-brand"><h1>DRIFT<br><em>RACER</em></h1><span>2D + 3D</span></div>
+    <div class="title-bottom"><div><button id="btnPlayNow">JUGAR AHORA <span>↗</span></button><small>ENTER / SELECCIONAR</small></div><div class="demo-caption"><span id="titleDemoInfo">PREPARANDO DEMO…</span><button id="btnDemoPause" class="text-button">Ⅱ DEMO</button></div></div>
+  </section>
+  <div id="mainMenu" class="hidden">
+    <div class="raw-home">
+      <header class="raw-home-header"><b>DRIFT <em>RACER</em></b><span>MENÚ PRINCIPAL / 09</span></header>
+      <nav class="raw-mode-list" aria-label="Modos de juego">
+        <button id="btnQuickRace"><i>01</i><span>CARRERA RÁPIDA</span><b>↗</b></button>
+        <button id="btnModeDownhill"><i>02</i><span>CERRO ABAJO</span><b>↘</b></button>
+        <button id="btnModeChallenge"><i>03</i><span>DESAFÍOS</span><b>↗</b></button>
+        <button id="btnModeOnline"><i>04</i><span>ONLINE <small>BETA · 3 PILOTOS</small></span><b>↗</b></button>
+        <button id="btnModeTT"><i>05</i><span>CONTRARRELOJ</span><b>↗</b></button>
+        <button id="btnModeCreative"><i>06</i><span>CREA TU CIRCUITO</span><b>↗</b></button>
+      </nav>
+      <footer class="raw-home-footer"><div class="view-segment" aria-label="Vista de conducción"><button data-view="2d">2D</button><button data-view="3d">3D</button></div><button id="btnSettings" class="text-button">AJUSTES</button><button id="btnMenuHelp" class="text-button">CONTROLES</button><button id="btnImport" class="text-button">IMPORTAR</button><button id="btnBackTitle" class="text-button">← INICIO</button></footer>
+      <div class="raw-demo-label"><span>EXHIBICIÓN / DRIFT ELITE</span><b id="homeDemoInfo"></b></div>
     </div>
   </div>
 
@@ -392,6 +391,7 @@
       <label class="setting">Movimiento de cámara<select id="motionSetting"><option value="full">Suave y dinámico</option><option value="reduced">Reducido</option></select></label>
       <label class="setting">Impulso visual Drift<select id="impulseSetting"><option value="on">Activado</option><option value="off">Desactivado</option></select></label>
       <label class="setting">Líneas de velocidad<select id="speedLinesSetting"><option value="car">Seguir el auto</option><option value="center">Centro de pantalla</option><option value="off">Desactivadas</option></select></label>
+      <label class="setting intensity-setting"><span>Intensidad de líneas <output id="speedLinesIntensityLabel">150%</output></span><input id="speedLinesIntensity" type="range" min="0" max="300" step="25" value="150" aria-label="Intensidad de líneas de velocidad"></label>
       <p class="muted">V cambia entre 2D y 3D durante la carrera. C cambia la cámara 3D. Tus preferencias se guardan en este navegador.</p>
       <button id="btnSettingsBack">Volver</button>
     </div>
@@ -428,7 +428,7 @@
 
   <div id="pauseMenu" class="modal hidden">
     <div class="card">
-      <p class="eyebrow">TÓMATE UN RESPIRO</p><h2 id="pauseTitle">Pausa</h2>
+      <p class="eyebrow">CARRERA / PAUSA</p><h2 id="pauseTitle">Pausa</h2>
       <p>W / flechas: conducir · Espacio / S: frenar · Shift: derrape · E / Q: marchas</p><p class="muted">Sostén el x3 y apoya una rueda en el piano para llegar a x5. Revive tu carrera desde «Ver repetición».</p>
       <div class="row" style="gap:8px;margin-top:10px">
         <button id="btnResume">Seguir</button><button id="btnReplayPause" class="gray" disabled>Ver repetición ↗</button>
@@ -452,13 +452,14 @@
   
   <audio id="radio" preload="none" crossorigin="anonymous"></audio>
 
-<script src="js/replay.js?v=0.8.0"></script>
-<script src="js/drift-effects.js?v=0.8.0"></script>
-<script src="js/circuit-layouts.js?v=0.8.0"></script>
-<script src="js/road-contact.js?v=0.8.0"></script>
-<script src="js/downhill.js?v=0.8.0"></script>
-<script src="js/yugo-physics.js?v=0.8.0"></script>
-<script src="js/online-rules.js?v=0.8.0"></script>
+<script src="js/replay.js?v=0.9.0"></script>
+<script src="js/drift-effects.js?v=0.9.0"></script>
+<script src="js/attract-demo.js?v=0.9.0"></script>
+<script src="js/circuit-layouts.js?v=0.9.0"></script>
+<script src="js/road-contact.js?v=0.9.0"></script>
+<script src="js/downhill.js?v=0.9.0"></script>
+<script src="js/yugo-physics.js?v=0.9.0"></script>
+<script src="js/online-rules.js?v=0.9.0"></script>
 <script>
 "use strict";
 
@@ -497,6 +498,7 @@ const keys=new Set();
 addEventListener('keydown',e=>{
   const k=e.key.toLowerCase();
   if(e.target.closest?.('input,textarea,select,[contenteditable]')) return;
+  if(state==='title'){if((k==='enter'||k===' ')&&e.target.id!=='btnDemoPause'){e.preventDefault();$('#btnPlayNow').click();}return;}
   if(replayUI?.active){if(k==='escape'){e.preventDefault();replayUI.close();}else if(k===' '){e.preventDefault();replayUI.toggle();}return;}
   keys.add(k);
   if(e.repeat && ['r','g','escape','h','v','c'].includes(k)) return;
@@ -521,6 +523,7 @@ addEventListener('keydown',e=>{
     else if(!$('#carPanel').classList.contains('hidden')) $('#btnCarBack').click();
     else if(!$('#circuitMenu').classList.contains('hidden')) $('#btnCircuitBack').click();
     else if(mode==='online'&&online?.inRoom) online.showLobby();
+    else if(state==='menu'&&!mainMenu.classList.contains('hidden')) $('#btnBackTitle').click();
     else if(state==='menu') showMainMenu();
   }
   if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) e.preventDefault();
@@ -775,7 +778,7 @@ function safeAddListener(id, event, handler) {
 
 function hidePanels(){
   clearInputs();
-  for(const id of ['mainMenu','challengeMenu','startPanel','carPanel','pauseMenu','overlay','help','settingsMenu','importMenu','circuitMenu','onlineMenu'])document.getElementById(id).classList.add('hidden');
+  for(const id of ['titleScreen','mainMenu','challengeMenu','startPanel','carPanel','pauseMenu','overlay','help','settingsMenu','importMenu','circuitMenu','onlineMenu'])document.getElementById(id).classList.add('hidden');
   document.getElementById('help').classList.remove('show');
   state='menu';syncTouchHUD();document.body.classList.remove('in-game','downhill');$('#descentHud').classList.add('hidden');document.getElementById('gameActions').classList.remove('show');
   document.getElementById('challengeBadge').classList.remove('show');
@@ -1166,6 +1169,7 @@ function makeTrackFromBoard(){
 }
 
 function startWithTrack(tr, m='race'){
+  $('#titleScreen').classList.add('hidden');
   if(!tr){ alert('Pista inválida.'); return; }
   if(replayUI?.active)replayUI.close();
   mode = tr.downhill?'downhill':m;
@@ -1372,7 +1376,12 @@ function drawWarnings(){
   if(warn) warn.style.display='none';
   if(hint) hint.style.display='none';
 
-  if(mode==='downhill'){if(player.descent?.motion==='falling'&&warn){warn.style.display='block';warn.textContent=`Caída · R para recuperar · Reaparición en ${Math.max(0,4.5-player.descent.fallTime).toFixed(1)} s`;}return;}
+  if(mode==='downhill'){
+    if(warn&&player.descent?.motion==='falling'){warn.style.display='block';warn.textContent=`Caída · Recuperación en ${Math.max(.1,4.5-player.descent.fallTime).toFixed(1)} s · R: volver ahora`;}
+    else if(warn&&player.descent?.routeLostTime>0){warn.style.display='block';warn.textContent='Fuera del trazado · Volviendo al último punto seguro…';}
+    else if(warn&&player.offTimer>0){warn.style.display='block';warn.textContent=`Vuelve al asfalto · ${Math.max(.1,8-player.offTimer).toFixed(1)} s`;}
+    return;
+  }
 
   // Fuera de pista: 12s para volver
   const OFF_LIMIT = 12;
@@ -1514,30 +1523,36 @@ function loop(ms){
     ctx.setTransform(view.dpr,0,0,view.dpr,0,0);
     ctx.clearRect(0,0,view.width,view.height);
     const inSession=document.body.classList.contains('in-game');
+    const demoVisible=!inSession&&(!$('#titleScreen').classList.contains('hidden')||!mainMenu.classList.contains('hidden'));
+    if(demoVisible&&!document.hidden)demoFrame=attractDemo.frame(dt);
     const preparing=!replayFrame&&typeof renderPreparationPreview==='function'&&renderPreparationPreview(dt,now);
     const draw3D=!preparing && sceneView && !sceneFailed && (replayFrame||renderPrefs.view==='3d'||!inSession);
     $('#scene3d').style.visibility=draw3D?'visible':'hidden';
     driftEffect.step(dt,{pressed:!!shown?.handbrake,speed:shown?.worldSpeed()||0,active:state==='running'||!!(replayFrame&&replayUI.playing),reduced:renderPrefs.motion==='reduced',impulse:renderPrefs.impulse!=='off',lines:renderPrefs.speedLines});
     if(draw3D){
-      const revision=[state,inSession,track,player,chosen.sprite,replayFrame?.revision,replayFrame?.camera,renderPrefs.camera,renderPrefs.motion,renderPrefs.timeOfDay,renderPrefs.quality,innerWidth,innerHeight,sceneView.distance,sceneView.car,sceneView.rx7Template,sceneView.yugoTemplate,sceneView.fujiwaraTemplate];
+      const revision=[state,inSession,track,player,chosen.sprite,replayFrame?.revision,replayFrame?.camera,renderPrefs.camera,renderPrefs.motion,renderPrefs.timeOfDay,renderPrefs.quality,innerWidth,innerHeight,sceneView.distance,sceneView.car,sceneView.rx7Template,sceneView.yugoTemplate,sceneView.fujiwaraTemplate,attractDemo.paused];
       const changed=!lastScenePresentation||revision.some((v,i)=>v!==lastScenePresentation[i]),active=['running','countdown'].includes(state)||(mode==='online'&&online?.racing)||!!(replayFrame&&replayUI.playing);
-      const shouldRender=inSession?(active||changed):(changed||now-lastSceneFrame>=1/(sceneView.software?10:30));
+      const shouldRender=inSession?(active||changed):(changed||(demoVisible&&!attractDemo.paused&&!document.hidden&&now-lastSceneFrame>=1/(sceneView.software?10:30)));
       if(shouldRender){
         const presentationDt=inSession?(active?dt:0):Math.min(.1,now-lastSceneFrame);lastScenePresentation=revision;lastSceneFrame=now;
-        try{sceneView.render({track:inSession?track:attractTrack,player:inSession?shown:attractCar,ghost:inSession&&!replayFrame?ghost:null,rivals:replayFrame?.rivals||(mode==='online'?online?.rivals():[]),skin:replayFrame?.skin||chosen.sprite,dt:replayFrame?replayFrame.dt:presentationDt,inMenu:!inSession,time:replayFrame?.time??(inSession?raceTime:now),camera:replayFrame?.camera||renderPrefs.camera,anchor:replayFrame?.anchor,motion:renderPrefs.motion,timeOfDay:replayFrame?.timeOfDay??renderPrefs.timeOfDay,impulse:driftEffect.boost,frameDt:presentationDt});}
+        try{sceneView.render({track:inSession?track:attractTrack,player:inSession?shown:demoFrame.player,ghost:inSession&&!replayFrame?ghost:null,rivals:!inSession?demoFrame.rivals:replayFrame?.rivals||(mode==='online'?online?.rivals():[]),skin:!inSession?demoFrame.player.skin:replayFrame?.skin||chosen.sprite,dt:replayFrame?replayFrame.dt:presentationDt,inMenu:!inSession,time:replayFrame?.time??(inSession?raceTime:demoFrame.time),camera:!inSession?'demo':replayFrame?.camera||renderPrefs.camera,anchor:!inSession?demoFrame.anchor:replayFrame?.anchor,motion:renderPrefs.motion,timeOfDay:!inSession?demoFrame.day:replayFrame?.timeOfDay??renderPrefs.timeOfDay,impulse:driftEffect.boost,frameDt:presentationDt});}
         catch(error){fail3D(error);}
       }
     }else if(!preparing){
       lastScenePresentation=null;
       ctx.fillStyle=bgPat;ctx.fillRect(0,0,view.width,view.height);
-      ctx.save();const zoom=1-driftEffect.boost*.035;ctx.translate(view.width*.5,view.height*.68);ctx.scale(zoom,zoom);ctx.translate(-view.width*.5,-view.height*.68);
+      ctx.save();const zoom=1-driftEffect.boost*.008;ctx.translate(view.width*.5,view.height*.68);ctx.scale(zoom,zoom);ctx.translate(-view.width*.5,-view.height*.68);
+      if(demoVisible){
+        const cars=[demoFrame.player,...demoFrame.rivals],p=cars[1].pos,s=Math.min(view.width,view.height)/80,cam={s,tx:view.width*.64-p.x*s,ty:view.height*.55-p.y*s};
+        attractTrack.draw(ctx,cam);for(const car of cars)Car.prototype.draw.call({...car,sprite:CAR_IMG[car.skin]},ctx,cam);
+      }
       if(inSession && track) track.draw(ctx,camera);
       if(inSession && ghost&&!replayFrame) ghost.draw(ctx,camera);
       if(inSession && mode==='online'&&!replayFrame)online?.draw2D(ctx,camera);
       if(replayFrame)for(const rival of replayFrame.rivals)Car.prototype.draw.call(rival,ctx,camera);
       if(inSession && shown)Car.prototype.draw.call(shown,ctx,camera);ctx.restore();
     }
-    if(inSession&&shown)driftEffect.draw(ctx,view.width,view.height,{mode:renderPrefs.speedLines,night:renderPrefs.timeOfDay,focus:draw3D?sceneView.screenFocus:{x:shown.pos.x*camera.s+camera.tx,y:shown.pos.y*camera.s+camera.ty}});
+    if(inSession&&shown)driftEffect.draw(ctx,view.width,view.height,{mode:renderPrefs.speedLines,night:renderPrefs.timeOfDay,intensity:renderPrefs.speedLinesIntensity,focus:draw3D?sceneView.screenFocus:{x:shown.pos.x*camera.s+camera.tx,y:shown.pos.y*camera.s+camera.ty}});
     if(draw3D&&inSession&&mode==='online'&&!replayFrame){ctx.save();ctx.font='600 12px system-ui';ctx.textAlign='center';for(const label of sceneView.rivalLabels||[]){ctx.fillStyle='#101c22d9';const width=ctx.measureText(label.name).width+16;ctx.fillRect(label.x-width/2,label.y-15,width,22);ctx.fillStyle='#e8f5ef';ctx.fillText(label.name,label.x,label.y);}ctx.restore();}
     if(inSession && player&&!replayFrame){drawMiniMap(ctx,track,player);updateDriveHUD();}
     if(state==='countdown'){ 
@@ -1712,7 +1727,7 @@ safeAddListener('btnHardReset', 'click', ()=>{
 // Mostrar menú principal por defecto (si no vino hash)
 if(startPanel) startPanel.classList.add('hidden');
 if(!pendingTrackFactory){
-  document.getElementById('mainMenu')?.classList.remove('hidden');
+  document.getElementById('mainMenu')?.classList.add('hidden');$('#titleScreen').classList.remove('hidden');state='title';
 }
 
 // Inicialización final
@@ -1933,8 +1948,8 @@ function checkChallengeProgress(){
 }
 
 </script>
-<script src="js/experience.js?v=0.8.0"></script>
-<script src="js/replay-ui.js?v=0.8.0"></script>
-<script src="js/online-config.js?v=0.8.0"></script>
-<script src="js/online-client.js?v=0.8.0"></script>
+<script src="js/experience.js?v=0.9.0"></script>
+<script src="js/replay-ui.js?v=0.9.0"></script>
+<script src="js/online-config.js?v=0.9.0"></script>
+<script src="js/online-client.js?v=0.9.0"></script>
 </body></html>

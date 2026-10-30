@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
-import {buildMountainTerrain} from './mountain-terrain.js?v=0.8.0';
-import {batchWorld} from './world-optimization.js?v=0.8.0';
+import {buildMountainTerrain} from './mountain-terrain.js?v=0.9.0';
+import {batchWorld} from './world-optimization.js?v=0.9.0';
 const mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.88,...extra});
 function mesh(parent,geo,material,x=0,y=0,z=0){const o=new T.Mesh(geo,material);o.position.set(x,y,z);parent.add(o);return o;}
 function box(p,m,x,y,z,w,h,d){return mesh(p,new T.BoxGeometry(w,h,d),m,x,y,z);}

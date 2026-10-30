@@ -101,11 +101,22 @@ globalThis.DriftDownhill=(()=>{
     DriftRoadContact.reset(track,car,skin);car.descent.pitch=car.ride.pitch;car.descent.roll=car.ride.roll;car.descent.y=car.ride.height;return car.descent;
   }
   function advance(track,car,before,dt){
-    const d=car.descent,q=track.sample(car.pos.x,car.pos.y),delta=q.s-d.s,limit=Math.max(5,Math.min(12,(car.worldSpeed()+5)*dt*2.5));
-    if(q.distance>track.roadHalf+1||Math.abs(delta)>limit||Math.hypot(car.pos.x-before.x,car.pos.y-before.y)>limit||d.motion!=='driving')return {valid:false,finished:false};
-    const fresh=q.s>d.maxS+.01;d.s=q.s;d.maxS=Math.max(d.maxS,q.s);
-    if(q.s>=d.checkpoint+60&&q.distance<track.roadHalf-1)d.checkpoint=Math.floor(q.s/60)*60;
-    return {valid:fresh,finished:before.s<track.finishS&&q.s>=track.finishS&&d.maxS>=track.finishS};
+    const d=car.descent,q=track.sample(car.pos.x,car.pos.y),reference=d.routeS??d.s;
+    const limit=Math.max(5,Math.min(12,(car.worldSpeed()+5)*dt*2.5));
+    const continuous=d.motion==='driving'&&Math.abs(q.s-reference)<=limit&&Math.hypot(car.pos.x-before.x,car.pos.y-before.y)<=limit;
+    // Follow the same stretch of road along its shoulder, even while scoring is
+    // suspended. Rejoining must not compare against an old frozen asphalt pose.
+    if(continuous&&q.distance<=track.roadHalf+8){
+      d.routeS=q.s;d.routeLostTime=0;
+      if(q.distance>track.roadHalf+1)return {valid:false,finished:false};
+      const fresh=q.s>d.maxS+.01;d.s=q.s;d.maxS=Math.max(d.maxS,q.s);
+      if(q.s>=d.checkpoint+60&&q.distance<track.roadHalf-1)d.checkpoint=Math.floor(q.s/60)*60;
+      return {valid:fresh,finished:before.s<track.finishS&&q.s>=track.finishS&&d.maxS>=track.finishS};
+    }
+    // A lower switchback/teleport still cannot skip the road. Recover from an
+    // invalid re-entry automatically instead of leaving the progress stuck.
+    d.routeLostTime=d.motion==='driving'&&q.distance<=track.roadHalf+1?(d.routeLostTime||0)+dt:0;
+    return {valid:false,finished:false,respawn:d.routeLostTime>.8};
   }
   const dot=(a,b)=>a.x*b.x+a.y*b.y+a.z*b.z;
   const cross=(a,b)=>({x:a.y*b.z-a.z*b.y,y:a.z*b.x-a.x*b.z,z:a.x*b.y-a.y*b.x});
@@ -168,7 +179,7 @@ globalThis.DriftDownhill=(()=>{
     const acceleration=(car.worldSpeed()-speedBefore)/dt,transfer=clamp(-acceleration*.65/(G*2.5),-.22,.22);d.loadFront=.5+transfer;d.loadRear=.5-transfer;
     d.pitch=car.ride.pitch+clamp(acceleration*.006,-.045,.045);d.roll=car.ride.roll;d.y=car.ride.height;
     const result=advance(track,car,before,dt);if(!result.valid){const gained=Math.max(0,car.score-score);car.score=score;car.comboPoints=Math.max(0,car.comboPoints-gained);}
-    return {...result,respawn:car.offTimer>=8};
+    return {...result,respawn:!!result.respawn||car.offTimer>=8};
   }
   return Object.freeze({count:routes.length,info,layout,createTrack,gravity,reset,step,advance});
 })();
