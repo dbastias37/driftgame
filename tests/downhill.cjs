@@ -48,3 +48,12 @@ test('route identities, normalized shapes and grades vary; thumbnail layouts reu
  }
  assert.equal(r('DriftDownhill.layout(20)===DriftDownhill.layout(20)'),true);assert.equal(r('typeof DriftDownhill.layout(20).sample'),'undefined');
 });
+test('a sustained shoulder excursion and clean re-entry resume progress without R or a lost life',()=>{
+ const r=harness();r(boot+`var p=track.atDistance(100);player.pos={x:p.x,y:p.y};player.descent.s=player.descent.maxS=100;player.vel={x:20,y:0};
+ for(let s=100.3;s<125;s+=.3){const before={...player.pos,s:player.descent.s},p=track.atDistance(s),n=track.normalAt(p.i),offset=s<103?(s-100)/3*(track.roadHalf+1.2):s<120?track.roadHalf+1.2:Math.max(0,(125-s)/5)*(track.roadHalf+1.2);player.pos={x:p.x+n.x*offset,y:p.y+n.y*offset};var outcome=DriftDownhill.advance(track,player,before,1/60);if(outcome.respawn)throw Error('Ordinary re-entry forced a reset');}`);
+ assert.ok(r('player.descent.s')>124);assert.equal(r('player.lives'),3);assert.equal(r('player.descent.routeLostTime'),0);
+ r('var before={...player.pos,s:player.descent.s},p=track.atDistance(126);player.pos={x:p.x,y:p.y};var outcome=DriftDownhill.advance(track,player,before,1/60)');assert.equal(r('outcome.valid'),true);assert.ok(r('player.descent.maxS')>125.9);
+});
+test('invalid lower-road re-entry automatically recovers rather than freezing at zero progress',()=>{
+ const r=harness();r(boot+`var p=track.atDistance(400);player.pos={x:p.x,y:p.y};player.vel={x:0,y:0};var before={...player.pos,s:0};for(let i=0;i<50;i++)var outcome=DriftDownhill.advance(track,player,before,1/60);`);assert.equal(r('outcome.respawn'),true);assert.equal(r('player.descent.maxS'),0);assert.equal(r('outcome.finished'),false);
+});

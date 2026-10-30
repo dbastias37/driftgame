@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
-import {DriftView3D,disposeGroup} from './view3d.js?v=0.8.0';
-import {updateWorldVisibility} from './world-optimization.js?v=0.8.0';
+import {DriftView3D,disposeGroup} from './view3d.js?v=0.9.0';
+import {updateWorldVisibility} from './world-optimization.js?v=0.9.0';
 
 const material=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.82,...extra});
 function box(parent,m,x,y,z,w,h,d){const mesh=new T.Mesh(new T.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);parent.add(mesh);return mesh;}
