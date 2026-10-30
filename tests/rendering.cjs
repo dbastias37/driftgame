@@ -26,3 +26,12 @@ test('two online rivals use separate models, steering and wheel motion; leaving 
   const model=view.rivalModels.get('0');assert.notEqual(model.root,view.car.root);assert.equal(model.wheels.find(w=>w.front).steer.rotation.y,-.2);assert.notEqual(model.wheels[0].spin.rotation.z,0);
   const oldRoots=[...view.rivalModels.values()].map(m=>m.root);view.render({track,player,rivals:[],dt:1/60});assert.equal(view.rivalModels.size,0);assert(oldRoots.every(root=>!view.scene.children.includes(root)));view.dispose();
 });
+test('cinematic cameras, recorded wheel rotation and visual impulse do not mutate the race or clip under mountains',async()=>{
+ global.document={createElement:canvas};global.innerWidth=800;global.innerHeight=560;global.devicePixelRatio=1;
+ const {DriftView3D}=await import('../js/view3d.js'),{createTrack,createCar}=await import('../server/engine.js');await import('../js/downhill.js');
+ const oldError=console.error;console.error=()=>{};let view;try{view=new DriftView3D(canvas(),{loadVehicle:null,loadYugoVehicle:null,loadFujiwaraVehicle:null});}finally{console.error=oldError;}
+ try{const flat=createTrack(1),track=DriftDownhill.createTrack(flat.constructor,5),player=createCar(track,'blue',true,0);DriftDownhill.reset(track,player,'blue');player.wheelTravel=24;const before=JSON.stringify(player);
+ for(const camera of ['drone','cinematic','trackside','isometric'])for(const time of [2,8,15]){view.resetCamera();view.render({track,player,camera,dt:1/60,time,impulse:.7,replay:true});assert.equal(JSON.stringify(player),before);assert.ok(view.camera.position.y>=track.terrainHeight(view.camera.position.x,view.camera.position.z)+1.79);assert.ok(Number.isFinite(view.screenFocus.x));assert.ok(Number.isFinite(view.screenFocus.y));assert.equal(view.car.wheels[0].spin.rotation.z,-24/(view.car.wheels[0].radius||.36));}
+ view.resetCamera();view.render({track,player,camera:'chase',dt:1/60,impulse:0});const fov=view.camera.fov;view.render({track,player,camera:'chase',dt:1/60,impulse:.7});assert.ok(view.camera.fov>fov);assert.equal(JSON.stringify(player),before);
+ }finally{view.dispose();}
+});

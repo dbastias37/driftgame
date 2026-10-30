@@ -4,6 +4,7 @@ online=(()=>{
   let socket=null,room=null,selfId='',token='',intent=null,enabled=false,connecting=false,retry=0,retryTimer=0,connectTimer=0;
   let offset=0,bestPing=Infinity,ping=0,lastSnapshot=0,lastPing=0,lastRoomKey='',seq=0,ack=0,epoch=0,pending=[],outbox=[],gear=0,waiting=false;
   let raceActive=false,finished=false,rivalFrames=new Map(),remoteCars=new Map(),visibleRivals=[],hudAcc=0,oldDay=null,notice='',savedSession=null;
+  let chatMessages=[];
   const now=()=>Date.now()+offset,me=()=>room?.players.find(p=>p.id===selfId),host=()=>room?.host===selfId;
   try{savedSession=JSON.parse(sessionStorage.getItem(SESSION)||'null');$id('onlineName').value=localStorage.getItem('drift:online:name')||'Piloto';}catch{}
   const requested=new URLSearchParams(location.search).get('sala');if(requested)$id('onlineCodeInput').value=requested.slice(0,6).toUpperCase();
@@ -12,11 +13,19 @@ online=(()=>{
   function send(m){if(socket?.readyState===WebSocket.OPEN&&socket.bufferedAmount<32768){socket.send(JSON.stringify(m));return true;}return false;}
   function storeSession(){try{sessionStorage.setItem(SESSION,JSON.stringify({code:room.code,token}));}catch{}}
   function clearSession(){savedSession=null;try{sessionStorage.removeItem(SESSION);}catch{}}
+  function renderChat(){
+    $id('onlineChat').classList.toggle('hidden',!room);
+    const list=$id('onlineChatMessages'),stick=list.scrollHeight-list.scrollTop-list.clientHeight<40;
+    list.replaceChildren();
+    for(const entry of chatMessages){const li=document.createElement('li'),name=document.createElement('b'),text=document.createElement('span');li.className=entry.player===selfId?'mine':'';name.textContent=entry.name; text.textContent=entry.text;li.append(name,text);list.appendChild(li);}
+    if(!chatMessages.length){const li=document.createElement('li');li.className='chat-empty';li.textContent='Coordina la salida y comenta la carrera.';list.appendChild(li);}
+    if(stick||chatMessages.at(-1)?.player===selfId)list.scrollTop=list.scrollHeight;
+  }
   function connectingUI(value){connecting=value;$id('onlineCreate').disabled=$id('onlineJoin').disabled=value;}
   function open(){
     hidePanels();mode='online';$id('onlineMenu').classList.remove('hidden');$id('onlineHud').classList.add('hidden');
     $id('onlineEntry').classList.toggle('hidden',!!room);$id('onlineLobby').classList.toggle('hidden',!room);$id('onlineResults').classList.add('hidden');$id('onlineStart').classList.add('hidden');
-    $id('onlineBack').textContent=room?'← Salir de la sala':'← Menú principal';status('');enabled=true;
+    renderChat();$id('onlineBack').textContent=room?'← Salir de la sala':'← Menú principal';status('');enabled=true;
     if(room){showLobby();return;}
     $id('onlineName').focus();
     if(savedSession){intent={type:'resume',...savedSession};connect();}
@@ -54,10 +63,12 @@ online=(()=>{
       if(rtt<bestPing+20){bestPing=Math.min(bestPing,rtt);offset=m.now-(m.client+Date.now())/2;}
       $id('onlineConnection').textContent=`CONECTADO · ${ping} ms`;$id('onlinePing').textContent=`${ping} ms`;return;
     }
+    if(m.type==='chatError'){$id('onlineChatStatus').textContent=m.message;return;}
+    if(m.type==='chat'&&room){if(!chatMessages.some(e=>e.id===m.entry.id)){chatMessages.push(m.entry);chatMessages=chatMessages.slice(-40);renderChat();}return;}
     if(m.type==='error'){status(m.message);connectingUI(false);return;}
     if(m.type==='expired'){const message=m.message;leave();open();status(message);return;}
     if(m.type==='welcome'){
-      connectingUI(false);selfId=m.id;token=m.token;room=m.room;storeSession();notice='';status('');updateRoom(m.room);
+      connectingUI(false);selfId=m.id;token=m.token;room=m.room;chatMessages=(m.chat||[]).slice(-40);renderChat();storeSession();notice='';status('');updateRoom(m.room);
       if(raceActive){waiting=true;rivalFrames.clear();send({type:'resync'});}return;
     }
     if(m.type==='room'){updateRoom(m);return;}
@@ -93,6 +104,7 @@ online=(()=>{
       const key=room.code+':'+room.race;if(key!==lastRoomKey){lastRoomKey=key;beginRace();}return;
     }
     if(room.phase==='results'){raceActive=false;controlsLocked=true;showResults();return;}
+    if(replayUI?.active)replayUI.close();
     if(raceActive){raceActive=false;lastRoomKey='';}
     if(!$id('carPanel').classList.contains('hidden')){preparedTrack=presetTrack(room.level);$id('garageTrackName').textContent=preparedTrack.layout.name;renderLobby();return;}
     showLobby();
@@ -151,14 +163,15 @@ online=(()=>{
     $id('onlineRaceNotice').textContent=notice|| (finished?'¡Meta! Esperando a los demás…':state==='paused'?'La carrera continúa. Vuelve con «Seguir».':ping>220?'Latencia alta · Busca una conexión más estable.':'Shift: derrape · Espacio: freno');
   }
   function showResults(){
-    hidePanels();mode='online';state='menu';$id('onlineHud').classList.add('hidden');$id('onlineMenu').classList.remove('hidden');$id('onlineEntry').classList.add('hidden');$id('onlineLobby').classList.add('hidden');$id('onlineResults').classList.remove('hidden');$id('onlineStart').classList.add('hidden');$id('onlineBack').textContent='← Salir de la sala';
-    const list=$id('onlineResultList');list.replaceChildren();
+    if(!replayUI?.active)hidePanels();mode='online';if(!replayUI?.active)state='menu';$id('onlineHud').classList.add('hidden');$id('onlineMenu').classList.remove('hidden');$id('onlineEntry').classList.add('hidden');$id('onlineLobby').classList.add('hidden');$id('onlineResults').classList.remove('hidden');$id('onlineStart').classList.add('hidden');$id('onlineBack').textContent='← Salir de la sala';
+    replayUI?.syncButtons();renderChat();const list=$id('onlineResultList');list.replaceChildren();
     [...room.players].sort((a,b)=>(a.place||99)-(b.place||99)).forEach(p=>{const li=document.createElement('li'),place=document.createElement('b'),name=document.createElement('span'),time=document.createElement('span');place.textContent=p.place?String(p.place).padStart(2,'0'):'—';name.className='online-result-name';name.textContent=p.name+(p.id===selfId?' · tú':'');time.textContent=p.finished?formatTime(p.finished/1000):'Sin terminar';li.append(place,name,time);list.appendChild(li);});
     $id('onlineRematch').disabled=!host();$id('onlineRematch').textContent=host()?'OTRA CARRERA ↗':'ESPERANDO AL ANFITRIÓN';status('');
   }
   function recover(){if(raceActive&&!finished){send({type:'recover'});toast('Volviendo al último control validado.');}}
   function leave(){
-    if(!enabled&&!room)return;send({type:'leave'});enabled=false;intent=null;clearTimeout(retryTimer);clearTimeout(connectTimer);const ws=socket;socket=null;ws?.close();connectingUI(false);room=null;selfId=token='';raceActive=finished=waiting=false;lastRoomKey='';rivalFrames.clear();remoteCars.clear();visibleRivals=[];pending=[];outbox=[];clearSession();
+    replayUI?.close();
+    if(!enabled&&!room)return;send({type:'leave'});enabled=false;intent=null;clearTimeout(retryTimer);clearTimeout(connectTimer);const ws=socket;socket=null;ws?.close();connectingUI(false);room=null;chatMessages=[];$id('onlineChatInput').value='';$id('onlineChatStatus').textContent='';renderChat();selfId=token='';raceActive=finished=waiting=false;lastRoomKey='';rivalFrames.clear();remoteCars.clear();visibleRivals=[];pending=[];outbox=[];clearSession();
     document.body.classList.remove('online-race');$id('onlineHud').classList.add('hidden');$id('onlineMenu').classList.add('hidden');$id('onlineConnection').textContent='HASTA 3 PILOTOS';TOTAL_LAPS=5;controlsLocked=false;$id('btnPause').textContent='Pausa';$id('btnPause').setAttribute('aria-label','Pausar');
     if(oldDay!==null){renderPrefs.timeOfDay=oldDay;oldDay=null;syncDaytimeUI();saveRenderPrefs();}
   }
@@ -167,6 +180,7 @@ online=(()=>{
     if(Date.now()-lastPing>3000){lastPing=Date.now();send({type:'ping',client:lastPing});}
     if(raceActive&&outbox.length){const commands=outbox.slice(0,12);if(send({type:'inputs',race:room.race,epoch,commands}))outbox.splice(0,commands.length);}
   },50);
+  $id('onlineChatForm').addEventListener('submit',e=>{e.preventDefault();const text=$id('onlineChatInput').value.trim();if(!text||!room)return;if(send({type:'chat',text})){$id('onlineChatInput').value='';$id('onlineChatStatus').textContent='';}else $id('onlineChatStatus').textContent='Reconectando. Tu mensaje sigue aquí para reenviarlo.';});
   $id('btnModeOnline').addEventListener('click',open);$id('onlineCreate').addEventListener('click',()=>request('create'));$id('onlineJoin').addEventListener('click',()=>request('join'));$id('onlineCodeInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();request('join');}});
   $id('onlineBack').addEventListener('click',showMainMenu);$id('onlineGarage').addEventListener('click',garage);$id('onlineReady').addEventListener('click',()=>send({type:'ready',ready:!me()?.ready}));$id('onlineStart').addEventListener('click',()=>send({type:'start'}));$id('onlineRematch').addEventListener('click',()=>send({type:'rematch'}));
   for(const id of ['onlineTrack','onlineLaps','onlineDay'])$id(id).addEventListener('change',()=>send({type:'settings',level:Number($id('onlineTrack').value),laps:Number($id('onlineLaps').value),day:Number($id('onlineDay').value)}));

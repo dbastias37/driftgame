@@ -28,7 +28,7 @@ export class Rooms {
         if(m.type==='create'){
           if(this.rooms.size>=this.maxRooms){peer.send(error('Servidor beta lleno. Intenta en unos minutos.'));return;}
           let code;do{code=Array.from({length:6},()=>ALPHABET[randomInt(ALPHABET.length)]).join('');}while(this.rooms.has(code));
-          r={code,players:new Map(),phase:'lobby',level:1,laps:3,day:0,race:0,created:this.now(),updated:this.now()};this.rooms.set(code,r);
+          r={code,players:new Map(),phase:'lobby',level:1,laps:3,day:0,race:0,created:this.now(),updated:this.now(),chat:[],chatSeq:0};this.rooms.set(code,r);
         }else r=this.rooms.get(String(m.code||'').trim().toUpperCase());
         if(!r){peer.send(error('No encontramos esa sala. Revisa el código.'));return;}
         if(r.phase!=='lobby'){peer.send(error('Esta carrera ya comenzó. Espera la próxima salida.'));return;}
@@ -37,12 +37,20 @@ export class Rooms {
         r.players.set(p.id,p);if(!r.host)r.host=p.id;
       }
       peer.room=r.code;peer.player=p.id;r.updated=this.now();
-      this.send(p,{type:'welcome',id:p.id,token:p.token,room:this.view(r),now:this.now()});
+      this.send(p,{type:'welcome',id:p.id,token:p.token,room:this.view(r),chat:r.chat,now:this.now()});
       if(p.car)this.send(p,this.snapshot(r,p));this.broadcast(r);return;
     }
     const r=this.roomFor(peer),p=r?.players.get(peer.player);if(!r||!p||p.peer!==peer)return;
     r.updated=this.now();
     switch(m.type){
+      case 'chat':{
+        if(typeof m.text!=='string'||m.text.length>720)return;
+        const text=m.text.normalize('NFKC').replace(/[\p{Cc}\p{Cf}]/gu,' ').replace(/\s+/g,' ').trim().slice(0,180);
+        if(!text)return;
+        if(this.now()-(p.chatAt??-Infinity)<1000){this.send(p,{type:'chatError',message:'Espera un segundo antes de enviar otro mensaje.'});return;}
+        p.chatAt=this.now();const entry={id:++r.chatSeq,player:p.id,name:p.name,text,at:this.now()};
+        r.chat.push(entry);if(r.chat.length>40)r.chat.shift();this.broadcast(r,{type:'chat',entry});break;
+      }
       case 'leave':this.remove(r,p);break;
       case 'choose':if(r.phase==='lobby'&&Net.SKINS.includes(m.skin)){p.skin=m.skin;p.auto=m.auto!==false;p.ready=false;this.broadcast(r);}break;
       case 'ready':if(r.phase==='lobby'){p.ready=m.ready===true;this.broadcast(r);}break;
@@ -69,7 +77,7 @@ export class Rooms {
     }
   }
   recover(r,p){
-    const i=Math.floor((p.gates%16)*r.track.points.length/16),a=r.track.point(i);p.car.pos={x:a.x,y:a.y};p.car.angle=r.track.tangentAt(i);p.car.vel={x:0,y:0};p.car.omega=p.car.throttleSm=p.car.offTimer=0;p.lastIndex=i;p.progress=p.gates;
+    const i=Math.floor((p.gates%16)*r.track.points.length/16),a=r.track.point(i);p.car.pos={x:a.x,y:a.y};p.car.angle=r.track.tangentAt(i);p.car.vel={x:0,y:0};p.car.omega=p.car.throttleSm=p.car.offTimer=0;p.car.breakFlow();p.lastIndex=i;p.progress=p.gates;
     p.queue=[];p.received=p.ack;p.epoch++;p.recoveryAt=this.now()+2000;
     this.send(p,{type:'reset',race:r.race,epoch:p.epoch,ack:p.ack,state:Net.capture(p.car)});
   }

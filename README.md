@@ -1,4 +1,4 @@
-# Drift Racer 0.7.0 — 2D + 3D
+# Drift Racer 0.8.0 — 2D + 3D
 
 Juego de drift estático para navegador, con dos vistas intercambiables de **una misma simulación**. Incluye seis autos, veinte desafíos, editor de circuitos, transmisión manual/automática y contrarreloj con fantasma local.
 
@@ -22,6 +22,16 @@ Abrir `http://localhost:8000`. No necesita compilación ni instalar dependencias
 - **Configuración:** vista, cámara, calidad, barra día/atardecer/noche, movimiento reducido y controles táctiles automáticos/forzados.
 
 El garaje es el último paso: modelo 3D sobre una tarima giratoria, estadísticas originales, transmisión, vista 2D/3D y resumen del circuito. Arrastrar o usar las flechas con el visor enfocado cambia el ángulo; «Pausar giro» detiene la rotación. «Volver a la pista» conserva la selección. Los circuitos importados y enlaces compartidos también pasan por la vista aérea antes del garaje.
+
+## Cinemática, pianos y chat (0.8.0)
+
+- **Drift visual:** pulsar Shift o DRIFT produce una apertura suave del campo de visión (zoom leve en 2D), con ataque y regreso amortiguados. No cambia aceleración, adherencia, dirección ni suspensión. Mantener el botón no repite el impulso.
+- **Líneas manga:** vectores animados en la periferia, con centro despejado y densidad menor en móvil. Configuración permite seguir el auto, fijar el centro o desactivarlas; el impulso tiene un ajuste independiente. Movimiento reducido desactiva ambos efectos.
+- **Piano x5:** con el drift ya en x3, al menos una rueda debe tocar la parte elevada del piano. Se usan las cuatro posiciones de ruedas de cada modelo y el perfil físico de la pista. Al perder contacto o entrar en la transición de derrape vuelve a x3 sin borrar el combo. Colisión, salida o pérdida real del drift conservan las reglas de ruptura anteriores.
+- **Dron:** disponible al conducir con C o en Configuración. Hace pasadas y arcos acotados, con altura adaptada a la ladera.
+- **Repetición local:** aparece en Pausa o al terminar, después de dos segundos grabados. Montaje alterna dron, isométrica y cámaras fijas cerca de curvas; se puede elegir un plano, pausar, buscar y reproducir a 0,5× / 1× / 2×. Las cámaras fijas ceden a una toma aérea si el auto se aleja demasiado. Escape vuelve al estado previo. En online se habilita al terminar la carrera, con los tres autos.
+- Se guardan hasta los últimos **10 minutos** de poses, suspensión, ruedas y caídas, a un máximo de 20 muestras/s. La memoria de los buffers está limitada a **4,56 MB para tres autos**. No se resimula la física al mirar o buscar. El humo y las marcas se reconstruyen como efectos visuales. La grabación vive en memoria y se reemplaza al iniciar otra carrera; no se exporta como video.
+- **Chat de sala:** disponible en el lobby y resultados, con texto de hasta 180 caracteres, un mensaje por segundo por piloto e historial temporal de 40 mensajes. Solo se distribuye a la sala y se recupera al reconectar. Nombres/autor son asignados por el servidor; el cliente presenta texto literal. No se envía el historial en las instantáneas de carrera.
 
 ## Cerro abajo
 
