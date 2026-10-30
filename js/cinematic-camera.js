@@ -1,6 +1,17 @@
 // Camera directions depend only on the recorded pose/time and the road.
 // Drone arcs are bounded; trackside cameras keep their world position per shot.
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+// Use a continuous road chord, not the nearest vertex tangent. The latter
+// jumps at every segment boundary and becomes visible as drone yaw vibration.
+const paths=new WeakMap();
+function roadHeading(track,p,sample){
+  let data=paths.get(track);
+  if(!data){const points=track.points,ends=[],lengths=[];let total=0;for(let i=0;i<points.length-(track.open?1:0);i++){ends.push(total);const b=points[(i+1)%points.length],a=points[i],len=Math.hypot(b.x-a.x,b.y-a.y);lengths.push(len);total+=len;}data={points,ends,lengths,total};paths.set(track,data);}
+  const {points,ends,lengths,total}=data;let best=Infinity,s=0;
+  for(let offset=-2;offset<=2;offset++){const raw=sample.i+offset,i=track.open?clamp(raw,0,lengths.length-1):(raw+lengths.length)%lengths.length,a=points[i],b=points[(i+1)%points.length],dx=b.x-a.x,dy=b.y-a.y,t=clamp(((p.x-a.x)*dx+(p.y-a.y)*dy)/(lengths[i]**2||1),0,1),dist=(p.x-a.x-dx*t)**2+(p.y-a.y-dy*t)**2;if(dist<best){best=dist;s=ends[i]+lengths[i]*t;}}
+  function at(distance){distance=track.open?clamp(distance,0,total):((distance%total)+total)%total;let lo=0,hi=ends.length-1;while(lo<hi){const mid=Math.ceil((lo+hi)/2);if(ends[mid]<=distance)lo=mid;else hi=mid-1;}const a=points[lo],b=points[(lo+1)%points.length],t=clamp((distance-ends[lo])/(lengths[lo]||1),0,1);return {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t};}
+  const a=at(s-12),b=at(s+20);return Math.atan2(b.y-a.y,b.x-a.x);
+}
 export class CinematicDirector{
   reset(){this.key=null;this.fixed=null;}
   constructor(){this.reset();}
@@ -8,7 +19,7 @@ export class CinematicDirector{
     const shot=Math.floor(time/7),sequence=['drone','trackside','isometric','drone','trackside','drone'];
     let kind=reduced?'isometric':mode==='cinematic'?sequence[shot%sequence.length]:mode;
     let key=kind==='trackside'?kind+':'+shot:kind;
-    const p=player.pos,speed=player.worldSpeed(),q=track.sample(p.x,p.y),yaw=q.tang;
+    const p=player.pos,speed=player.worldSpeed(),q=track.sample(p.x,p.y),yaw=roadHeading(track,p,q);
     const h=player.descent?.motion==='falling'?player.descent.y:(player.ride?.height||0),f={x:Math.cos(yaw),z:Math.sin(yaw)},n={x:-f.z,z:f.x};
     let position,target={x:p.x,y:h+.7,z:p.y},fov=48;
     if(kind==='trackside'){

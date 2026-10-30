@@ -133,7 +133,7 @@ online=(()=>{
     hidePanels();carIdx=CAR_DATA.findIndex(c=>c.sprite===own.skin);chosen=CAR_DATA[carIdx];document.querySelector(`input[name="tx"][value="${own.auto?'auto':'manual'}"]`).checked=true;
     oldDay??=renderPrefs.timeOfDay;renderPrefs.timeOfDay=room.day;syncDaytimeUI();startWithTrack(presetTrack(room.level),'online');TOTAL_LAPS=room.laps;
     Net.grid(player,track,room.players.findIndex(p=>p.id===selfId));DriftRoadContact.reset(track,player,chosen.sprite);camera.tx=-player.pos.x*camera.s+view.width*.5;camera.ty=-player.pos.y*camera.s+view.height*.6;
-    seq=ack=epoch=gear=0;pending=[];outbox=[];rivalFrames.clear();remoteCars.clear();visibleRivals=[];raceActive=true;finished=false;waiting=false;lastSnapshot=Date.now();notice='';
+    seq=ack=epoch=gear=0;pending=[];outbox=[];rivalFrames.clear();remoteCars.clear();visibleRivals=[];raceActive=true;finished=false;waiting=false;lastSnapshot=Date.now();notice='';$id('onlineCareerReward').textContent='';
     document.body.classList.add('online-race');$id('onlineHud').classList.remove('hidden');$id('onlineMenu').classList.add('hidden');$id('pauseTitle').textContent='La carrera sigue en línea';$id('btnPause').textContent='Menú';$id('btnPause').setAttribute('aria-label','Abrir menú de carrera');
     countdown=Math.max(1,Math.ceil((room.startAt-now())/1000));controlsLocked=false;
   }
@@ -163,6 +163,9 @@ online=(()=>{
     $id('onlineRaceNotice').textContent=notice|| (finished?'¡Meta! Esperando a los demás…':state==='paused'?'La carrera continúa. Vuelve con «Seguir».':ping>220?'Latencia alta · Busca una conexión más estable.':'Shift: derrape · Espacio: freno');
   }
   function showResults(){
+    const winner=room.players.find(p=>p.id===selfId),reward=DriftCareer.onlineReward({key:room.code+':'+room.startAt+':'+room.race,place:winner?.place,finished:winner?.finished||0,players:room.players.length});
+    if(reward.reward){$id('onlineCareerReward').textContent='VICTORIA · +1.500 CR para tu taller';syncCareerWallet();}
+
     if(!replayUI?.active)hidePanels();mode='online';if(!replayUI?.active)state='menu';$id('onlineHud').classList.add('hidden');$id('onlineMenu').classList.remove('hidden');$id('onlineEntry').classList.add('hidden');$id('onlineLobby').classList.add('hidden');$id('onlineResults').classList.remove('hidden');$id('onlineStart').classList.add('hidden');$id('onlineBack').textContent='← Salir de la sala';
     replayUI?.syncButtons();renderChat();const list=$id('onlineResultList');list.replaceChildren();
     [...room.players].sort((a,b)=>(a.place||99)-(b.place||99)).forEach(p=>{const li=document.createElement('li'),place=document.createElement('b'),name=document.createElement('span'),time=document.createElement('span');place.textContent=p.place?String(p.place).padStart(2,'0'):'—';name.className='online-result-name';name.textContent=p.name+(p.id===selfId?' · tú':'');time.textContent=p.finished?formatTime(p.finished/1000):'Sin terminar';li.append(place,name,time);list.appendChild(li);});

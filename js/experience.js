@@ -2,7 +2,7 @@
 const PREF_KEY='drift:preferences:v3';
 let savedPrefs={};try{savedPrefs=JSON.parse(localStorage.getItem(PREF_KEY)||'{}')||{};}catch{}
 const renderPrefs={
-  view:['2d','3d'].includes(savedPrefs.view)?savedPrefs.view:'3d',
+  view:'3d',
   camera:['chase','aerial','hood','drone'].includes(savedPrefs.camera)?savedPrefs.camera:'chase',
   impulse:savedPrefs.impulse==='off'?'off':'on',
   speedLines:['car','center','off'].includes(savedPrefs.speedLines)?savedPrefs.speedLines:'car',
@@ -20,18 +20,15 @@ let demoFrame=attractDemo.frame(0);
 for(const id of ['titleDemoInfo','homeDemoInfo'])$('#'+id).textContent=attractTrack.layout.name+' / '+(demoDay?'NOCHE':'DÍA')+' / 3 PILOTOS';
 $('#btnPlayNow').addEventListener('click',()=>{showMainMenu();$('#btnQuickRace').focus();});
 $('#btnBackTitle').addEventListener('click',()=>{hidePanels();state='title';$('#titleScreen').classList.remove('hidden');$('#btnPlayNow').focus();});
-$('#btnDemoPause').addEventListener('click',()=>{attractDemo.paused=!attractDemo.paused;$('#btnDemoPause').textContent=attractDemo.paused?'▶ DEMO':'Ⅱ DEMO';});
+$('#btnDemoPause').addEventListener('click',()=>{attractDemo.paused=!attractDemo.paused;$('#btnDemoPause').textContent=attractDemo.paused?'▶ EXHIBICIÓN':'Ⅱ EXHIBICIÓN';});
 const CAMERA_NAMES={chase:'Seguimiento',aerial:'Aérea',hood:'Capó',drone:'Dron cinematográfico'};
 if(Number.isInteger(savedPrefs.car)&&savedPrefs.car>=0&&savedPrefs.car<CAR_DATA.length){carIdx=savedPrefs.car;chosen=CAR_DATA[carIdx];}
 if(savedPrefs.tx==='manual')document.querySelector('input[name="tx"][value="manual"]').checked=true;
 function saveRenderPrefs(){try{localStorage.setItem(PREF_KEY,JSON.stringify({...renderPrefs,car:carIdx,tx:selectedTx()}));}catch{}}
 function toast(message){$('#toast').textContent=message;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),3400);}
 function syncRenderUI(){
-  document.querySelectorAll('[data-view]').forEach(b=>{const selected=b.dataset.view===renderPrefs.view;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected));});
-  $('#btnView').textContent=renderPrefs.view==='3d'?'Vista 3D':'Vista 2D';
-  $('#btnView').setAttribute('aria-label',renderPrefs.view==='3d'?'Cambiar a vista 2D':'Cambiar a vista 3D');
   $('#btnCamera').disabled=renderPrefs.view!=='3d';
-  $('#viewBadge').textContent=renderPrefs.view==='3d'?'3D / '+CAMERA_NAMES[renderPrefs.camera].toUpperCase():'2D / CLÁSICA';
+  $('#viewBadge').textContent='3D / '+CAMERA_NAMES[renderPrefs.camera].toUpperCase();
   $('#speedLinesIntensity').value=Math.round(renderPrefs.speedLinesIntensity*100);$('#speedLinesIntensityLabel').textContent=Math.round(renderPrefs.speedLinesIntensity*100)+'%';
   $('#impulseSetting').value=renderPrefs.impulse;$('#speedLinesSetting').value=renderPrefs.speedLines;
   syncDaytimeUI();
@@ -45,18 +42,14 @@ function syncDaytimeUI(){
 document.querySelectorAll('[data-daytime]').forEach(input=>input.addEventListener('input',e=>{
   renderPrefs.timeOfDay=Math.max(0,Math.min(1,Number(e.target.value)/100));syncDaytimeUI();saveRenderPrefs();
 }));
-function setRenderView(next){
-  if(next==='3d'&&sceneFailed){toast('3D no disponible en este navegador. Puedes seguir jugando en 2D.');return;}
-  renderPrefs.view=next;sceneView?.resetCamera();syncRenderUI();saveRenderPrefs();
-  if(document.body.classList.contains('in-game'))toast(next==='3d'?'Vista 3D · C cambia la cámara':'Vista 2D clásica · V vuelve a 3D');
-}
+function setRenderView(){renderPrefs.view='3d';syncRenderUI();saveRenderPrefs();}
 function cycleCamera(){if(renderPrefs.view!=='3d')return;const names=['chase','aerial','hood','drone'];renderPrefs.camera=names[(names.indexOf(renderPrefs.camera)+1)%names.length];sceneView?.resetCamera();syncRenderUI();saveRenderPrefs();toast('Cámara '+CAMERA_NAMES[renderPrefs.camera]);}
 function fail3D(error){
-  if(sceneFailed)return;sceneFailed=true;
-  console.warn('3D unavailable; preserving the current race in 2D.',error);
-  sceneView?.dispose();sceneView=null;renderPrefs.view='2d';$('#scene3d').style.visibility='hidden';syncRenderUI();
-  toast('3D no disponible. La carrera continúa en 2D.');
+  if(sceneFailed)return;sceneFailed=true;console.warn('3D unavailable',error);
+  if(state==='running'||state==='countdown')setPaused(true);
+  sceneView?.dispose();sceneView=null;$('#scene3d').style.visibility='hidden';$('#rendererError').classList.remove('hidden');$('#btnRetryRenderer').focus();
 }
+$('#btnRetryRenderer').addEventListener('click',()=>location.reload());
 function openSettings(){
   if(state==='running'||state==='countdown')setPaused(true);
   settingsReturn=state==='paused'?'pauseMenu':'mainMenu';
@@ -83,8 +76,6 @@ function drawTrackThumbnails(root){
     const p=t.point(0);g.fillStyle='#ff7544';g.beginPath();g.arc(p.x,p.y,4/s,0,PI*2);g.fill();
   });
 }
-document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setRenderView(b.dataset.view)));
-$('#btnView').addEventListener('click',()=>setRenderView(renderPrefs.view==='3d'?'2d':'3d'));
 $('#btnCamera').addEventListener('click',cycleCamera);
 $('#btnModeDownhill').addEventListener('click',()=>{mode='downhill';showDownhillMenu();});
 $('#btnQuickRace').addEventListener('click',()=>{mode='race';showCircuitMenu();});
@@ -109,7 +100,7 @@ addEventListener('keydown',e=>{
     e.preventDefault();items[next]?.focus();return;
   }
   if(e.key!=='Tab')return;
-  const panel=replayUI?.active?$('#replayControls'):$('#help.show')||['settingsMenu','importMenu','titleScreen','onlineMenu','carPanel','circuitMenu','challengeMenu','startPanel','pauseMenu','overlay','mainMenu'].map(id=>$('#'+id)).find(el=>!el.classList.contains('hidden'));
+  const panel=replayUI?.active?$('#replayControls'):$('#help.show')||['rendererError','creditsMenu','settingsMenu','importMenu','titleScreen','onlineMenu','carPanel','circuitMenu','challengeMenu','startPanel','pauseMenu','overlay','mainMenu'].map(id=>$('#'+id)).find(el=>!el.classList.contains('hidden'));
   if(!panel)return;
   const focusables=[...panel.querySelectorAll('button:not([disabled]),input,textarea,select,summary')].filter(el=>el.getClientRects().length);
   const first=focusables[0],last=focusables.at(-1);if(!first)return;
@@ -152,7 +143,7 @@ function updateTrackPreviewDetails(){
   button.disabled=locked;button.textContent=locked?'SUPERA EL DESAFÍO ANTERIOR':'ELEGIR AUTO ↗';
   $('#circuitPreviewGoal').textContent=t.downhill?`Objetivo: ${t.goal.toLocaleString('es-CL')} pts antes del 100% · 3 vidas · Mejor: ${downhillBest(t.routeLevel).score.toLocaleString('es-CL')} pts`:'';
   if(t.downhill)$('#circuitPreviewDetails').textContent=`${(t.finishS/1000).toFixed(2)} km · ↓ ${Math.round(t.drop)} m · Pendiente ${Math.round(t.drop/t.length*100)}% media`;
-  if(challenge)$('#challengePreviewGoal').textContent=`Objetivo: ${challengeRequiredPoints(level).toLocaleString('es-CL')} pts · Mejor: ${getChallengeBest(level).toLocaleString('es-CL')} pts${locked?' · Bloqueado':''}`;
+  if(challenge)$('#challengePreviewGoal').textContent=`Una vuelta · ${DriftCareer.load().missions[level].filter(Boolean).length}/3 objetivos · Se conservan entre intentos${locked?' · Completa la etapa anterior':''}`;
   document.querySelectorAll('[data-circuit],.btnPickChallenge,[data-downhill-pick]').forEach(b=>{
     const selected=Number(b.dataset.circuit||b.dataset.lvl||b.dataset.downhillPick)===level;
     b.setAttribute('aria-pressed',String(selected));b.closest?.('.challenge-item')?.classList.toggle('selected',selected);
@@ -194,7 +185,7 @@ function renderPreparationPreview(dt,time){
     // invisible previews and the racing renderer do not render behind it.
     if(time-previewLastFrame<1/(menuPreview.software?12:30))return true;
     const elapsed=previewLastFrame?Math.min(.1,time-previewLastFrame):dt;previewLastFrame=time;
-    menuPreview.renderPreview({...preview,skin:chosen.sprite,dt:elapsed,spinning:previewSpinning,timeOfDay:renderPrefs.timeOfDay});
+    menuPreview.renderPreview({...preview,skin:chosen.sprite,dt:elapsed,spinning:previewSpinning,timeOfDay:renderPrefs.timeOfDay,cosmetics:garageCosmetics});
     status?.classList.add('hidden');
   }catch(error){console.warn('Preview unavailable',error);previewFailed=true;}
   return true;
@@ -234,7 +225,7 @@ function updateDescentHUD(){
 function finishDownhill(){
   const won=player.score>=track.goal;player.descent.s=track.finishS;state=won?'downhillWon':'downhillFailed';
   if(won){const best=downhillBest(track.routeLevel);if(player.score>best.score)try{localStorage.setItem('downhill:v2:'+track.routeLevel,JSON.stringify({score:Math.floor(player.score),time:raceTime}));}catch{}}
-  updateDescentHUD();showOverlay({title:won?'¡Cerro conquistado!':'Llegaste, pero faltaron puntos',msg:`${track.layout.name} · Sprint completado: <b>100%</b><br>Puntaje: <b>${Math.floor(player.score).toLocaleString('es-CL')} / ${track.goal.toLocaleString('es-CL')}</b> pts · Tiempo: <b>${formatTime(raceTime)}</b>${won?'':'<br>Vuelve a intentarlo: enlaza los derrapes antes de la meta.'}`});
+  updateDescentHUD();showOverlay({title:won?'¡Cerro conquistado!':'Llegaste, pero faltaron puntos',msg:`${track.layout.name} · Sprint completado: <b>100%</b><br>Puntaje: <b>${Math.floor(player.score).toLocaleString('es-CL')} / ${track.goal.toLocaleString('es-CL')}</b> pts · Tiempo: <b>${formatTime(raceTime)}</b>${won?careerReward(true):'<br>Vuelve a intentarlo: enlaza los derrapes antes de la meta.'}`});
 }
 $('#btnRecover').addEventListener('click',loseLifeAndRespawn);
 
@@ -251,8 +242,8 @@ $('#btnRecover').addEventListener('click',loseLifeAndRespawn);
 
 
 
-import('./view3d.js?v=0.9.0').then(({DriftView3D})=>{
+import('./view3d.js?v=1.0.0-prealpha.1').then(({DriftView3D})=>{
   sceneView=new DriftView3D($('#scene3d'),{quality:renderPrefs.quality,onFailure:fail3D,onVehicleFailure:()=>toast('No se pudo cargar un modelo de auto. Recarga para volver a intentarlo.')});
   if(sceneView.software)toast('3D compatible activo · Calidad ligera');
 }).catch(fail3D);
-import('./menu-preview.js?v=0.9.0').then(module=>{MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});
+import('./menu-preview.js?v=1.0.0-prealpha.1').then(module=>{MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});

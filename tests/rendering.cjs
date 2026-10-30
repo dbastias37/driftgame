@@ -45,3 +45,12 @@ test('exhibition renders three moving cars and preserves the recording across ci
  assert.equal(shots.size,3);assert.notDeepEqual(positions[0],positions[1]);assert.ok(view.car.wheels.every(w=>Number.isFinite(w.spin.rotation.z)));
  }finally{view.dispose();}
 });
+
+test('workshop neon and smoke render without extra lights or particle allocations and reset for stock cars',async()=>{
+ global.document={createElement:canvas};global.innerWidth=800;global.innerHeight=560;global.devicePixelRatio=1;
+ const {DriftView3D}=await import('../js/view3d.js'),{createTrack,createCar}=await import('../server/engine.js');
+ const oldError=console.error;console.error=()=>{};let v;try{v=new DriftView3D(canvas(),{loadVehicle:null,loadYugoVehicle:null,loadFujiwaraVehicle:null});}finally{console.error=oldError;}
+ const tr=createTrack(1),p=createCar(tr,'blue',true,0);p.cosmetics={neon:'#c58bff',smokeVolume:3,smokeColor:'#82ed9b'};p.smoke=Array.from({length:700},()=>({x:p.pos.x,y:p.pos.y,life:.4}));const array=v.smokePos;
+ v.render({track:tr,player:p,dt:1/60});assert(v.car.neon.visible);assert.equal(v.car.neon.material.color.getHexString(),'c58bff');assert.equal(v.smokeMat.color.getHexString(),'82ed9b');assert.equal(v.smokeMat.size,2.8*Math.sqrt(3));assert.equal(v.smokePos,array);assert(v.smokeGeo.drawRange.count<=450);assert.notEqual(v.car.neon.material.map,v.smokeTexture);
+ const root=v.car.root;p.cosmetics={};v.render({track:tr,player:p,dt:1/60});assert.equal(v.car.root,root);assert.equal(v.car.neon.visible,false);assert.equal(v.smokeMat.size,2.8);v.dispose();
+});

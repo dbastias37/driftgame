@@ -27,7 +27,7 @@ test('finished, gameover and challengeWon remain terminal in both views',()=>{
   const run=harness();for(const ending of ['finished','gameover','challengeWon']){run(`startWithTrack(presetTrack(1),'race');state='${ending}';`);const before=run(snapshot);run("setRenderView('2d');simulate(1);setRenderView('3d');simulate(1);");assert.deepEqual(run(snapshot),before);}
 });
 test('life loss and restart are preserved; challenge progress persists',()=>{
-  const run=harness();run("startWithTrack(presetTrack(1),'race');state='running';loseLifeAndRespawn();loseLifeAndRespawn();loseLifeAndRespawn();");assert.equal(run('player.lives'),0);assert.equal(run('state'),'gameover');run('restartRaceSameTrack()');assert.equal(run('player.lives'),3);assert.equal(run('state'),'countdown');run("mode='challenge';activeChallengeLevel=1;activeChallengeGoal=challengeRequiredPoints(1);state='running';player.score=activeChallengeGoal;checkChallengeProgress();");assert.equal(run('state'),'challengeWon');assert.equal(run("localStorage.getItem('challenge:unlocked')"),'2');
+  const run=harness();run("startWithTrack(presetTrack(1),'race');state='running';loseLifeAndRespawn();loseLifeAndRespawn();loseLifeAndRespawn();");assert.equal(run('player.lives'),0);assert.equal(run('state'),'gameover');run('restartRaceSameTrack()');assert.equal(run('player.lives'),3);assert.equal(run('state'),'countdown');run("mode='challenge';activeChallengeLevel=1;activeChallengeGoal=challengeRequiredPoints(1);startWithTrack(presetTrack(1),'challenge');state='running';player.score=activeChallengeGoal;player.comboPoints=DriftCareer.objectives(1)[2].target;careerRun.observe(player,30);finished();");assert.equal(run('state'),'challengeWon');assert.equal(run("localStorage.getItem('challenge:unlocked')"),'2');
 });
 test('custom widths survive sharing and both TRK versions remain supported',()=>{
   const run=harness();assert.equal(run('decodeTrack(encodeSharedTrack(presetTrack(1))).roadHalf'),14);assert.equal(run('!!decodeTrack(encodeTrack(presetTrack(1).points))'),true);assert.equal(run("decodeTrack('TRK.'+b64u_enc(JSON.stringify(Array(8).fill([0,0]))))"),null);
@@ -35,8 +35,8 @@ test('custom widths survive sharing and both TRK versions remain supported',()=>
 test('ghost sampling and recording are unchanged across views',()=>{
   const run=harness();run("startWithTrack(presetTrack(1),'tt');lapTime=20;ghostSamples=Array.from({length:600},(_,i)=>({x:i,y:2*i,angle:.1*i}));onLap();startWithTrack(track,'tt');state='running';");assert.equal(run('ghost.data.time'),20);run("simulate(SIM_DT);setRenderView('2d');simulate(SIM_DT);setRenderView('3d');simulate(SIM_DT)");assert.ok(run('ghost.t')>0);assert.ok(run('ghostSamples.length')>0);
 });
-test('3D failure preserves the race and exposes 2D fallback',()=>{
-  const run=harness();run("startWithTrack(presetTrack(1),'tt');state='running';keys.add('w');for(let i=0;i<90;i++)simulate(SIM_DT)");const before=run(snapshot);run("fail3D(new Error('test'))");assert.equal(run('renderPrefs.view'),'2d');assert.deepEqual(run(snapshot),before);
+test('3D failure pauses the race and offers retry without rendering legacy 2D',()=>{
+  const run=harness();run("startWithTrack(presetTrack(1),'tt');state='running';keys.add('w');for(let i=0;i<90;i++)simulate(SIM_DT)");const before=run(snapshot);run("fail3D(new Error('test'))");assert.equal(run('renderPrefs.view'),'3d');assert.equal(run('state'),'paused');assert.equal(run("!$('#rendererError').classList.contains('hidden')"),true);assert.deepEqual({...run(snapshot),state:before.state},before);
 });
 test('drivetrain, steering, integration and tire effects remain identical to the physics baseline',()=>{
   const baseline=fs.readFileSync(path.join(__dirname,'fixtures/car-v0.2.txt'),'utf8');
