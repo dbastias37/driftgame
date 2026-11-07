@@ -1,7 +1,7 @@
 name: Driving and 3D regression checks
 on:
   push:
-    branches: [main, feat/unified-3d-experience]
+    branches: [main, feat/unified-3d-experience, driftgame-psx]
   pull_request:
 jobs:
   core:
@@ -13,3 +13,7 @@ jobs:
           node-version: '22'
       - run: npm ci --omit=dev --ignore-scripts
       - run: npm run test:core
+      - run: node --test tests/psx.cjs
+      - run: node --check js/psx-renderer.js
+      - run: node --check js/view3d.js
+      - run: node --check js/experience.js
