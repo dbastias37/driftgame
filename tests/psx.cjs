@@ -39,9 +39,22 @@ test('wide terrain and road materials exclude PSX vertex displacement',()=>{
  assert.match(view,/Object\.values\(materials\)/);
  assert.match(mountain,/material\.userData\.psxProtectedSurface=true/);
 });
-test('retro output gains 15 percent resolution without changing original/HUD',()=>{
+test('retro output gains 60 percent density and preserves original/HUD',()=>{
  const renderer=fs.readFileSync(path.join(__dirname,'../js/psx-renderer.js'),'utf8');
- assert.match(renderer,/1\.15\*Math\.min\(rw\/w,rh\/h\)/);
+ assert.match(renderer,/1\.6\*Math\.min\(rw\/w,rh\/h\)/);
  assert.match(renderer,/resolution==='original'/);
  assert.match(renderer,/this\.renderer\.render\(this\.postScene,this\.postCamera\)/);
+});
+
+test('PSX crisp presets, UI settings and browser migration are aligned',()=>{
+ const engine=fs.readFileSync(path.join(__dirname,'../js/psx-renderer.js'),'utf8');
+ const experience=fs.readFileSync(path.join(__dirname,'../js/experience.js'),'utf8');
+ const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
+ for(const resolution of ['426x320','512x384','736x552']){
+  assert.ok(engine.includes(resolution));
+  assert.ok(experience.includes(resolution));
+  assert.ok(html.includes('value="'+resolution+'"'));
+ }
+ assert.match(experience,/savedPrefs\.psx\.profileVersion===2/);
+ assert.match(engine,/authentic:\{resolution:'512x384',jitter:\.55/);
 });
