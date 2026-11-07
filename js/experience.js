@@ -9,6 +9,7 @@ const renderPrefs={
   speedLinesIntensity:Number.isFinite(savedPrefs.speedLinesIntensity)?Math.max(0,Math.min(3,savedPrefs.speedLinesIntensity)):1.5,
   timeOfDay:Math.max(0,Math.min(1,Number(savedPrefs.timeOfDay)||0)),
   quality:['auto','high','low'].includes(savedPrefs.quality)?savedPrefs.quality:'auto',
+  psx:savedPrefs.psx&&typeof savedPrefs.psx==='object'?savedPrefs.psx:{style:'authentic'},
   touch:['auto','on','off'].includes(savedPrefs.touch)?savedPrefs.touch:'auto',
   motion:['full','reduced'].includes(savedPrefs.motion)?savedPrefs.motion:(matchMedia('(prefers-reduced-motion: reduce)').matches?'reduced':'full')
 };
@@ -25,8 +26,32 @@ const CAMERA_NAMES={chase:'Seguimiento',aerial:'Aérea',hood:'Capó',drone:'Dron
 if(Number.isInteger(savedPrefs.car)&&savedPrefs.car>=0&&savedPrefs.car<CAR_DATA.length){carIdx=savedPrefs.car;chosen=CAR_DATA[carIdx];}
 if(savedPrefs.tx==='manual')document.querySelector('input[name="tx"][value="manual"]').checked=true;
 function saveRenderPrefs(){try{localStorage.setItem(PREF_KEY,JSON.stringify({...renderPrefs,car:carIdx,tx:selectedTx()}));}catch{}}
+const PSX_DEFAULTS={
+  modern:{resolution:'original',jitter:0,affine:0,dither:0,fog:1,flat:false},
+  soft:{resolution:'640x480',jitter:.3,affine:.28,dither:.28,fog:.85,flat:false},
+  authentic:{resolution:'320x240',jitter:1,affine:.7,dither:.65,fog:.65,flat:true},
+  extreme:{resolution:'320x240',jitter:1.65,affine:1,dither:1,fog:.48,flat:true}
+};
+function syncPSXUI(){
+ const p=renderPrefs.psx,style=PSX_DEFAULTS[p.style]?p.style:'authentic',v={...PSX_DEFAULTS[style],...p};
+ $('#psxStyle').value=style;$('#psxResolution').value=v.resolution;
+ for(const [name,scale] of [['Jitter',100],['Affine',100],['Dither',100],['Fog',100]]){
+   const key=name.toLowerCase(),number=Math.round((v[key]??0)*scale);
+   $('#psx'+name).value=number;$('#psx'+name+'Label').textContent=number+'%';
+ }
+ $('#psxFlat').value=v.flat?'on':'off';
+}
+function applyPSX(){sceneView?.setPSXSettings(renderPrefs.psx);lastScenePresentation=null;saveRenderPrefs();syncPSXUI();}
+$('#psxStyle').addEventListener('change',event=>{renderPrefs.psx={style:event.target.value};applyPSX();});
+$('#psxResolution').addEventListener('change',event=>{renderPrefs.psx={...PSX_DEFAULTS[renderPrefs.psx.style],...renderPrefs.psx,resolution:event.target.value};applyPSX();});
+for(const name of ['Jitter','Affine','Dither','Fog'])$('#psx'+name).addEventListener('input',event=>{
+ const key=name.toLowerCase();renderPrefs.psx={...PSX_DEFAULTS[renderPrefs.psx.style],...renderPrefs.psx,[key]:Number(event.target.value)/100};applyPSX();
+});
+$('#psxFlat').addEventListener('change',event=>{renderPrefs.psx={...PSX_DEFAULTS[renderPrefs.psx.style],...renderPrefs.psx,flat:event.target.value==='on'};applyPSX();});
+
 function toast(message){$('#toast').textContent=message;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),3400);}
 function syncRenderUI(){
+  syncPSXUI();
   $('#btnCamera').disabled=renderPrefs.view!=='3d';
   $('#viewBadge').textContent='3D / '+CAMERA_NAMES[renderPrefs.camera].toUpperCase();
   $('#speedLinesIntensity').value=Math.round(renderPrefs.speedLinesIntensity*100);$('#speedLinesIntensityLabel').textContent=Math.round(renderPrefs.speedLinesIntensity*100)+'%';
@@ -244,6 +269,7 @@ $('#btnRecover').addEventListener('click',loseLifeAndRespawn);
 
 import('./view3d.js?v=1.0.0-prealpha.1').then(({DriftView3D})=>{
   sceneView=new DriftView3D($('#scene3d'),{quality:renderPrefs.quality,onFailure:fail3D,onVehicleFailure:()=>toast('No se pudo cargar un modelo de auto. Recarga para volver a intentarlo.')});
+  sceneView.setPSXSettings(renderPrefs.psx);
   if(sceneView.software)toast('3D compatible activo · Calidad ligera');
 }).catch(fail3D);
 import('./menu-preview.js?v=1.0.0-prealpha.1').then(module=>{MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});
