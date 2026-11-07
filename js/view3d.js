@@ -1,4 +1,5 @@
 import * as T from '../vendor/three.module.min.js';
+import {PSXRenderer} from './psx-renderer.js';
 import {SoftwareRenderer} from './software-renderer.js?v=1.0.0-prealpha.1';
 import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles} from './track-surface.js?v=1.0.0-prealpha.1';
 import {buildMountain} from './mountain-scene.js?v=1.0.0-prealpha.1';
@@ -78,10 +79,12 @@ export class DriftView3D{
     try{this.renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});}
     catch{this.renderer=new SoftwareRenderer(canvas);}
     this.software=!!this.renderer.software;
+    this.psx=null;this.psxSettings={style:'authentic'};
     this.renderer.outputColorSpace=T.SRGBColorSpace;this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.25;
     this.scene=new T.Scene();this.scene.background=new T.Color(0x9fb4b6);this.scene.fog=new T.Fog(0x9fb4b6,160,700);
     const hemi=new T.HemisphereLight(0xc7e4ee,0x56634a,2.3);this.scene.add(hemi);const sun=new T.DirectionalLight(0xffe4c6,3.1);sun.position.set(-110,180,60);this.scene.add(sun);this.atmosphere=new Atmosphere(this.scene,hemi,sun);this.atmosphere.set(0);
     this.camera=new T.PerspectiveCamera(58,1,.5,1200);this.world=new T.Group();this.scene.add(this.world);
+    if(!this.software)this.psx=new PSXRenderer(this.renderer,this.scene,this.camera,this.psxSettings);
     this.car=createCar('blue');this.scene.add(this.car.root);this.ghostCar=createCar('blue',true);this.scene.add(this.ghostCar.root);
     this.smokeTexture=smokeTexture();this.smokeGeo=new T.BufferGeometry();this.smokePos=new Float32Array(450*3);this.smokeGeo.setAttribute('position',new T.BufferAttribute(this.smokePos,3).setUsage(T.DynamicDrawUsage));
     this.smokeMat=new T.PointsMaterial({color:0xdde8e8,map:this.smokeTexture,size:2.8,transparent:true,opacity:.23,depthWrite:false,sizeAttenuation:true});
@@ -97,6 +100,7 @@ export class DriftView3D{
     this.contextLost=e=>{e.preventDefault();this.onFailure(new Error('WebGL context lost'));};canvas.addEventListener('webglcontextlost',this.contextLost);
   }
   setQuality(q){this.quality=q;this.low=this.software||q==='low'||(q==='auto'&&(innerWidth<700||navigator.hardwareConcurrency<=4));this.pixelRatio=Math.min(devicePixelRatio||1,this.low?1:1.5);this.renderer.setPixelRatio(this.pixelRatio);this.width=0;this.track=null;}
+  setPSXSettings(settings){this.psxSettings={...settings};this.psx?.setConfig(this.psxSettings);}
   setTimeOfDay(value){this.atmosphere.set(value);}
   adaptResolution(dt){
     if(this.quality!=='auto'||this.software||!(dt>0&&dt<.2))return;
@@ -280,7 +284,7 @@ export class DriftView3D{
       if(inMenu||distance>100)continue;const projected=new T.Vector3(car.pos.x,(car.ride?.height||0)+2.7,car.pos.y).project(this.camera);
       if(projected.z>-1&&projected.z<1&&Math.abs(projected.x)<1&&Math.abs(projected.y)<1)this.rivalLabels.push({name:car.name,x:(projected.x+1)*w/2,y:(1-projected.y)*h/2});
     }
-    this.renderer.render(this.scene,this.camera);
+    if(this.psx)this.psx.render(w,h);else this.renderer.render(this.scene,this.camera);
   }
-  dispose(){this.disposed=true;this.canvas.removeEventListener('webglcontextlost',this.contextLost);this.atmosphere.dispose();disposeGroup(this.scene);this.renderer.dispose();}
+  dispose(){this.disposed=true;this.canvas.removeEventListener('webglcontextlost',this.contextLost);this.psx?.dispose();this.atmosphere.dispose();disposeGroup(this.scene);this.renderer.dispose();}
 }
