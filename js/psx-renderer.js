@@ -78,6 +78,7 @@ export class PSXRenderer{
   setConfig(config={}){
     const old=this.settings;
     this.settings=resolvePSXConfig(config);
+    if(this.settings.style==='modern')this.restoreTextures();
     if(old.style!==this.settings.style || old.flat!==this.settings.flat || old.affine!==this.settings.affine){
       this.restoreMaterials();
     }
@@ -125,7 +126,7 @@ sampledDiffuseColor = sRGBTransferEOTF(sampledDiffuseColor);
 #endif
 diffuseColor *= sampledDiffuseColor;
 #endif`);
-      material.userData.psxShader=shader;
+      this.userData.psxShader=shader;
     };
     material.customProgramCacheKey=function(){return String(original.customProgramCacheKey?.call(this)||'')+'|psx-v2';};
     material.needsUpdate=true;
@@ -144,7 +145,7 @@ diffuseColor *= sampledDiffuseColor;
           if(!this.textures.has(map))this.textures.set(map,{minFilter:map.minFilter,magFilter:map.magFilter,anisotropy:map.anisotropy,generateMipmaps:map.generateMipmaps});
           map.magFilter=T.NearestFilter;
           map.minFilter=T.NearestMipmapNearestFilter;
-          map.anisotropy=1;map.needsUpdate=true;
+          if(map.anisotropy!==1||map.magFilter!==T.NearestFilter||map.minFilter!==T.NearestMipmapNearestFilter){map.anisotropy=1;map.needsUpdate=true;}
         }
       }
     });
