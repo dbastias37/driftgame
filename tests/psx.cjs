@@ -28,3 +28,20 @@ test('vertex snapping and affine UV implemented in shader, not on physics bodies
  assert.match(src,/psxAffineUV=vMapUv\*gl_Position\.w/);
  assert.match(src,/psxAffineUV \/ max\(abs\(psxAffineW\)/);
 });
+
+test('wide terrain and road materials exclude PSX vertex displacement',()=>{
+ const renderer=fs.readFileSync(path.join(__dirname,'../js/psx-renderer.js'),'utf8');
+ const view=fs.readFileSync(path.join(__dirname,'../js/view3d.js'),'utf8');
+ const mountain=fs.readFileSync(path.join(__dirname,'../js/mountain-scene.js'),'utf8');
+ assert.match(renderer,/protectedSurface\?0:self\.settings\.jitter/);
+ assert.match(renderer,/stable\?0:this\.settings\.jitter/);
+ assert.match(view,/ground\.material\.userData\.psxProtectedSurface=true/);
+ assert.match(view,/Object\.values\(materials\)/);
+ assert.match(mountain,/material\.userData\.psxProtectedSurface=true/);
+});
+test('retro output gains 15 percent resolution without changing original/HUD',()=>{
+ const renderer=fs.readFileSync(path.join(__dirname,'../js/psx-renderer.js'),'utf8');
+ assert.match(renderer,/1\.15\*Math\.min\(rw\/w,rh\/h\)/);
+ assert.match(renderer,/resolution==='original'/);
+ assert.match(renderer,/this\.renderer\.render\(this\.postScene,this\.postCamera\)/);
+});
