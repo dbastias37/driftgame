@@ -1,6 +1,7 @@
 /* Presentation and navigation. Never advances or rewrites driving physics. */
 const PREF_KEY='drift:preferences:v3';
 let savedPrefs={};try{savedPrefs=JSON.parse(localStorage.getItem(PREF_KEY)||'{}')||{};}catch{}
+function PSX_STYLE_FALLBACK(style){return ['modern','soft','authentic','extreme'].includes(style)?style:'authentic';}
 const renderPrefs={
   view:'3d',
   camera:['chase','aerial','hood','drone'].includes(savedPrefs.camera)?savedPrefs.camera:'chase',
@@ -9,7 +10,8 @@ const renderPrefs={
   speedLinesIntensity:Number.isFinite(savedPrefs.speedLinesIntensity)?Math.max(0,Math.min(3,savedPrefs.speedLinesIntensity)):1.5,
   timeOfDay:Math.max(0,Math.min(1,Number(savedPrefs.timeOfDay)||0)),
   quality:['auto','high','low'].includes(savedPrefs.quality)?savedPrefs.quality:'auto',
-  psx:savedPrefs.psx&&typeof savedPrefs.psx==='object'?savedPrefs.psx:{style:'authentic'},
+  // Migrate older extremely pixelated presets once, preserving chosen style.
+  psx:savedPrefs.psx&&savedPrefs.psx.profileVersion===2?savedPrefs.psx:{style:PSX_STYLE_FALLBACK(savedPrefs.psx?.style),profileVersion:2},
   touch:['auto','on','off'].includes(savedPrefs.touch)?savedPrefs.touch:'auto',
   motion:['full','reduced'].includes(savedPrefs.motion)?savedPrefs.motion:(matchMedia('(prefers-reduced-motion: reduce)').matches?'reduced':'full')
 };
@@ -28,9 +30,9 @@ if(savedPrefs.tx==='manual')document.querySelector('input[name="tx"][value="manu
 function saveRenderPrefs(){try{localStorage.setItem(PREF_KEY,JSON.stringify({...renderPrefs,car:carIdx,tx:selectedTx()}));}catch{}}
 const PSX_DEFAULTS={
   modern:{resolution:'original',jitter:0,affine:0,dither:0,fog:1,flat:false},
-  soft:{resolution:'640x480',jitter:.3,affine:.28,dither:.28,fog:.85,flat:false},
-  authentic:{resolution:'320x240',jitter:1,affine:.7,dither:.65,fog:.65,flat:true},
-  extreme:{resolution:'320x240',jitter:1.65,affine:1,dither:1,fog:.48,flat:true}
+  soft:{resolution:'736x552',jitter:.18,affine:.18,dither:.18,fog:.92,flat:false},
+  authentic:{resolution:'512x384',jitter:.55,affine:.4,dither:.35,fog:.78,flat:true},
+  extreme:{resolution:'426x320',jitter:.95,affine:.65,dither:.55,fog:.6,flat:true}
 };
 function syncPSXUI(){
  const p=renderPrefs.psx,style=PSX_DEFAULTS[p.style]?p.style:'authentic',v={...PSX_DEFAULTS[style],...p};
@@ -41,7 +43,7 @@ function syncPSXUI(){
  }
  $('#psxFlat').value=v.flat?'on':'off';
 }
-function applyPSX(){sceneView?.setPSXSettings(renderPrefs.psx);lastScenePresentation=null;saveRenderPrefs();syncPSXUI();}
+function applyPSX(){renderPrefs.psx.profileVersion=2;sceneView?.setPSXSettings(renderPrefs.psx);lastScenePresentation=null;saveRenderPrefs();syncPSXUI();}
 $('#psxStyle').addEventListener('change',event=>{renderPrefs.psx={style:event.target.value};applyPSX();});
 $('#psxResolution').addEventListener('change',event=>{renderPrefs.psx={...PSX_DEFAULTS[renderPrefs.psx.style],...renderPrefs.psx,resolution:event.target.value};applyPSX();});
 for(const name of ['Jitter','Affine','Dither','Fog'])$('#psx'+name).addEventListener('input',event=>{
