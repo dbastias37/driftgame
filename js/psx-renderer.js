@@ -2,10 +2,10 @@ import * as T from '../vendor/three.module.min.js';
 
 // PSX emulation: presentation only. No physics, transform or collision mutations.
 const PRESETS={
-  modern:{resolution:'original',jitter:0,affine:0,dither:0,colors:32,fog:1,flat:false},
-  soft:{resolution:'640x480',jitter:.3,affine:.28,dither:.28,colors:32,fog:.85,flat:false},
-  authentic:{resolution:'320x240',jitter:1,affine:.7,dither:.65,colors:32,fog:.65,flat:true},
-  extreme:{resolution:'320x240',jitter:1.65,affine:1,dither:1,colors:16,fog:.48,flat:true}
+  modern:{resolution:'original',jitter:0,affine:0,dither:0,colors:64,fog:1,flat:false},
+  soft:{resolution:'736x552',jitter:.18,affine:.18,dither:.18,colors:64,fog:.92,flat:false},
+  authentic:{resolution:'512x384',jitter:.55,affine:.4,dither:.35,colors:64,fog:.78,flat:true},
+  extreme:{resolution:'426x320',jitter:.95,affine:.65,dither:.55,colors:32,fog:.6,flat:true}
 };
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 export const PSX_PRESETS=Object.freeze(Object.keys(PRESETS));
@@ -14,7 +14,7 @@ export function resolvePSXConfig(source={}){
   const p=PRESETS[style];
   return {
     style,
-    resolution:['original','320x240','426x240','640x480'].includes(source.resolution)?source.resolution:p.resolution,
+    resolution:['original','320x240','426x240','426x320','512x384','640x480','736x552'].includes(source.resolution)?source.resolution:p.resolution,
     jitter:clamp(Number(source.jitter??p.jitter)||0,0,2),
     affine:clamp(Number(source.affine??p.affine)||0,0,1),
     dither:clamp(Number(source.dither??p.dither)||0,0,1),
@@ -89,8 +89,8 @@ export class PSXRenderer{
     if(resolution==='original')return [Math.max(1,Math.round(w*(this.renderer.getPixelRatio?.()||1))),Math.max(1,Math.round(h*(this.renderer.getPixelRatio?.()||1)))];
     const [rw,rh]=resolution.split('x').map(Number);
     // Respect the viewport aspect ratio, never crop the camera projection.
-    // Raise width and height by 15% while retaining aspect ratio.
-    const density=1.15*Math.min(rw/w,rh/h);
+    // High-definition retro: 60% more pixels along each axis than the preset base.\n    // Low-resolution geometry and nearest-neighbor scaling remain active.
+    const density=1.6*Math.min(rw/w,rh/h);
     return [Math.max(1,Math.round(w*density)),Math.max(1,Math.round(h*density))];
   }
   ensureTarget(w,h){
