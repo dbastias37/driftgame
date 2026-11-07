@@ -6,6 +6,8 @@ function mesh(parent,geo,material,x=0,y=0,z=0){const o=new T.Mesh(geo,material);
 function box(p,m,x,y,z,w,h,d){return mesh(p,new T.BoxGeometry(w,h,d),m,x,y,z);}
 function noise(){const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d'),data=g.createImageData(128,128);let seed=76;for(let i=0;i<data.data.length;i+=4){seed=(seed*1664525+1013904223)>>>0;const v=62+(seed>>>28);data.data[i]=v;data.data[i+1]=v+6;data.data[i+2]=v+7;data.data[i+3]=255;}g.putImageData(data,0,0);const t=new T.CanvasTexture(c);t.wrapS=t.wrapT=T.RepeatWrapping;t.colorSpace=T.SRGBColorSpace;return t;}
 function band(track,parent,material,a,b,height=()=>.025,filter=()=>true){
+  // Stabilize expansive road strips against PSX clip-space snapping.
+  material.userData.psxProtectedSurface=true;
   // Short pieces allow the same camera culling as flat-circuit kerbs.
   for(let start=0;start<track.points.length-1;start+=24){
     const end=Math.min(track.points.length-1,start+24),pos=[],uv=[],indices=[];
@@ -19,8 +21,11 @@ function label(text){const c=document.createElement('canvas');c.width=512;c.heig
 export function buildMountain(track,world,low=false){
   const grass=mat(0x526253),rock=mat(0x728a84),dark=mat(0x283b43),white=mat(0xdde0d3),orange=mat(0xc85837),metal=mat(0x8a9694,{metalness:.45}),asphalt=mat(0xaeb7ba,{map:noise()}),sand=mat(0x7a8074);
   const b=track.bounds,tile=64,step=8;
-  buildMountainTerrain(track,world,mat(0xffffff,{vertexColors:true,flatShading:true}));
+  const terrainMaterial=mat(0xffffff,{vertexColors:true,flatShading:true});
+  terrainMaterial.userData.psxProtectedSurface=true;
+  buildMountainTerrain(track,world,terrainMaterial);
   const distantMaterial=mat(0x526253);
+  distantMaterial.userData.psxProtectedSurface=true;
   // Continue the mountain outside the detailed road area; no floating rectangle.
   for(let x=Math.floor((b.minX-700)/tile)*tile;x<b.maxX+700;x+=tile)for(let z=Math.floor((b.minY-700)/tile)*tile;z<b.maxY+700;z+=tile){
     if(x>=Math.floor((b.minX-160)/tile)*tile&&x<b.maxX+160&&z>=Math.floor((b.minY-180)/tile)*tile&&z<b.maxY+180)continue;
