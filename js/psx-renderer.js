@@ -89,7 +89,8 @@ export class PSXRenderer{
     if(resolution==='original')return [Math.max(1,Math.round(w*(this.renderer.getPixelRatio?.()||1))),Math.max(1,Math.round(h*(this.renderer.getPixelRatio?.()||1)))];
     const [rw,rh]=resolution.split('x').map(Number);
     // Respect the viewport aspect ratio, never crop the camera projection.
-    const density=Math.min(rw/w,rh/h);
+    // Raise width and height by 15% while retaining aspect ratio.
+    const density=1.15*Math.min(rw/w,rh/h);
     return [Math.max(1,Math.round(w*density)),Math.max(1,Math.round(h*density))];
   }
   ensureTarget(w,h){
@@ -108,13 +109,15 @@ export class PSXRenderer{
     if(!material||this.materials.has(material)||material.isShaderMaterial||material.isRawShaderMaterial||material.isSpriteMaterial)return;
     const original={onBeforeCompile:material.onBeforeCompile,customProgramCacheKey:material.customProgramCacheKey,flatShading:material.flatShading};
     this.materials.set(material,original);
-    material.flatShading=!!this.settings.flat && (material.isMeshStandardMaterial||material.isMeshLambertMaterial||material.isMeshPhongMaterial);
+    // Protect very large coplanar road and terrain faces from vertex jitter/flat normals.
+    const protectedSurface=!!material.userData?.psxProtectedSurface;
+    material.flatShading=!!this.settings.flat && !protectedSurface && (material.isMeshStandardMaterial||material.isMeshLambertMaterial||material.isMeshPhongMaterial);
     const self=this;
     material.onBeforeCompile=function(shader,renderer){
       if(original.onBeforeCompile)original.onBeforeCompile.call(this,shader,renderer);
       shader.uniforms.psxGrid={value:self.grid};
-      shader.uniforms.psxJitter={value:self.settings.jitter};
-      shader.uniforms.psxAffine={value:self.settings.affine};
+      shader.uniforms.psxJitter={value:protectedSurface?0:self.settings.jitter};
+      shader.uniforms.psxAffine={value:protectedSurface?0:self.settings.affine};
       shader.vertexShader='uniform vec2 psxGrid; uniform float psxJitter; uniform float psxAffine;\n#ifdef USE_MAP\nvarying vec2 psxAffineUV; varying float psxAffineW;\n#endif\n'+shader.vertexShader;
       shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\nif(psxJitter>0.0 && gl_Position.w>0.0){ vec2 ndc=gl_Position.xy/gl_Position.w; vec2 stepSize=vec2(2.0)/max(psxGrid,vec2(1.0)); vec2 snapped=floor(ndc/stepSize+0.5)*stepSize; gl_Position.xy=mix(ndc,snapped,min(psxJitter,1.0))*gl_Position.w; if(psxJitter>1.0)gl_Position.xy+=(snapped-ndc)*(psxJitter-1.0)*gl_Position.w;}\n#ifdef USE_MAP\npsxAffineUV=vMapUv*gl_Position.w; psxAffineW=gl_Position.w;\n#endif');
       shader.fragmentShader='uniform float psxAffine;\n#ifdef USE_MAP\nvarying vec2 psxAffineUV; varying float psxAffineW;\n#endif\n'+shader.fragmentShader;
@@ -139,7 +142,7 @@ diffuseColor *= sampledDiffuseColor;
         if(!m)continue;active.add(m);
         this.prepareMaterial(m);
         const s=m.userData?.psxShader;
-        if(s){s.uniforms.psxJitter.value=this.settings.jitter;s.uniforms.psxAffine.value=this.settings.affine;}
+        if(s){const stable=!!m.userData?.psxProtectedSurface;s.uniforms.psxJitter.value=stable?0:this.settings.jitter;s.uniforms.psxAffine.value=stable?0:this.settings.affine;}
         const map=m.map;
         if(map&&this.settings.style!=='modern'){
           if(!this.textures.has(map))this.textures.set(map,{minFilter:map.minFilter,magFilter:map.magFilter,anisotropy:map.anisotropy,generateMipmaps:map.generateMipmaps});
