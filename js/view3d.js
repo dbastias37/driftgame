@@ -118,11 +118,19 @@ export class DriftView3D{
     asphaltTexture.anisotropy=Math.min(8,this.renderer.capabilities?.getMaxAnisotropy()||1);
     kerbTexture.anisotropy=asphaltTexture.anisotropy;
     const ground=mesh(new T.PlaneGeometry(Math.max(2200,b.w+1200),Math.max(2200,b.h+1200)),mat(0x526253,{polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1}),this.world,cx,-.12,cz);ground.rotation.x=-Math.PI/2;ground.renderOrder=-100;
+    // Keep the enormous terrain plane stationary in clip-space: snapping it
+    // produces depth artifacts and green wedges through the track.
+    ground.material.userData.psxProtectedSurface=true;
     const materials={
       asphalt:mat(0xaeb7ba,{map:asphaltTexture,roughness:.96}),
       edge:mat(0xdde0d3),curb:mat(0xffffff,{map:kerbTexture}),
       runoff:mat(0x7a8074),centerLine:mat(0xcfc8a3),
     };
+    // Road strips use stable screen-space vertices and original smooth normals.
+    // PSX jitter remains enabled for buildings, trees and vehicles.
+    for(const material of Object.values(materials))material.userData.psxProtectedSurface=true;
+    // Prevent low precision depth competition against surrounding terrain.
+    materials.asphalt.polygonOffset=true;materials.asphalt.polygonOffsetFactor=-1;materials.asphalt.polygonOffsetUnits=-1;
     // Adjacent regions retain their footprint; only the curb has a rounded
     // height profile, shared with the four-wheel terrain contact simulation.
     const layout=trackSurface(track);
