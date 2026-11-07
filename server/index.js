@@ -2,7 +2,7 @@ import http from 'node:http';
 import {WebSocketServer} from 'ws';
 import {pathToFileURL} from 'node:url';
 import {Rooms} from './rooms.js';
-export function createServer({origins=(process.env.ALLOWED_ORIGINS||'https://driftgame.onrender.com').split(','),...options}={}){
+export function createServer({origins=(process.env.ALLOWED_ORIGINS||'https://driftgame-psx.onrender.com').split(','),...options}={}){
   const rooms=new Rooms(options),byIP=new Map();
   const server=http.createServer((req,res)=>{
     res.setHeader('Cache-Control','no-store');res.setHeader('Content-Type','application/json');
