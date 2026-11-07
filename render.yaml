@@ -1,0 +1,23 @@
+# DriftGame PSX: deployment from the isolated driftgame-psx branch.
+# Creates an independent static site and multiplayer server; main is untouched.
+services:
+  - type: web
+    name: driftgame-psx
+    runtime: static
+    branch: driftgame-psx
+    buildCommand: echo "DriftGame PSX static assets ready"
+    staticPublishPath: .
+    autoDeployTrigger: commit
+  - type: web
+    name: driftgame-psx-online
+    runtime: node
+    branch: driftgame-psx
+    plan: free
+    buildCommand: npm ci --omit=dev --ignore-scripts
+    startCommand: npm start
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ALLOWED_ORIGINS
+        value: https://driftgame-psx.onrender.com
