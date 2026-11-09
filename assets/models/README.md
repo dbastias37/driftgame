@@ -46,3 +46,29 @@ node tools/render-yugo.mjs
 - Licencia declarada en los metadatos: **SKETCHFAB Standard** — https://sketchfab.com/licenses. Se conservan los créditos; la integración no amplía ni concede derechos adicionales sobre el modelo.
 - Adaptación runtime `js/fujiwara-model.js`: frente +X, largo visual 4,215 m; 1.349 triángulos, carrocería agrupada en una malla y cuatro ruedas independientes con pivotes centrados. Se conservan los dos atlas originales, UV, filtro de píxel y material base sin PBR. La iluminación de noche aplica un tinte ambiental sin modificar el atlas.
 - Sprite superior producido por `tools/render-fujiwara.mjs` desde el mismo modelo. `FUJIWARA_CANVAS_MODULE` permite indicar la instalación local de `@napi-rs/canvas`.
+
+
+# Chevrolet Nova SS negro y Nissan Skyline R34 azul
+
+Archivos entregados por el usuario el 9 de noviembre de 2026:
+
+- Nova SS: `muscle_car_cgtrader.blend`, `MUSCLE_CAR.fbx`, `cgtrader_optimized_MUSCLE_CAR.fbx`, `textures.zip`. Se usa el archivo Blender con sus texturas incrustadas; el material original se llama `Material_Nova` y el atlas conserva los emblemas SS.
+- Skyline R34: `R34Model.rar`, que contiene `Skyline.blend` y `r34 Textures.rar`. Se usa exclusivamente la colección **Skyline Stock Done**, con las texturas originales; se excluyen las variantes dañadas, widebody, backups y el escenario de trabajo.
+- Los archivos recibidos no indican un autor o licencia verificable. Los créditos describen la procedencia sin atribuir su creación a Drift Racer ni inventar licencias.
+
+Conversión reproducible con Blender 4.3 (rutas de entrada ya extraídas):
+
+```sh
+blender -b --python tools/convert-replacement-cars.py -- nova SOURCE.blend TEXTURES assets/models/chevrolet-nova-ss.glb
+blender -b --python tools/convert-replacement-cars.py -- r34 SOURCE.blend TEXTURES assets/models/nissan-skyline-r34.glb
+node tools/render-replacement-cars.mjs
+```
+
+El script exporta GLB con texturas incrustadas y `.fit.json` con los puntos medidos de las cuatro ruedas. `js/vehicle-fit.js` contiene esos mismos datos para gráficos, contacto con el piso y efectos. El frente queda en +X, el eje vertical en +Y. Se nivelan los cuatro neumáticos a 2 cm del plano, manteniendo las pequeñas asimetrías originales de las mallas. Se conserva la geometría original; solo se agrupan partes por material y función. Las luces del Nova usan una máscara emisiva de los lentes del atlas, sin iluminar toda la carrocería.
+
+| Casilla persistente | Modelo | Largo visual | Triángulos | GLB |
+| --- | --- | --- | --- | --- |
+| `blue` | Nissan Skyline R34 | 4,60 m | 28.547 | 2.544.396 bytes |
+| `gray` | Chevrolet Nova SS | 4,81 m | 9.024 | 769.756 bytes |
+
+`CAR_CANVAS_MODULE` permite indicar una instalación existente de `@napi-rs/canvas` para regenerar los sprites. El juego no necesita Blender ni Canvas nativo en ejecución.

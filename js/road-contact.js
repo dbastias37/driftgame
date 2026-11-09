@@ -40,6 +40,8 @@ globalThis.DriftRoadContact ||= (()=>{
     terrainCache.set(track,result);return result;
   }
   function wheelOffsets(skin){
+    const fit=globalThis.DriftVehicleFit?.[skin];
+    if(fit)return [...fit.wheels].sort((a,b)=>Number(a.x>0)-Number(b.x>0)||a.z-b.z).map(({x,z})=>({x,z}));
     const front=skin==='fujiwara'?1.275775:skin==='yugo'?1.06:skin==='yellow'?1.343514:1.27,rear=skin==='fujiwara'?-1.122379:skin==='yugo'?-1.09:skin==='yellow'?-1.137491:-1.3,side=skin==='fujiwara'?.729235:skin==='yugo'?.654:skin==='yellow'?.768966:.98;
     return [{x:rear,z:-side},{x:rear,z:side},{x:front,z:-side},{x:front,z:side}];
   }
@@ -89,9 +91,16 @@ globalThis.DriftRoadContact ||= (()=>{
     r.wheels=target.wheels;r.lastX=car.pos.x;r.lastY=car.pos.y;r.lastAngle=car.angle;
   }
   function alignWheelEffects(car,skin){
-    const rear=wheelOffsets(skin)[0],spawn=car.spawnTrails,smoke=car.updateSmoke;
-    const align=(f,r,side)=>({x:f.x*(rear.x+car.length*.5)+r.x*side*(Math.abs(rear.z)-.9),y:f.y*(rear.x+car.length*.5)+r.y*side*(Math.abs(rear.z)-.9)});
-    car.spawnTrails=function(f,r,dt,int){spawn.call(this,f,r,dt,int);const t=this.tireTrails.at(-1);if(t)for(const [side,n]of[[-1,1],[1,2]]){const d=align(f,r,side);t['x'+n]+=d.x;t['y'+n]+=d.y;}};
+    car._wheelEffectSkin=skin;
+    if(car._wheelEffectsAligned)return;
+    car._wheelEffectsAligned=true;
+    const spawn=car.spawnTrails,smoke=car.updateSmoke,update=car.update;
+    car.update=function(dt,input,track){this.braking=!!input.brake;return update.call(this,dt,input,track);};
+    const align=(f,r,side)=>{
+      const rear=wheelOffsets(car._wheelEffectSkin).find(p=>p.x<0&&(p.z>0)===(side>0));
+      return {x:f.x*(rear.x+car.length*.5)+r.x*(rear.z-side*.9),y:f.y*(rear.x+car.length*.5)+r.y*(rear.z-side*.9)};
+    };
+    car.spawnTrails=function(f,r,dt,int){const previous=this.tireTrails.at(-1);spawn.call(this,f,r,dt,int);const t=this.tireTrails.at(-1);if(t&&t!==previous)for(const [side,n]of[[-1,1],[1,2]]){const d=align(f,r,side);t['x'+n]+=d.x;t['y'+n]+=d.y;}};
     car.updateSmoke=function(dt,f,r,...rest){const old=new Set(this.smoke);smoke.call(this,dt,f,r,...rest);let n=0;for(const p of this.smoke)if(!old.has(p)){const d=align(f,r,n++%2?1:-1);p.x+=d.x;p.y+=d.y;}};
   }
   return Object.freeze({curb,profile,terrain,wheelOffsets,curbWheels,contacts,reset,update,alignWheelEffects});

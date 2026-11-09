@@ -220,10 +220,10 @@
   @media(max-height:500px){#carPreview{height:110px} #carPanel h2{font-size:19px} #times{top:122px} #ui{max-width:330px} #stickZone{width:120px;height:120px} #gasZone{height:135px}}
 .daytime-control{display:block;max-width:330px;margin:14px 0 8px;font-size:12px;color:#aebbbb}.daytime-control output{float:right;color:#ff7544}.daytime-control input{display:block;width:100%;margin:10px 0;accent-color:#ff7544;cursor:pointer}.daytime-ends{display:flex;justify-content:space-between;font-size:10px;color:#829597}
 </style>
-<link rel="stylesheet" href="css/experience.css?v=1.0.0-prealpha.1">
-<link rel="stylesheet" href="css/online.css?v=1.0.0-prealpha.1">
-<link rel="stylesheet" href="css/raw-menu.css?v=1.0.0-prealpha.1">
-<link rel="stylesheet" href="css/career.css?v=1.0.0-prealpha.1">
+<link rel="stylesheet" href="css/experience.css?v=1.0.0-prealpha.2">
+<link rel="stylesheet" href="css/online.css?v=1.0.0-prealpha.2">
+<link rel="stylesheet" href="css/raw-menu.css?v=1.0.0-prealpha.2">
+<link rel="stylesheet" href="css/career.css?v=1.0.0-prealpha.2">
 </head>
 <body>
   <div id="ui">
@@ -456,15 +456,16 @@
   
   <audio id="radio" preload="none" crossorigin="anonymous"></audio>
 
-<script src="js/career.js?v=1.0.0-prealpha.1"></script>
-<script src="js/replay.js?v=1.0.0-prealpha.1"></script>
-<script src="js/drift-effects.js?v=1.0.0-prealpha.1"></script>
-<script src="js/attract-demo.js?v=1.0.0-prealpha.1"></script>
-<script src="js/circuit-layouts.js?v=1.0.0-prealpha.1"></script>
-<script src="js/road-contact.js?v=1.0.0-prealpha.1"></script>
-<script src="js/downhill.js?v=1.0.0-prealpha.1"></script>
-<script src="js/yugo-physics.js?v=1.0.0-prealpha.1"></script>
-<script src="js/online-rules.js?v=1.0.0-prealpha.1"></script>
+<script src="js/career.js?v=1.0.0-prealpha.2"></script>
+<script src="js/replay.js?v=1.0.0-prealpha.2"></script>
+<script src="js/drift-effects.js?v=1.0.0-prealpha.2"></script>
+<script src="js/attract-demo.js?v=1.0.0-prealpha.2"></script>
+<script src="js/circuit-layouts.js?v=1.0.0-prealpha.2"></script>
+<script src="js/vehicle-fit.js?v=1.0.0-prealpha.2"></script>
+<script src="js/road-contact.js?v=1.0.0-prealpha.2"></script>
+<script src="js/downhill.js?v=1.0.0-prealpha.2"></script>
+<script src="js/yugo-physics.js?v=1.0.0-prealpha.2"></script>
+<script src="js/online-rules.js?v=1.0.0-prealpha.2"></script>
 <script>
 "use strict";
 
@@ -1545,7 +1546,7 @@ function loop(ms){
     $('#scene3d').style.visibility=draw3D?'visible':'hidden';
     driftEffect.step(dt,{pressed:!!shown?.handbrake,speed:shown?.worldSpeed()||0,active:state==='running'||!!(replayFrame&&replayUI.playing),reduced:renderPrefs.motion==='reduced',impulse:renderPrefs.impulse!=='off',lines:renderPrefs.speedLines});
     if(draw3D){
-      const revision=[state,inSession,track,player,chosen.sprite,replayFrame?.revision,replayFrame?.camera,renderPrefs.camera,renderPrefs.motion,renderPrefs.timeOfDay,renderPrefs.quality,innerWidth,innerHeight,sceneView.distance,sceneView.car,sceneView.rx7Template,sceneView.yugoTemplate,sceneView.fujiwaraTemplate,attractDemo.paused];
+      const revision=[state,inSession,track,player,chosen.sprite,replayFrame?.revision,replayFrame?.camera,renderPrefs.camera,renderPrefs.motion,renderPrefs.timeOfDay,renderPrefs.quality,innerWidth,innerHeight,sceneView.distance,sceneView.car,sceneView.rx7Template,sceneView.yugoTemplate,sceneView.fujiwaraTemplate,sceneView.novaTemplate,sceneView.skylineTemplate,attractDemo.paused];
       const changed=!lastScenePresentation||revision.some((v,i)=>v!==lastScenePresentation[i]),active=['running','countdown'].includes(state)||(mode==='online'&&online?.racing)||!!(replayFrame&&replayUI.playing);
       const shouldRender=inSession?(active||changed):(changed||(demoVisible&&!attractDemo.paused&&!document.hidden&&now-lastSceneFrame>=1/(sceneView.software?10:30)));
       if(shouldRender){
@@ -1623,10 +1624,10 @@ function loop(ms){
 
 /* ====== Panel de coche ====== */
 const CAR_DATA = [
-  {name:'Sumaru Impressa GTI', sprite:'blue',   color:'#2b72ff', stripes:0, desc:'Drift estable y recuperaciones rápidas.', stats:{acc:.75,trq:.70,vmax:.82,mass:.75}, tune:{engine:1.10,lat:.95,hand:.85,drag:.98,mass:.95}},
+  {name:'Nissan Skyline R34', sprite:'blue',   color:'#2955b8', stripes:0, desc:'Coupé japonés azul con alerón y seis cilindros en línea. Drift estable y recuperaciones rápidas.', stats:{acc:.75,trq:.70,vmax:.82,mass:.75}, tune:{engine:1.10,lat:.95,hand:.85,drag:.98,mass:.95}},
   {name:'Chevriolette C´Maro V8', sprite:'red', color:'#ff3b3b', stripes:2, desc:'Muscle car pesado con mucho par.',       stats:{acc:.68,trq:1.00,vmax:.86,mass:1.20}, tune:{engine:1.20,lat:.90,hand:.80,drag:1.02,mass:1.15}},
   {name:'Mazda RX-7 FD · RedSuns', sprite:'yellow',         color:'#ffd93b', stripes:0, desc:'Muy veloz y estable.',                   stats:{acc:.90,trq:.82,vmax:1.00,mass:.92}, tune:{engine:1.25,lat:1.05,hand:.90,drag:.95,mass:.92}},
-  {name:'Toiota Corona 1990', sprite:'gray',    color:'#9aa0a6', stripes:0, desc:'City car ágil y noble.',                 stats:{acc:.60,trq:.55,vmax:.70,mass:.95}, tune:{engine:.95,lat:1.00,hand:1.00,drag:1.05,mass:.95}},
+  {name:'Chevrolet Nova SS', sprite:'gray',    color:'#16171a', stripes:0, desc:'Muscle car negro de silueta clásica, insignias SS y motor V8. Entrega progresiva y control predecible.',                 stats:{acc:.60,trq:.55,vmax:.70,mass:.95}, tune:{engine:.95,lat:1.00,hand:1.00,drag:1.05,mass:.95}},
 ];
 CAR_DATA.push({name:'Yugo Koral 55',sprite:'yugo',color:'#ce362b',stripes:0,desc:'Ligero, corto y de reacciones ágiles. 55 CV · 790 kg · punta ≈145 km/h en llano. Drift adaptado al juego.',stats:{acc:.42,trq:.35,vmax:145/198,mass:790/1380},tune:{engine:1,lat:1,hand:1,drag:1,mass:1},specs:{power:'55 CV',torque:'77,4 Nm',speed:'≈145 km/h',mass:'790 kg'}});
 CAR_DATA.push({name:'Toyota AE86 · Fujiwara',sprite:'fujiwara',color:'#e8e8da',stripes:0,desc:'El clásico panda de Fujiwara. Ligero, progresivo y ágil para enlazar las curvas del descenso.',stats:{acc:.76,trq:.62,vmax:.84,mass:.76},tune:{engine:1.08,lat:1.02,hand:.88,drag:1,mass:.82}});
@@ -1694,6 +1695,8 @@ function configureSelectedCar(car,data){
   car.engineForce*=data.tune.engine;car.baseLatFriction*=data.tune.lat;car.handLatFriction*=data.tune.hand;car.dragLinear*=data.tune.drag;car.mass*=data.tune.mass;
   if(data.sprite==='yugo')DriftYugo.configure(car);
   if(data.sprite==='fujiwara'){car.bodyDimensions={length:4.215,width:1.7,height:1.335,cgHeight:.62};DriftRoadContact.alignWheelEffects(car,'fujiwara');}
+  const fit=globalThis.DriftVehicleFit?.[data.sprite];
+  if(fit){car.bodyDimensions={length:fit.length,width:fit.width,height:fit.height,cgHeight:fit.height*.46};DriftRoadContact.alignWheelEffects(car,data.sprite);}
   car.skin=data.sprite;return car;
 }
 function applyChosen(){
@@ -1943,9 +1946,9 @@ function checkChallengeProgress(){
 }
 
 </script>
-<script src="js/experience.js?v=1.0.0-prealpha.1"></script>
-<script src="js/career-ui.js?v=1.0.0-prealpha.1"></script>
-<script src="js/replay-ui.js?v=1.0.0-prealpha.1"></script>
-<script src="js/online-config.js?v=1.0.0-prealpha.1"></script>
-<script src="js/online-client.js?v=1.0.0-prealpha.1"></script>
+<script src="js/experience.js?v=1.0.0-prealpha.2"></script>
+<script src="js/career-ui.js?v=1.0.0-prealpha.2"></script>
+<script src="js/replay-ui.js?v=1.0.0-prealpha.2"></script>
+<script src="js/online-config.js?v=1.0.0-prealpha.2"></script>
+<script src="js/online-client.js?v=1.0.0-prealpha.2"></script>
 </body></html>

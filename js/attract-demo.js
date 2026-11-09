@@ -24,7 +24,7 @@ globalThis.DriftAttract=(()=>{
         const u=wrap(start+t-phase[k],this.duration),i=segment(times,u),fraction=(u-times[i])/(times[i+1]-times[i]),s=dist[i]+(dist[i+1]-dist[i])*fraction;
         const direction=heading(s),curve=angle(heading(s-10),heading(s+10))/20,speed=(dist[i+1]-dist[i])/(times[i+1]-times[i]);
         const slip=clamp(curve*14,-.52,.52)*(1+Math.sin(s*.025+k)*.08),lateral=(k-1)*2.3+Math.sin(s*.018+k)*.5;
-        const p=path(s),car={id:k?'demo-'+k:'self',name:['FUJIWARA','RX-7','GTI'][k],skin:skins[k],color:['#e8e8da','#e6b52b','#276bdb'][k],pos:{x:p.x-Math.sin(direction)*lateral,y:p.y+Math.cos(direction)*lateral},angle:direction+slip,vel:{x:Math.cos(direction)*speed,y:Math.sin(direction)*speed},steerAngle:clamp(curve*2.5-slip*.55,-.38,.38),omega:curve*speed,gear:speed>30?4:3,handbrake:Math.abs(slip)>.25,trailOn:Math.abs(slip)>.12,score:0,mult:1};
+        const p=path(s),car={id:k?'demo-'+k:'self',name:['FUJIWARA','RX-7','SKYLINE R34'][k],skin:skins[k],color:['#e8e8da','#e6b52b','#2955b8'][k],pos:{x:p.x-Math.sin(direction)*lateral,y:p.y+Math.cos(direction)*lateral},angle:direction+slip,vel:{x:Math.cos(direction)*speed,y:Math.sin(direction)*speed},steerAngle:clamp(curve*2.5-slip*.55,-.38,.38),omega:curve*speed,gear:speed>30?4:3,handbrake:Math.abs(slip)>.25,trailOn:Math.abs(slip)>.12,score:0,mult:1};
         car.ride=DriftRoadContact.contacts(track,car,car.skin);return car;
       };
       this.recording=new DriftReplay.Recorder(Math.ceil(this.duration)+1);this.recording.reset({track,skin:skins[0],timeOfDay:day});

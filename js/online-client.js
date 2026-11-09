@@ -153,7 +153,7 @@ online=(()=>{
     if(!raceActive)return;visibleRivals=[];
     for(const info of room.players){if(info.id===selfId)continue;const pose=Net.interpolate(rivalFrames.get(info.id)||[],now()-100);if(!pose)continue;
       let car=remoteCars.get(info.id);if(!car){car=new Car(track);car.id=info.id;car.skin=info.skin;car.sprite=CAR_IMG[info.skin];car.color=CAR_DATA.find(c=>c.sprite===info.skin).color;remoteCars.set(info.id,car);}
-      car.pos.x=pose[0];car.pos.y=pose[1];car.angle=pose[2];car.vel.x=pose[3];car.vel.y=pose[4];car.steerAngle=pose[5];car.name=info.name;car.connected=info.connected;DriftRoadContact.update(track,car,Math.min(dt,.05),info.skin);visibleRivals.push(car);
+      car.pos.x=pose[0];car.pos.y=pose[1];car.angle=pose[2];car.vel.x=pose[3];car.vel.y=pose[4];car.steerAngle=pose[5];car.handbrake=!!(pose[6]&1);car.braking=!!(pose[6]&2);car.name=info.name;car.connected=info.connected;DriftRoadContact.update(track,car,Math.min(dt,.05),info.skin);visibleRivals.push(car);
     }
     hudAcc+=dt;if(hudAcc<.1)return;hudAcc=0;
     const list=$id('onlineStandings');list.replaceChildren();

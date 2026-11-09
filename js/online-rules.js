@@ -1,7 +1,7 @@
 /* Shared fixed-step protocol. Inputs only cross the trust boundary; positions never do. */
 globalThis.DriftNet = (() => {
   const VERSION=1, DT=1/60, SKINS=['blue','red','yellow','gray','yugo','fujiwara'];
-  const FIELDS=['angle','steerAngle','steerTarget','steerVel','throttleSm','handbrake','gear','shiftTimer','omega','yawRate','redBlink','offTrack','offTimer','edgeShake','wrongWay','score','best','mult','driftTime','comboState','comboFlashTime','comboPoints','comboBreak','trailOn','trailGrace','driftBreakTimer','_lastTrailOn','invuln'];
+  const FIELDS=['angle','steerAngle','steerTarget','steerVel','throttleSm','handbrake','gear','shiftTimer','omega','yawRate','redBlink','offTrack','offTimer','edgeShake','wrongWay','score','best','mult','driftTime','comboState','comboFlashTime','comboPoints','comboBreak','trailOn','trailGrace','driftBreakTimer','_lastTrailOn','invuln','braking'];
   function capture(car){return [car.pos.x,car.pos.y,car.vel.x,car.vel.y,...FIELDS.map(k=>car[k])];}
   function restore(car,s){car.pos.x=s[0];car.pos.y=s[1];car.vel.x=s[2];car.vel.y=s[3];FIELDS.forEach((k,i)=>car[k]=s[i+4]);}
   function encode(input,seq,gear=0){return [seq,(input.accel?1:0)|(input.brake?2:0)|(input.handbrake?4:0),Math.round(Math.max(-1,Math.min(1,input.steerAxis||0))*1000)/1000,gear];}
@@ -17,10 +17,12 @@ globalThis.DriftNet = (() => {
   function configure(car,data,auto){
     car.skin=data.sprite;car.color=data.color;car.engineForce*=data.tune.engine;car.baseLatFriction*=data.tune.lat;car.handLatFriction*=data.tune.hand;car.dragLinear*=data.tune.drag;car.mass*=data.tune.mass;
     if(data.sprite==='yugo')globalThis.DriftYugo.configure(car);
+    const fit=globalThis.DriftVehicleFit?.[data.sprite];
+    if(fit){car.bodyDimensions={length:fit.length,width:fit.width,height:fit.height,cgHeight:fit.height*.46};globalThis.DriftRoadContact.alignWheelEffects(car,data.sprite);}
     car.auto=auto;
   }
   function grid(car,track,slot){const n=track.normalAt(0),p=track.point(0);car.pos.x=p.x+n.x*(slot-1)*3.2;car.pos.y=p.y+n.y*(slot-1)*3.2;}
-  function pose(car){return [car.pos.x,car.pos.y,car.angle,car.vel.x,car.vel.y,car.steerAngle];}
+  function pose(car){return [car.pos.x,car.pos.y,car.angle,car.vel.x,car.vel.y,car.steerAngle,(car.handbrake?1:0)|(car.braking?2:0)];}
   function interpolate(frames,at){
     if(!frames.length)return null;
     let a=frames[0],b=a;
@@ -29,6 +31,7 @@ globalThis.DriftNet = (() => {
     const u=Math.max(0,Math.min(1,(at-a.t)/(b.t-a.t))),p=a.p.map((v,i)=>v+(b.p[i]-v)*u);
     // Teleports (recovery) must never interpolate through the scenery.
     if(Math.hypot(b.p[0]-a.p[0],b.p[1]-a.p[1])>18)return (u<1?a.p:b.p).slice();
+    if(a.p.length>6)p[6]=(u<.5?a.p[6]:b.p[6])||0;
     p[2]=a.p[2]+Math.atan2(Math.sin(b.p[2]-a.p[2]),Math.cos(b.p[2]-a.p[2]))*u;return p;
   }
   return {VERSION,DT,SKINS,capture,restore,encode,validCommand,step,configure,grid,pose,interpolate};
