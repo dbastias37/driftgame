@@ -1,7 +1,7 @@
 /* Shared fixed-step protocol. Inputs only cross the trust boundary; positions never do. */
 globalThis.DriftNet = (() => {
-  const VERSION=2, DT=1/60, SKINS=['blue','yellow','gray','yugo','fujiwara'];
-  const FIELDS=['angle','steerAngle','steerTarget','steerVel','throttleSm','handbrake','gear','shiftTimer','omega','yawRate','redBlink','offTrack','offTimer','edgeShake','wrongWay','score','best','mult','driftTime','comboState','comboFlashTime','comboPoints','comboBreak','trailOn','trailGrace','driftBreakTimer','_lastTrailOn','invuln','braking','accelLong','accelLat','frontSlip','rearSlip','driveSlip'];
+  const VERSION=3, DT=1/60, SKINS=['blue','yellow','gray','yugo','fujiwara'];
+  const FIELDS=['angle','steerAngle','steerTarget','steerVel','throttleSm','handbrake','handbrakeMix','gear','shiftTimer','omega','yawRate','redBlink','offTrack','offTimer','edgeShake','wrongWay','score','best','mult','driftTime','comboState','comboFlashTime','comboPoints','comboBreak','trailOn','trailGrace','driftBreakTimer','_lastTrailOn','invuln','braking','accelLong','accelLat','frontSlip','rearSlip','driveSlip'];
   function capture(car){return [car.pos.x,car.pos.y,car.vel.x,car.vel.y,...FIELDS.map(k=>car[k])];}
   function restore(car,s){car.pos.x=s[0];car.pos.y=s[1];car.vel.x=s[2];car.vel.y=s[3];FIELDS.forEach((k,i)=>car[k]=s[i+4]);}
   function encode(input,seq,gear=0){return [seq,(input.accel?1:0)|(input.brake?2:0)|(input.handbrake?4:0),Math.round(Math.max(-1,Math.min(1,input.steerAxis||0))*1000)/1000,gear];}
@@ -14,7 +14,8 @@ globalThis.DriftNet = (() => {
     if(!effects){car.spawnTrails=trail;car.updateSmoke=smoke;}
     return result;
   }
-  function configure(car,data,auto){
+  function configure(car,data,auto,conditions={}){
+    globalThis.DriftOptions?.apply(car,conditions);
     car.skin=data.sprite;car.color=data.color;car.engineForce*=data.tune.engine;car.baseLatFriction*=data.tune.lat;car.handLatFriction*=data.tune.hand;car.dragLinear*=data.tune.drag;car.mass*=data.tune.mass;
     if(data.sprite==='yugo')globalThis.DriftYugo.configure(car);
     const fit=globalThis.DriftVehicleFit?.[data.sprite];

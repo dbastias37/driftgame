@@ -3,7 +3,8 @@ const PREF_KEY='drift:preferences:v3';
 let savedPrefs={};try{savedPrefs=JSON.parse(localStorage.getItem(PREF_KEY)||'{}')||{};}catch{}
 const renderPrefs={
   view:'3d',
-  camera:['chase','aerial','hood','drone'].includes(savedPrefs.camera)?savedPrefs.camera:'chase',
+  camera:Object.hasOwn(DriftOptions.cameras,savedPrefs.camera)?savedPrefs.camera:'chase',
+  ...DriftOptions.conditions(savedPrefs),retro:DriftOptions.retro(savedPrefs.retro||DriftOptions.presets.psx),rivals:Math.round(clamp(Number(savedPrefs.rivals)||0,0,3)),collisions:savedPrefs.collisions===true,
   impulse:savedPrefs.impulse==='off'?'off':'on',
   speedLines:['car','center','off'].includes(savedPrefs.speedLines)?savedPrefs.speedLines:'car',
   speedLinesIntensity:Number.isFinite(savedPrefs.speedLinesIntensity)?Math.max(0,Math.min(3,savedPrefs.speedLinesIntensity)):1.5,
@@ -21,7 +22,8 @@ for(const id of ['titleDemoInfo','homeDemoInfo'])$('#'+id).textContent=attractTr
 $('#btnPlayNow').addEventListener('click',()=>{showMainMenu();$('#btnQuickRace').focus();});
 $('#btnBackTitle').addEventListener('click',()=>{hidePanels();state='title';$('#titleScreen').classList.remove('hidden');$('#btnPlayNow').focus();});
 $('#btnDemoPause').addEventListener('click',()=>{attractDemo.paused=!attractDemo.paused;$('#btnDemoPause').textContent=attractDemo.paused?'▶ EXHIBICIÓN':'Ⅱ EXHIBICIÓN';});
-const CAMERA_NAMES={chase:'Seguimiento',aerial:'Aérea',hood:'Capó',drone:'Dron cinematográfico'};
+const CAMERA_NAMES=DriftOptions.cameras;
+$('#cameraSetting').innerHTML=Object.entries(CAMERA_NAMES).map(([key,name])=>`<option value="${key}">${name}</option>`).join('');
 const oldCarOrder=['blue','red','yellow','gray','yugo','fujiwara'];
 const savedSkin=savedPrefs.carSkin||oldCarOrder[savedPrefs.car];
 const savedIndex=CAR_DATA.findIndex(c=>c.sprite===(savedSkin==='red'?'gray':savedSkin));
@@ -30,6 +32,7 @@ if(savedPrefs.tx==='manual')document.querySelector('input[name="tx"][value="manu
 function saveRenderPrefs(){try{localStorage.setItem(PREF_KEY,JSON.stringify({...renderPrefs,car:carIdx,carSkin:chosen.sprite,tx:selectedTx()}));}catch{}}
 function toast(message){$('#toast').textContent=message;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),3400);}
 function syncRenderUI(){
+  syncOptionsUI();
   $('#btnCamera').disabled=renderPrefs.view!=='3d';
   $('#viewBadge').textContent='3D / '+CAMERA_NAMES[renderPrefs.camera].toUpperCase();
   $('#speedLinesIntensity').value=Math.round(renderPrefs.speedLinesIntensity*100);$('#speedLinesIntensityLabel').textContent=Math.round(renderPrefs.speedLinesIntensity*100)+'%';
@@ -46,7 +49,7 @@ document.querySelectorAll('[data-daytime]').forEach(input=>input.addEventListene
   renderPrefs.timeOfDay=Math.max(0,Math.min(1,Number(e.target.value)/100));syncDaytimeUI();saveRenderPrefs();
 }));
 function setRenderView(){renderPrefs.view='3d';syncRenderUI();saveRenderPrefs();}
-function cycleCamera(){if(renderPrefs.view!=='3d')return;const names=['chase','aerial','hood','drone'];renderPrefs.camera=names[(names.indexOf(renderPrefs.camera)+1)%names.length];sceneView?.resetCamera();syncRenderUI();saveRenderPrefs();toast('Cámara '+CAMERA_NAMES[renderPrefs.camera]);}
+function cycleCamera(){if(renderPrefs.view!=='3d')return;const names=Object.keys(CAMERA_NAMES);renderPrefs.camera=names[(names.indexOf(renderPrefs.camera)+1)%names.length];sceneView?.resetCamera();syncRenderUI();saveRenderPrefs();toast('Cámara '+CAMERA_NAMES[renderPrefs.camera]);}
 function fail3D(error){
   if(sceneFailed)return;sceneFailed=true;console.warn('3D unavailable',error);
   if(state==='running'||state==='countdown')setPaused(true);
@@ -56,7 +59,7 @@ $('#btnRetryRenderer').addEventListener('click',()=>location.reload());
 function openSettings(){
   if(state==='running'||state==='countdown')setPaused(true);
   settingsReturn=state==='paused'?'pauseMenu':'mainMenu';
-  $('#'+settingsReturn).classList.add('hidden');$('#settingsMenu').classList.remove('hidden');syncRenderUI();$('#cameraSetting').focus();
+  $('#'+settingsReturn).classList.add('hidden');$('#settingsMenu').classList.remove('hidden');syncRenderUI();$('[data-settings-tab="drive"]').focus();
 }
 function closeSettings(){$('#settingsMenu').classList.add('hidden');$('#'+settingsReturn).classList.remove('hidden');$('#'+(settingsReturn==='pauseMenu'?'btnResume':'btnSettings')).focus();}
 function toggleHelp(force){
@@ -79,6 +82,21 @@ function drawTrackThumbnails(root){
     const p=t.point(0);g.fillStyle='#ff7544';g.beginPath();g.arc(p.x,p.y,4/s,0,PI*2);g.fill();
   });
 }
+function syncOptionsUI(){
+  $('#difficultySetting').value=renderPrefs.difficulty;$('#weatherSetting').value=renderPrefs.weather;$('#rivalsSetting').value=renderPrefs.rivals;$('#collisionsSetting').checked=renderPrefs.collisions;$('#collisionsSetting').disabled=!renderPrefs.rivals;
+  $('#difficultyHint').textContent=DriftOptions.difficulties[renderPrefs.difficulty].description;
+  const r=renderPrefs.retro;$('#retroResolution').value=r.resolution;$('#retroBits').value=r.bits;$('#retroFlat').checked=r.flat;
+  for(const [label,key] of [['Jitter','jitter'],['Affine','affine'],['Dither','dither'],['Crt','crt']]){$('#retro'+label).value=Math.round(r[key]*100);$('#retro'+label+'Value').textContent=Math.round(r[key]*100)+'%';}
+  $('#retroPreset').value=Object.keys(DriftOptions.presets).find(key=>Object.entries(DriftOptions.presets[key]).every(([k,v])=>r[k]===v))||'custom';
+  $('#crtOverlay').style.opacity=r.crt;document.body.classList.toggle('retro-active',r.bits!==24||!!r.resolution);document.body.dataset.colorBits=r.bits;
+}
+for(const [id,key] of [['difficultySetting','difficulty'],['weatherSetting','weather'],['rivalsSetting','rivals'],['collisionsSetting','collisions']])$('#'+id).addEventListener('change',e=>{renderPrefs[key]=key==='rivals'?Number(e.target.value):key==='collisions'?e.target.checked:e.target.value;syncOptionsUI();saveRenderPrefs();});
+function setRetro(values){renderPrefs.retro=DriftOptions.retro(values);syncOptionsUI();saveRenderPrefs();}
+$('#retroPreset').addEventListener('change',e=>{if(DriftOptions.presets[e.target.value])setRetro(DriftOptions.presets[e.target.value]);});
+for(const [id,key,scale] of [['Resolution','resolution',1],['Bits','bits',1],['Jitter','jitter',100],['Affine','affine',100],['Dither','dither',100],['Crt','crt',100],['Flat','flat',0]])$('#retro'+id).addEventListener(scale===100?'input':'change',e=>setRetro({...renderPrefs.retro,[key]:scale?Number(e.target.value)/scale:e.target.checked}));
+document.querySelectorAll('[data-settings-tab]').forEach(button=>button.addEventListener('click',()=>{
+  const key=button.dataset.settingsTab;document.querySelectorAll('[data-settings-tab]').forEach(tab=>tab.setAttribute('aria-selected',String(tab===button)));document.querySelectorAll('[data-settings-pane]').forEach(pane=>pane.classList.toggle('hidden',pane.dataset.settingsPane!==key));
+}));
 $('#btnCamera').addEventListener('click',cycleCamera);
 $('#btnModeDownhill').addEventListener('click',()=>{mode='downhill';showDownhillMenu();});
 $('#btnQuickRace').addEventListener('click',()=>{mode='race';showCircuitMenu();});
@@ -169,12 +187,12 @@ function returnToTrackPreview(){
   const n=preparedTrack.layout.level;showTrackSelection();previewCircuit(n,mode==='challenge');
 }
 function syncPreparationPreview(){
-  const garage=!$('#carPanel').classList.contains('hidden'),challenge=!$('#challengeMenu').classList.contains('hidden'),circuit=!$('#circuitMenu').classList.contains('hidden');
-  if(!garage&&!challenge&&!circuit)return null;
-  const stage=$('#'+(garage?'garageStage':challenge?'challengeStage':'circuitStage')),canvas=$('#carPreview');
+  const settings=!$('#settingsMenu').classList.contains('hidden'),garage=!$('#carPanel').classList.contains('hidden'),challenge=!$('#challengeMenu').classList.contains('hidden'),circuit=!$('#circuitMenu').classList.contains('hidden');
+  if(!settings&&!garage&&!challenge&&!circuit)return null;
+  const stage=$('#'+(settings?'settingsStage':garage?'garageStage':challenge?'challengeStage':'circuitStage')),canvas=$('#carPreview');
   if(canvas.parentElement!==stage)stage.appendChild(canvas);
   document.querySelectorAll('[data-preview-spin]').forEach(b=>b.textContent=previewSpinning?'Ⅱ Pausar giro':'▶ Activar giro');
-  return {kind:garage?'garage':'track',track:garage?preparedTrack:previewSelection?.track,stage};
+  return {kind:settings?'settings':garage?'garage':'track',track:settings?attractTrack:garage?preparedTrack:previewSelection?.track,stage};
 }
 function renderPreparationPreview(dt,time){
   const preview=syncPreparationPreview();if(!preview)return false;
@@ -186,9 +204,9 @@ function renderPreparationPreview(dt,time){
     if(document.hidden)return true;
     // There is only one preview canvas. Software mode caps work to 12 fps;
     // invisible previews and the racing renderer do not render behind it.
-    if(time-previewLastFrame<1/(menuPreview.software?12:30))return true;
+    if(time-previewLastFrame<1/(menuPreview.software?18:60))return true;
     const elapsed=previewLastFrame?Math.min(.1,time-previewLastFrame):dt;previewLastFrame=time;
-    menuPreview.renderPreview({...preview,skin:chosen.sprite,dt:elapsed,spinning:previewSpinning,timeOfDay:renderPrefs.timeOfDay,cosmetics:garageCosmetics});
+    menuPreview.renderPreview({...preview,skin:chosen.sprite,dt:elapsed,spinning:previewSpinning,timeOfDay:renderPrefs.timeOfDay,cosmetics:garageCosmetics,retro:renderPrefs.retro,weather:renderPrefs.weather,player:demoFrame.player,time:demoFrame.time,camera:renderPrefs.camera});
     status?.classList.add('hidden');
   }catch(error){console.warn('Preview unavailable',error);previewFailed=true;}
   return true;
@@ -201,11 +219,21 @@ $('#btnCircuitBack').addEventListener('click',()=>{
   else showMainMenu();
 });
 document.querySelectorAll('[data-preview-spin]').forEach(b=>b.addEventListener('click',()=>{previewSpinning=!previewSpinning;syncPreparationPreview();}));
-let previewPointer=null;
-$('#carPreview').addEventListener('pointerdown',e=>{previewPointer={id:e.pointerId,x:e.clientX};e.currentTarget.setPointerCapture(e.pointerId);});
-$('#carPreview').addEventListener('pointermove',e=>{if(previewPointer?.id!==e.pointerId)return;menuPreview?.rotateBy((e.clientX-previewPointer.x)*.008);previewPointer.x=e.clientX;previewSpinning=false;});
-for(const event of ['pointerup','pointercancel','lostpointercapture'])$('#carPreview').addEventListener(event,()=>{previewPointer=null;});
-$('#carPreview').addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();menuPreview?.rotateBy(e.key==='ArrowLeft'?-.18:.18);previewSpinning=false;}});
+const previewPointers=new Map();
+$('#carPreview').addEventListener('contextmenu',e=>e.preventDefault());
+$('#carPreview').addEventListener('pointerdown',e=>{previewPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});e.currentTarget.setPointerCapture(e.pointerId);});
+$('#carPreview').addEventListener('pointermove',e=>{
+  const old=previewPointers.get(e.pointerId);if(!old)return;const dx=e.clientX-old.x,dy=e.clientY-old.y;
+  if(previewPointers.size===2){const other=[...previewPointers].find(([id])=>id!==e.pointerId)[1];const before=Math.hypot(old.x-other.x,old.y-other.y),after=Math.hypot(e.clientX-other.x,e.clientY-other.y);if(after>5)menuPreview?.zoomPreviewBy(before/after);menuPreview?.panBy(dx*.5,dy*.5);}
+  else if(menuPreview?.previewMode==='garage')menuPreview.rotateBy(dx*.008);
+  else if(e.shiftKey||e.buttons===2)menuPreview?.orbitBy(dx*.006,-dy*.006);
+  else menuPreview?.panBy(dx,dy);
+  previewPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});previewSpinning=false;
+});
+for(const event of ['pointerup','pointercancel','lostpointercapture'])$('#carPreview').addEventListener(event,e=>previewPointers.delete(e.pointerId));
+$('#carPreview').addEventListener('wheel',e=>{e.preventDefault();if(menuPreview?.previewMode==='settings')menuPreview.zoomBy(Math.exp(e.deltaY*.001));else menuPreview?.zoomPreviewBy(Math.exp(e.deltaY*.001));previewSpinning=false;},{passive:false});
+$('#carPreview').addEventListener('keydown',e=>{const arrows={ArrowLeft:[-30,0],ArrowRight:[30,0],ArrowUp:[0,-30],ArrowDown:[0,30]};if(arrows[e.key]){e.preventDefault();if(e.shiftKey||menuPreview?.previewMode==='garage')menuPreview?.rotateBy(arrows[e.key][0]*.006);else menuPreview?.panBy(...arrows[e.key]);}else if(['+','=','-','Home'].includes(e.key)){e.preventDefault();if(e.key==='Home')menuPreview?.resetPreview();else menuPreview?.zoomPreviewBy(e.key==='-'?1.15:.87);}else return;previewSpinning=false;});
+document.querySelectorAll('[data-preview-reset]').forEach(b=>b.addEventListener('click',()=>{menuPreview?.resetPreview();previewSpinning=false;}));
 
 function downhillBest(level){try{return JSON.parse(localStorage.getItem('downhill:v2:'+level)||'null')||{score:0,time:0};}catch{return {score:0,time:0};}}
 function showDownhillMenu(level=preparedTrack?.downhill?preparedTrack.routeLevel:1){
@@ -245,8 +273,8 @@ $('#btnRecover').addEventListener('click',loseLifeAndRespawn);
 
 
 
-import('./view3d.js?v=1.0.0-prealpha.3').then(({DriftView3D})=>{
+import('./view3d.js?v=1.0.0-prealpha.4').then(({DriftView3D})=>{
   sceneView=new DriftView3D($('#scene3d'),{quality:renderPrefs.quality,onFailure:fail3D,onVehicleFailure:()=>toast('No se pudo cargar un modelo de auto. Recarga para volver a intentarlo.')});
   if(sceneView.software)toast('3D compatible activo · Calidad ligera');
 }).catch(fail3D);
-import('./menu-preview.js?v=1.0.0-prealpha.3').then(module=>{MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});
+import('./menu-preview.js?v=1.0.0-prealpha.4').then(module=>{MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});

@@ -1,14 +1,17 @@
 import * as T from '../vendor/three.module.min.js';
+import './game-options.js?v=1.0.0-prealpha.4';
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const smooth=n=>n*n*(3-2*n);
 const palettes=[{at:0,sky:0x708f9e,horizon:0x9fb4b6,sun:0xffe4c6,ground:0x56634a,ambient:2.3,direct:3.1},
   {at:.5,sky:0x514b71,horizon:0xd99d7c,sun:0xffa566,ground:0x484453,ambient:1.45,direct:1.8},
   {at:1,sky:0x09111e,horizon:0x26374e,sun:0x9fbfe6,ground:0x283346,ambient:.65,direct:.45}];
-export function atmosphereAt(value=0){
+export function atmosphereAt(value=0,weather='clear'){
   const t=clamp(Number(value)||0,0,1),a=t<.5?palettes[0]:palettes[1],b=t<.5?palettes[1]:palettes[2],f=smooth((t-a.at)/(b.at-a.at));
   const result={value:t,night:smooth(clamp((t-.28)/.62,0,1))};
   for(const key of ['sky','horizon','sun','ground'])result[key]=new T.Color(a[key]).lerp(new T.Color(b[key]),f);
   for(const key of ['ambient','direct'])result[key]=a[key]+(b[key]-a[key])*f;
+  const cloud=(DriftOptions.weathers[weather]||DriftOptions.weathers.clear).cloud;
+  result.sky.lerp(new T.Color(result.night>.5?0x17232d:0x6d7e89),cloud*.85);result.horizon.lerp(new T.Color(result.night>.5?0x34424d:0xa3b0b6),cloud*.75);result.ambient*=1-cloud*.18;result.direct*=1-cloud*.85;result.cloud=cloud;
   return result;
 }
 function radial(){
@@ -56,12 +59,12 @@ export class Atmosphere{
     // No shadow maps, post-processing, or per-lamp dynamic lights.
     this.spot=new T.SpotLight(0xffedc5,0,58,.27,.75,1.4);this.spot.castShadow=false;this.beams.add(this.spot,this.spot.target);this.spot.position.set(1.7,.8,0);this.spot.target.position.set(35,-.8,0);
   }
-  set(value){
-    if(this.value===value)return;this.value=value;const state=this.state=atmosphereAt(value),ctx=this.skyCanvas.getContext('2d'),im=ctx.createImageData(4,128);
+  set(value,weather='clear'){
+    if(this.value===value&&this.weather===weather)return;this.value=value;this.weather=weather;const state=this.state=atmosphereAt(value,weather),ctx=this.skyCanvas.getContext('2d'),im=ctx.createImageData(4,128);
     const top=state.sky.clone().convertLinearToSRGB(),bottom=state.horizon.clone().convertLinearToSRGB();
     for(let y=0;y<128;y++){const t=Math.min(1,y/85);for(let x=0;x<4;x++){const i=(y*4+x)*4;for(const [k,key] of ['r','g','b'].entries())im.data[i+k]=Math.round(255*(top[key]+(bottom[key]-top[key])*t));im.data[i+3]=255;}}
     ctx.putImageData(im,0,0);this.skyTexture.needsUpdate=true;this.scene.background=this.skyTexture;
-    this.scene.userData.sky={top:state.sky,bottom:state.horizon};this.scene.userData.daylight=1-state.night*.66;
+    this.scene.userData.sky={top:state.sky,bottom:state.horizon};this.scene.userData.daylight=(1-state.night*.66)*(1-state.cloud*.12);this.scene.userData.night=state.night;
     this.hemi.color.copy(state.horizon);this.hemi.groundColor.copy(state.ground);this.hemi.intensity=state.ambient;
     this.sun.color.copy(state.sun);this.sun.intensity=state.direct;this.sun.position.set(-110,180-state.night*130,60);
   }

@@ -21,7 +21,7 @@ test('all 20 circuits retain valid closed geometry and complete lap gates',()=>{
   run("startWithTrack(presetTrack(1),'race');state='running';for(let j=0;j<300;j++){advanceLap(0,2);advanceLap(2,0);}");assert.equal(run('lap'),1);
 });
 test('countdown, pause and settings freeze simulation, resume restores it',()=>{
-  const run=harness();run("startWithTrack(presetTrack(1),'race');for(let i=0;i<181;i++)simulate(SIM_DT);");assert.equal(run('state'),'running');run("keys.add('w');setPaused(true)");assert.equal(run('keys.size'),0);const before=run(snapshot);run('simulate(1);openSettings();simulate(1);closeSettings();');assert.deepEqual(run(snapshot),before);run('setPaused(false);simulate(SIM_DT)');assert.equal(run('state'),'running');assert.ok(run('raceTime')>before.raceTime);
+  const run=harness();run("startWithTrack(presetTrack(1),'race');for(let i=0;i<325;i++)simulate(SIM_DT);");assert.equal(run('state'),'running');run("keys.add('w');setPaused(true)");assert.equal(run('keys.size'),0);const before=run(snapshot);run('simulate(1);openSettings();simulate(1);closeSettings();');assert.deepEqual(run(snapshot),before);run('setPaused(false);simulate(SIM_DT)');assert.equal(run('state'),'running');assert.ok(run('raceTime')>before.raceTime);
 });
 test('finished, gameover and challengeWon remain terminal in both views',()=>{
   const run=harness();for(const ending of ['finished','gameover','challengeWon']){run(`startWithTrack(presetTrack(1),'race');state='${ending}';`);const before=run(snapshot);run("setRenderView('2d');simulate(1);setRenderView('3d');simulate(1);");assert.deepEqual(run(snapshot),before);}

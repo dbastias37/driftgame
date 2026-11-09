@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
-import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.3';
-import {updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.3';
+import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.4';
+import {updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.4';
 
 const material=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.82,...extra});
 function box(parent,m,x,y,z,w,h,d){const mesh=new T.Mesh(new T.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);parent.add(mesh);return mesh;}
@@ -31,7 +31,7 @@ function garageScene(){
   box(scene,metal,-8,1.65,-6.8,3.1,3.3,.18);for(let y=.25;y<3.2;y+=.22)box(scene,skirt,-8,y,-6.68,2.95,.025,.04);
   box(scene,dark,7,.55,-5.8,3,1.1,.95);box(scene,metal,7,1.13,-5.8,3.2,.12,1.05);
   for(const x of [6,7,8]){box(scene,orange,x,.63,-5.3,.88,.65,.035);box(scene,metal,x,.78,-5.26,.42,.025,.025);}
-  const label=document.createElement('canvas');label.width=512;label.height=128;const text=label.getContext('2d');text.fillStyle='#dce0d5';text.fillRect(0,0,512,128);text.fillStyle='#28383b';text.font='bold 48px Arial';text.textAlign='center';text.fillText('DR / GARAGE',256,76);
+  const label=document.createElement('canvas');label.width=512;label.height=128;const text=label.getContext('2d');text.fillStyle='#dce0d5';text.fillRect(0,0,512,128);text.fillStyle='#28383b';text.font='bold 48px DriftPixel';text.textAlign='center';text.fillText('DR / GARAGE',256,76);
   const sign=new T.Mesh(new T.PlaneGeometry(3.2,.8),new T.MeshBasicMaterial({map:new T.CanvasTexture(label)}));sign.position.set(.1,2.9,-6.86);scene.add(sign);
   const platform=new T.Group();scene.add(platform);
   const base=new T.Mesh(new T.CylinderGeometry(3.65,3.75,.28,80),dark);base.position.y=.14;platform.add(base);
@@ -42,17 +42,23 @@ function garageScene(){
 }
 
 export class MenuPreview3D extends DriftView3D{
-  constructor(canvas,options={}){super(canvas,options);this.garage=garageScene();this.garageAngle=-.35;this.droneAngle=.6;this.previewMode=null;}
+  constructor(canvas,options={}){super(canvas,options);this.garage=garageScene();this.garageAngle=-.35;this.droneAngle=.6;this.previewMode=null;this.previewPan=new T.Vector3();this.previewZoom=1;this.previewPitch=.98;}
   setSkin(key,force=false){
     if(key===this.key&&!force)return;
     this.car.root.removeFromParent();this.ghostCar.root.removeFromParent();super.setSkin(key,force);
   }
   rotateBy(amount){if(this.previewMode==='garage')this.garageAngle+=amount;else this.droneAngle+=amount;}
-  renderPreview({kind,track,skin='blue',dt=0,spinning=true,timeOfDay=0,cosmetics={}}){
-    this.setTimeOfDay(timeOfDay);
+  panBy(dx,dy){const scale=(this.previewRadius||100)*this.previewZoom*2/Math.max(100,this.canvas.clientHeight);this.previewPan.x+=(-Math.sin(this.droneAngle)*dx+Math.cos(this.droneAngle)*dy)*scale;this.previewPan.z+=(Math.cos(this.droneAngle)*dx+Math.sin(this.droneAngle)*dy)*scale;}
+  orbitBy(dx,dy=0){this.droneAngle+=dx;this.previewPitch=Math.max(.2,Math.min(1.5,this.previewPitch+dy));}
+  zoomPreviewBy(factor){this.previewZoom=Math.max(.3,Math.min(3,this.previewZoom*factor));}
+  resetPreview(){this.previewPan.set(0,0,0);this.previewZoom=1;this.previewPitch=.98;this.previewRevision=null;}
+  renderPreview({kind,track,skin='blue',dt=0,spinning=true,timeOfDay=0,cosmetics={},weather='clear',retro,player,time=0,camera='chase'}){
+    this.setTimeOfDay(timeOfDay,weather);this.setRetro(retro);
+    if(kind==='settings'&&player){this.previewMode=kind;this.scene.add(this.car.root);this.smoke.visible=this.trails.visible=true;super.render({track,player:{...player,skin,cosmetics,ride:null,bodyDimensions:null},skin,dt,time,timeOfDay,weather,retro,camera});return;}
+
     const width=Math.max(1,this.canvas.clientWidth||800),height=Math.max(1,this.canvas.clientHeight||500);
     if(this.width!==width||this.height!==height){this.width=width;this.height=height;this.renderer.setSize(width,height,false);this.camera.aspect=width/height;}
-    const revision=[cosmetics.paint,cosmetics.neon,cosmetics.smokeColor,cosmetics.smokeVolume,kind,track,skin,spinning,this.garageAngle,this.droneAngle,timeOfDay,width,height,this.car,this.rx7Template,this.yugoTemplate,this.fujiwaraTemplate,this.novaTemplate,this.skylineTemplate,this.quality];
+    const revision=[cosmetics.paint,cosmetics.neon,cosmetics.smokeColor,cosmetics.smokeVolume,kind,track,skin,spinning,this.garageAngle,this.droneAngle,this.previewPan.x,this.previewPan.z,this.previewPitch,this.previewZoom,retro,weather,timeOfDay,width,height,this.car,this.rx7Template,this.yugoTemplate,this.fujiwaraTemplate,this.novaTemplate,this.skylineTemplate,this.quality];
     if(!spinning&&this.previewRevision&&revision.every((v,i)=>v===this.previewRevision[i]))return;
     this.previewRevision=revision;
     this.previewMode=kind;this.camera.near=.1;
@@ -62,18 +68,18 @@ export class MenuPreview3D extends DriftView3D{
       this.garage.platform.rotation.y=this.garageAngle;
       this.car.root.visible=true;this.car.root.position.set(0,.28,0);this.car.root.rotation.set(0,0,0);this.car.body.position.set(0,0,0);this.car.body.rotation.set(0,0,0);
       this.camera.fov=45;this.camera.far=100;
-      const fit=Math.max(1,1.25/this.camera.aspect);this.camera.position.set(7.1*fit,Math.min(4.7,3.7*fit),7.8*fit);this.camera.lookAt(0,.8,0);this.camera.updateProjectionMatrix();
-      this.atmosphere.tintCar(this.car,true);this.renderer.render(this.garage.scene,this.camera);
+      const fit=Math.max(1,1.25/this.camera.aspect);this.camera.position.set(7.1*fit*this.previewZoom,Math.min(4.7,3.7*fit),7.8*fit*this.previewZoom);this.camera.lookAt(0,.8,0);this.camera.updateProjectionMatrix();
+      this.atmosphere.tintCar(this.car,true);this.retro.render(this.garage.scene,this.camera,width,height);
     }else if(track){
-      if(this.track!==track)this.build(track);
+      if(this.track!==track){this.build(track);this.resetPreview();}
       this.car.root.visible=false;this.ghostCar.root.visible=false;this.smoke.visible=false;this.trails.visible=false;
       if(spinning)this.droneAngle+=Math.min(dt,.1)*.055;
       const b=track.bounds,cx=b.minX+b.w/2,cz=b.minY+b.h/2,radius=Math.hypot(b.w,b.h,track.maxHeight||0)/2+track.roadHalf+22,centerY=track.downhill?track.maxHeight/2:0;
-      this.camera.fov=43;
-      const fov=2*Math.atan(Math.tan(this.camera.fov*Math.PI/360)*Math.min(1,this.camera.aspect)),distance=radius/Math.sin(fov/2)*1.06;
-      this.camera.near=Math.max(1,distance-radius*1.5);this.camera.far=distance+radius*4+900;this.scene.fog=new T.Fog(0x9fb4b6,distance+radius*1.5,distance+radius*6);
-      this.camera.position.set(cx+Math.cos(this.droneAngle)*distance*(track.downhill?.65:.45),centerY+distance*(track.downhill?.76:.89),cz+Math.sin(this.droneAngle)*distance*(track.downhill?.65:.45));this.camera.lookAt(cx,centerY,cz);this.camera.updateProjectionMatrix();
-      updateWorldVisibility(this.world,this.camera,Infinity,true);this.atmosphere.update(this.camera,this.car,track,this.streetLights,{overview:true});this.renderer.render(this.scene,this.camera);
+      this.previewRadius=radius;this.camera.fov=43;
+      const fov=2*Math.atan(Math.tan(this.camera.fov*Math.PI/360)*Math.min(1,this.camera.aspect)),distance=radius/Math.sin(fov/2)*1.06*this.previewZoom;
+      this.camera.near=.2;this.camera.far=distance+radius*4+900;this.scene.fog=new T.Fog(0x9fb4b6,distance+radius*1.5,distance+radius*6);
+      const center=new T.Vector3(cx,centerY,cz).add(this.previewPan);this.camera.position.set(center.x+Math.cos(this.droneAngle)*distance*Math.cos(this.previewPitch),center.y+distance*Math.sin(this.previewPitch),center.z+Math.sin(this.droneAngle)*distance*Math.cos(this.previewPitch));this.camera.lookAt(center);this.camera.updateProjectionMatrix();
+      updateWorldVisibility(this.world,this.camera,Infinity,true);this.atmosphere.update(this.camera,this.car,track,this.streetLights,{overview:true});this.weatherEffects.update({camera:this.camera,world:this.world,track,weather,time,overview:true});this.retro.render(this.scene,this.camera,width,height);
     }
   }
   dispose(){this.scene.add(this.car.root);disposeGroup(this.garage.scene);super.dispose();}

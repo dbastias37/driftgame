@@ -27,7 +27,7 @@ globalThis.DriftDynamics=(()=>{
     }
     reset(car);return car;
   }
-  function reset(car){car.accelLong=car.accelLat=car.frontSlip=car.rearSlip=car.driveSlip=0;car.frontLoad=car.mass*G*(car.handling?.front||.54);car.rearLoad=car.mass*G-car.frontLoad;}
+  function reset(car){car.handbrakeMix=0;car.accelLong=car.accelLat=car.frontSlip=car.rearSlip=car.driveSlip=0;car.frontLoad=car.mass*G*(car.handling?.front||.54);car.rearLoad=car.mass*G-car.frontLoad;}
   function step(car,dt,steer,thr,br){
     if(!(dt>0))return;
     const count=Math.max(1,Math.ceil(Math.min(dt,.1)*120)),h=Math.min(dt,.1)/count;
@@ -35,10 +35,13 @@ globalThis.DriftDynamics=(()=>{
   }
   function integrate(c,dt,steer,thr,br){
     const p=c.handling||profiles.blue,m=c.mass,weight=m*G,L=c.length;
+    const options=globalThis.DriftOptions,assist=options?.difficulties[c.conditions?.difficulty]||{grip:1,counter:0,stability:0},weather=options?.weathers[c.conditions?.weather]||{grip:1};
+    c.handbrakeMix=(c.handbrakeMix||0)+clamp((c.handbrake?1:0)-(c.handbrakeMix||0),-dt*12,dt*6);
     c.shiftTimer=Math.max(0,c.shiftTimer-dt);
     c.throttleSm+=clamp(thr-c.throttleSm,-c.throttleRate*dt,c.throttleRate*dt);
     const speed=c.worldSpeed(),sf=clamp(1/(1+speed*.065),.18,1);
-    c.steerTarget=steer*c.maxSteer*sf;
+    const bodySlip=Math.atan2(-c.vel.x*Math.sin(c.angle)+c.vel.y*Math.cos(c.angle),Math.max(4,c.vel.x*Math.cos(c.angle)+c.vel.y*Math.sin(c.angle)));
+    c.steerTarget=clamp(steer*c.maxSteer*sf+assist.counter*clamp(bodySlip,-.6,.6),-c.maxSteer,c.maxSteer);
     const before=c.steerAngle,rate=c.steerRate*p.steer/(1+speed*.012);
     c.steerAngle+=clamp(c.steerTarget-c.steerAngle,-rate*dt,rate*dt);c.steerVel=(c.steerAngle-before)/dt;
     const cos=Math.cos(c.angle),sin=Math.sin(c.angle),vx=c.vel.x*cos+c.vel.y*sin,vy=-c.vel.x*sin+c.vel.y*cos;
@@ -51,7 +54,7 @@ globalThis.DriftDynamics=(()=>{
     const a=L*(1-p.front),b=L*p.front,loadShift=p.cg*(m*(c.accelLong||0)+vx*c.dragLinear+Math.sign(vx)*vx*vx*c.dragQuad)/L;
     const fzF=clamp(weight*p.front-loadShift,weight*.12,weight*.88),fzR=weight-fzF;
     const grip=Math.sqrt(clamp(c.baseLatFriction/(c._stockGrip||2200),.55,1.8));
-    const mu=1.16*grip*(c.offTrack?.63:1),transfer=m*p.cg*(c.accelLat||0)/Math.max(1.2,c.trackWidth||1.5);
+    const mu=1.16*grip*assist.grip*weather.grip*(c.offTrack?.63:1),transfer=m*p.cg*(c.accelLat||0)/Math.max(1.2,c.trackWidth||1.5);
     function capacity(load,bias){
       const left=clamp(load*.5-transfer*bias,load*.06,load*.94),right=load-left;
       // Tyre load sensitivity: transferring load reduces the pair's total grip.
@@ -60,11 +63,11 @@ globalThis.DriftDynamics=(()=>{
     const capF=capacity(fzF,p.front),capR=capacity(fzR,1-p.front);
     const brake=Math.min(br*c.brakeForce,m*Math.abs(vx)/dt),brakeSign=Math.sign(vx);
     const frontDemand=engine*p.drive-brake*.65*brakeSign;
-    const rearDemand=engine*(1-p.drive)-brake*.35*brakeSign-(c.handbrake?Math.min(weight*.25,m*Math.abs(vx)/dt*.3)*brakeSign:0);
+    const rearDemand=engine*(1-p.drive)-brake*.35*brakeSign-c.handbrakeMix*Math.min(weight*.18,m*Math.abs(vx)/dt*.3)*brakeSign;
     const cs=Math.cos(c.steerAngle),ss=Math.sin(c.steerAngle),frontY=vy+a*c.omega;
     const alphaF=Math.atan2(frontY*cs-vx*ss,Math.max(3,Math.abs(vx*cs+frontY*ss)));
     const alphaR=Math.atan2(vy-b*c.omega,Math.max(3,Math.abs(vx)));
-    const handGrip=c.handbrake?clamp(.18+.5*c.handLatFriction/c.baseLatFriction,.2,.5):1;
+    const handGrip=1-c.handbrakeMix*(1-clamp(.32+.45*c.handLatFriction/c.baseLatFriction,.34,.65));
     function tyre(alpha,cap,demand,stiffness,slide){
       const fy=-cap*Math.tanh(stiffness*alpha/Math.max(1,cap))*slide;
       const fx=clamp(demand,-cap*1.15,cap*1.15),scale=Math.min(1,cap/Math.max(1,Math.hypot(fx,fy)));
@@ -77,7 +80,7 @@ globalThis.DriftDynamics=(()=>{
     const drag=-vx*c.dragLinear-Math.sign(vx)*vx*vx*c.dragQuad;
     const ax=(frontX+fxR+drag)/m,ay=(frontForceY+fyR)/m;
     const inertia=m*((c.bodyDimensions?.length||4.3)**2+(c.bodyDimensions?.width||1.8)**2)/12*p.yaw;
-    c.omega+=((a*frontForceY-b*fyR)/inertia-c.omega*.12)*dt;
+    c.omega+=((a*frontForceY-b*fyR)/inertia-c.omega*(.12+assist.stability*clamp(Math.abs(alphaR)/.6,0,1)))*dt;
     c.vel.x+=(ax*cos-ay*sin)*dt;c.vel.y+=(ax*sin+ay*cos)*dt;
     c.angle+=c.omega*dt;c.yawRate=c.omega;c.pos.x+=c.vel.x*dt;c.pos.y+=c.vel.y*dt;
     // Smooth acceleration is also the physical load-transfer state, sent in snapshots.

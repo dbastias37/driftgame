@@ -51,7 +51,7 @@ export function applyVehiclePaint(model,skin,color){
           const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;
           const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);const pixels=ctx.getImageData(0,0,canvas.width,canvas.height);
           if(recolorPixels(pixels.data,skin,slot.material.name,color,canvas.width,canvas.height)){
-            ctx.putImageData(pixels,0,0);slot.generated=slot.source.clone();slot.generated.image=canvas;slot.generated.needsUpdate=true;slot.material.map=slot.generated;
+            ctx.putImageData(pixels,0,0);slot.generated=slot.source.clone();slot.generated.source=new T.Source(canvas);slot.generated.needsUpdate=true;slot.material.map=slot.generated;
           }
         }
       }

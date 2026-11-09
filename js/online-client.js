@@ -53,7 +53,7 @@ online=(()=>{
     const code=$id('onlineCodeInput').value.trim().toUpperCase();
     if(type==='join'&&!/^[A-Z2-9]{6}$/.test(code)){status('Escribe el código de 6 caracteres de la sala.');$id('onlineCodeInput').focus();return;}
     const name=$id('onlineName').value.trim()||'Piloto';try{localStorage.setItem('drift:online:name',name);}catch{}
-    intent={type,name,code,skin:chosen.sprite,paint:DriftCareer.load().cars[chosen.sprite].paintColor,auto:selectedTx()==='auto'};enabled=true;retry=0;connectingUI(true);
+    intent={type,name,code,...DriftOptions.conditions(renderPrefs),skin:chosen.sprite,paint:DriftCareer.load().cars[chosen.sprite].paintColor,auto:selectedTx()==='auto'};enabled=true;retry=0;connectingUI(true);
     if(socket?.readyState===1){send(intent);intent=null;}else connect();
   }
   function receive(m){
@@ -119,8 +119,8 @@ online=(()=>{
       const car=document.createElement('p');car.textContent=p?CAR_DATA.find(c=>c.sprite===p.skin)?.name:'Invita con el código de arriba.';card.appendChild(car);
       const state=document.createElement('span');state.className='ready-state';state.textContent=p?!p.connected?'RECONECTANDO…':p.ready?'✓ LISTO':'ELIGIENDO AUTO':'—';card.appendChild(state);container.appendChild(card);
     }
-    for(const id of ['onlineTrack','onlineLaps','onlineDay'])$id(id).disabled=!isHost||room.phase!=='lobby';
-    $id('onlineTrack').value=room.level;$id('onlineLaps').value=room.laps;$id('onlineDay').value=room.day;
+    for(const id of ['onlineTrack','onlineLaps','onlineDay','onlineDifficulty','onlineWeather'])$id(id).disabled=!isHost||room.phase!=='lobby';
+    $id('onlineTrack').value=room.level;$id('onlineLaps').value=room.laps;$id('onlineDay').value=room.day;$id('onlineDifficulty').value=room.difficulty||'standard';$id('onlineWeather').value=room.weather||'clear';
     $id('onlineReady').textContent=own?.ready?'CANCELAR LISTO':'ESTOY LISTO ✓';$id('onlineReady').disabled=room.phase!=='lobby';
     $id('onlineStart').classList.toggle('hidden',!isHost||room.phase!=='lobby');$id('onlineStart').disabled=room.players.length<2||!room.players.every(p=>p.ready&&p.connected);
     $id('onlineLobbyHint').textContent=room.players.length<2?'Comparte el código. Hace falta otro piloto para salir.':!room.players.every(p=>p.ready&&p.connected)?'Cada piloto elige su auto y marca «Estoy listo». Cambiar la pista cancela los estados listos.':isHost?'Todos listos. Tú das la salida.':'Todos listos. Esperando la salida del anfitrión.';
@@ -131,7 +131,7 @@ online=(()=>{
   function beginRace(){
     const own=me();if(!own)return;
     hidePanels();carIdx=CAR_DATA.findIndex(c=>c.sprite===own.skin);chosen=CAR_DATA[carIdx];document.querySelector(`input[name="tx"][value="${own.auto?'auto':'manual'}"]`).checked=true;
-    oldDay??=renderPrefs.timeOfDay;renderPrefs.timeOfDay=room.day;syncDaytimeUI();startWithTrack(presetTrack(room.level),'online');player.cosmetics={paint:own.paint};TOTAL_LAPS=room.laps;
+    oldDay??=renderPrefs.timeOfDay;renderPrefs.timeOfDay=room.day;syncDaytimeUI();startWithTrack(presetTrack(room.level),'online',room);player.cosmetics={paint:own.paint};TOTAL_LAPS=room.laps;
     Net.grid(player,track,room.players.findIndex(p=>p.id===selfId));DriftRoadContact.reset(track,player,chosen.sprite);camera.tx=-player.pos.x*camera.s+view.width*.5;camera.ty=-player.pos.y*camera.s+view.height*.6;
     seq=ack=epoch=gear=0;pending=[];outbox=[];rivalFrames.clear();remoteCars.clear();visibleRivals=[];raceActive=true;finished=false;waiting=false;lastSnapshot=Date.now();notice='';$id('onlineCareerReward').textContent='';
     document.body.classList.add('online-race');$id('onlineHud').classList.remove('hidden');$id('onlineMenu').classList.add('hidden');$id('pauseTitle').textContent='La carrera sigue en línea';$id('btnPause').textContent='Menú';$id('btnPause').setAttribute('aria-label','Abrir menú de carrera');
@@ -186,8 +186,8 @@ online=(()=>{
   $id('onlineChatForm').addEventListener('submit',e=>{e.preventDefault();const text=$id('onlineChatInput').value.trim();if(!text||!room)return;if(send({type:'chat',text})){$id('onlineChatInput').value='';$id('onlineChatStatus').textContent='';}else $id('onlineChatStatus').textContent='Reconectando. Tu mensaje sigue aquí para reenviarlo.';});
   $id('btnModeOnline').addEventListener('click',open);$id('onlineCreate').addEventListener('click',()=>request('create'));$id('onlineJoin').addEventListener('click',()=>request('join'));$id('onlineCodeInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();request('join');}});
   $id('onlineBack').addEventListener('click',showMainMenu);$id('onlineGarage').addEventListener('click',garage);$id('onlineReady').addEventListener('click',()=>send({type:'ready',ready:!me()?.ready}));$id('onlineStart').addEventListener('click',()=>send({type:'start'}));$id('onlineRematch').addEventListener('click',()=>send({type:'rematch'}));
-  for(const id of ['onlineTrack','onlineLaps','onlineDay'])$id(id).addEventListener('change',()=>send({type:'settings',level:Number($id('onlineTrack').value),laps:Number($id('onlineLaps').value),day:Number($id('onlineDay').value)}));
+  for(const id of ['onlineTrack','onlineLaps','onlineDay','onlineDifficulty','onlineWeather'])$id(id).addEventListener('change',()=>send({type:'settings',level:Number($id('onlineTrack').value),laps:Number($id('onlineLaps').value),day:Number($id('onlineDay').value),difficulty:$id('onlineDifficulty').value,weather:$id('onlineWeather').value}));
   $id('onlineCopy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(room.code);status('Código copiado. Compártelo con tus amigos.');}catch{status('Código de sala: '+room.code);}});
   addEventListener('beforeunload',()=>socket?.close());
-  return {open,showLobby,confirmCar,leave,recover,simulate,frame,shift:d=>gear=d,rivals:()=>visibleRivals,draw2D(g,cam){for(const car of visibleRivals){car.draw(g,cam);g.save();g.font='11px system-ui';g.textAlign='center';g.fillStyle='#e5ffff';g.fillText(car.name,car.pos.x*cam.s+cam.tx,car.pos.y*cam.s+cam.ty-35);g.restore();}},get inRoom(){return !!room;},get racing(){return raceActive;}};
+  return {open,showLobby,confirmCar,leave,recover,simulate,frame,shift:d=>gear=d,rivals:()=>visibleRivals,draw2D(g,cam){for(const car of visibleRivals){car.draw(g,cam);g.save();g.font='11px DriftPixel, monospace';g.textAlign='center';g.fillStyle='#e5ffff';g.fillText(car.name,car.pos.x*cam.s+cam.tx,car.pos.y*cam.s+cam.ty-35);g.restore();}},get inRoom(){return !!room;},get racing(){return raceActive;}};
 })();

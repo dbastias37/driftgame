@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import './vehicle-fit.js?v=1.0.0-prealpha.3';
+import './vehicle-fit.js?v=1.0.0-prealpha.4';
 
 const files={gray:'chevrolet-nova-ss.glb',blue:'nissan-skyline-r34.glb'},pending=new Map();
 export async function parseReplacement(buffer,skin){
@@ -39,6 +39,16 @@ export function loadReplacement(skin){
   return pending.get(skin);
 }
 export const loadNova=()=>loadReplacement('gray'),loadSkyline=()=>loadReplacement('blue');
+
+export function separateNovaGlass(geometry){
+  const uv=geometry.attributes.uv,pos=geometry.attributes.position,index=geometry.index,solid=[],glass=[];
+  if(!uv||!index)return null;
+  for(let i=0;i<index.count;i+=3){const ids=[index.getX(i),index.getX(i+1),index.getX(i+2)];const pane=ids.every(n=>uv.getX(n)>.516&&uv.getY(n)<.134)&&ids.reduce((v,n)=>v+pos.getY(n),0)/3>.87;(pane?glass:solid).push(...ids);}
+  if(!glass.length)return null;
+  const pane=geometry.clone();pane.setIndex(glass);pane.computeBoundingSphere();geometry.setIndex(solid);return pane;
+}
+function glassMaterial(){return new T.MeshStandardMaterial({name:'Glass',color:0x7595a4,metalness:.12,roughness:.16,transparent:true,opacity:.62,depthWrite:false,side:T.FrontSide});}
+
 export function createReplacement(template,ghost=false){
   const {fit}=template,root=new T.Group(),body=new T.Group(),materials=new Map(),textures=new Map();
   root.name=fit.name;body.name='body-motion';root.add(body);
@@ -49,7 +59,7 @@ export function createReplacement(template,ghost=false){
   const lampMaterials={front:[],rear:[]};
   function material(source){
     if(!materials.has(source)){
-      const m=source.clone();
+      const m=source.name==='Glass'&&!ghost?glassMaterial():source.clone();
       for(const [key,value] of Object.entries(m))if(value?.isTexture){if(!textures.has(value))textures.set(value,value.clone());m[key]=textures.get(value);}
       if(ghost){m.color.set(0x77f2e7);m.transparent=true;m.opacity=.24;m.depthWrite=false;m.emissiveIntensity=0;}
       else if(m.name==='headlights'){m.emissive.set(m.emissiveMap?0xffffff:0xffeed2);lampMaterials.front.push(m);}else if(m.name==='taillights'){m.emissive.set(m.emissiveMap?0xffffff:0xff1608);lampMaterials.rear.push(m);}
@@ -59,7 +69,8 @@ export function createReplacement(template,ghost=false){
   }
   for(const part of template.parts){
     const geometry=part.geometry.clone(),mesh=new T.Mesh(geometry,material(part.material));mesh.name=part.name;
-    if(part.wheel<0)body.add(mesh);
+    if(part.wheel<0){body.add(mesh);if(template.skin==='gray'&&!ghost&&part.material.name==='Material_Nova'){const glass=separateNovaGlass(geometry);if(glass){const pane=new T.Mesh(glass,glassMaterial());pane.name='Nova-windows';pane.renderOrder=1;body.add(pane);}}}
+
     else{const wheel=wheels[part.wheel];geometry.translate(-wheel.steer.position.x,-wheel.steer.position.y,-wheel.steer.position.z);wheel.spin.add(mesh);}
   }
   const shadow=new T.Mesh(new T.PlaneGeometry(fit.length+.2,fit.width+.15),new T.MeshBasicMaterial({color:0,transparent:true,opacity:ghost?.06:.23,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1}));
