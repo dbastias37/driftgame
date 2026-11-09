@@ -29,9 +29,9 @@ test('all 20 real circuits fit the drone camera; long-distance software render i
  }
  view.dispose();
 });
-test('garage rotates the platform and four supported cars without leaking roots, including the real RX-7',async()=>{
+test('garage rotates the platform and five supported cars without leaking roots, including the real RX-7',async()=>{
  const {T,view,c}=await setup();let count=null;
- for(const skin of ['blue','red','yellow','gray','yellow']){
+ for(const skin of ['blue','yellow','gray','yugo','fujiwara','yellow']){
   view.renderPreview({kind:'garage',skin,dt:.1,spinning:true});
   assert.equal(view.car.root.parent,view.garage.platform);assert.equal(view.car.wheels.length,4);
   if(skin==='yellow')assert.ok(view.car.imported);

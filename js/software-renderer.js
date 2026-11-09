@@ -61,7 +61,7 @@ export class SoftwareRenderer{
         const fog=scene.fog?clamp((depth-scene.fog.near)/(scene.fog.far-scene.fog.near),0,1):0,fogColor=scene.fog?.color.clone().convertLinearToSRGB();
         const shade=vertexColor?new T.Color().setRGB(...['getX','getY','getZ'].map(method=>vi.reduce((sum,i)=>sum+vertexColor[method](i),0)/3)).multiply(material.color).convertLinearToSRGB():col;
         const rgb=[shade.r,shade.g,shade.b].map(c=>Math.round(255*clamp(c*light,0,1))),fogRGB=fogColor?[fogColor.r*255,fogColor.g*255,fogColor.b*255]:[0,0,0];
-        for(let i=1;i<pts.length-1;i++){const args=[pts[0],pts[i],pts[i+1],rgb,material.opacity,material.depthWrite,tex,material.alphaTest||0,fog,fogRGB,material.blending===T.AdditiveBlending];if(material.transparent)transparent.push({args,depth});else raster(...args);}
+        for(let i=1;i<pts.length-1;i++){const args=[pts[0],pts[i],pts[i+1],rgb,material.opacity*(vertexColor?.itemSize===4?vi.reduce((sum,i)=>sum+vertexColor.getW(i),0)/3:1),material.depthWrite,tex,material.alphaTest||0,fog,fogRGB,material.blending===T.AdditiveBlending];if(material.transparent)transparent.push({args,depth});else raster(...args);}
       }
     };
     scene.traverseVisible(obj=>{if(obj.isSprite){const p=new T.Vector3(),q=new T.Quaternion(),s=new T.Vector3();obj.matrixWorld.decompose(p,q,s);model.compose(p,camera.quaternion,s);drawMesh({geometry:this.spriteGeometry,material:obj.material},model);return;}if(!obj.isMesh)return;if(obj.isInstancedMesh){for(let i=0;i<obj.count;i++){obj.getMatrixAt(i,instance);model.multiplyMatrices(obj.matrixWorld,instance);drawMesh(obj,model);}}else drawMesh(obj,obj.matrixWorld);});

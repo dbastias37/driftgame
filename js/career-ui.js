@@ -28,7 +28,7 @@ function performanceChart(current,preview){
 }
 function syncWorkshop(){
   const p=DriftCareer.load(),skin=chosen.sprite,c=p.cars[skin],item=DriftCareer.part(skin,workshopPart),owned=c.owned[item.id],tier=Math.min(item.max,owned+1),cost=DriftCareer.price(skin,item.id,tier),required=DriftCareer.tierStars(tier),all=owned>=item.max;
-  garageCosmetics=mode==='online'?{}:DriftCareer.cosmetics(c);syncCareerWallet();
+  garageCosmetics=mode==='online'?{paint:c.paintColor}:DriftCareer.cosmetics(c);syncCareerWallet();syncPaint();$('#paintStatus').textContent='';
   $('#workshopCar').textContent=chosen.name;$('#workshopProfile').textContent=DriftCareer.profiles[skin].name;
   const projected=JSON.parse(JSON.stringify(c));projected.active[item.id]=all?c.active[item.id]:tier;
   performanceChart(c,projected);
@@ -48,3 +48,18 @@ $('#btnCreditsBack').addEventListener('click',()=>{showMainMenu();$('#btnCredits
 
 $('#modelCredits').innerHTML=`<article><h3>Pudim Abestado</h3><p><a href="https://sketchfab.com/3d-models/rx7-fd-redsuns-keisuke-takahashi-b76c1a819fd34cd6b139dceb705d2e8e" target="_blank" rel="noopener">RX7 FD “RedSuns” Keisuke Takahashi ↗</a></p><p><a href="https://sketchfab.com/3d-models/ae86-low-poly-fujiwara-tofu-shop-version-2-9ec1194ab2d1441bb8f8bae8d83fb204" target="_blank" rel="noopener">AE86 Low Poly Fujiwara Tofu Shop (Version 2) ↗</a></p><small>Modelos adaptados a escala y pivotes del juego. Licencia declarada en los archivos originales: <a href="https://sketchfab.com/licenses" target="_blank" rel="noopener">Sketchfab Standard</a>.</small></article><article><h3>3DDomino</h3><p><a href="https://sketchfab.com/3d-models/yugo-koral-55-1e2dcf759a4f47f9b2832af5e3c9b85d" target="_blank" rel="noopener">Yugo Koral 55 ↗</a></p><small><a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. Adaptación para Drift Racer: retopología, ruedas, atlas pixelado, UV y pivotes nuevos a partir del modelo de 3DDomino.</small></article><article><h3>Chevrolet Nova SS · Nissan Skyline R34</h3><p>Modelos y texturas aportados por Diego Bastias A.</p><small>Adaptación para Drift Racer: conversión a GLB, pivotes de ruedas y conexión de luces y efectos. Autor original no indicado en los archivos recibidos.</small></article>`;
 syncCareerWallet();
+
+
+function syncPaint(){
+  const selected=DriftCareer.load().cars[chosen.sprite].paintColor;
+  $('#paintName').textContent=DriftCareer.paints.find(p=>p.color===selected)?.name||'Personalizado';
+  $('#paintCustom').value=selected||chosen.color;
+  $('#paintOptions').innerHTML=DriftCareer.paints.map(p=>`<button type="button" data-paint="${p.color||'original'}" style="--swatch:${p.color||chosen.color}" aria-label="Pintura ${p.name}" title="${p.name}" aria-pressed="${selected===p.color}">${p.color?'':'↺'}</button>`).join('');
+  $('#paintOptions').querySelectorAll('[data-paint]').forEach(b=>b.addEventListener('click',()=>choosePaint(b.dataset.paint==='original'?null:b.dataset.paint)));
+}
+function choosePaint(color){
+  if(!DriftCareer.setPaint(chosen.sprite,color)){$('#paintStatus').textContent='No se pudo guardar el color.';return;}
+  const config=DriftCareer.load().cars[chosen.sprite];garageCosmetics=mode==='online'?{paint:config.paintColor}:DriftCareer.cosmetics(config);
+  syncPaint();drawCarPreview();$('#paintStatus').textContent='Pintura guardada para este auto.';
+}
+$('#paintCustom').addEventListener('change',e=>choosePaint(e.target.value));

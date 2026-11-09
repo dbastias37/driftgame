@@ -161,8 +161,6 @@ globalThis.DriftDownhill=(()=>{
     if(!holding){car.vel.x+=g.x*dt;car.vel.y+=g.y*dt;}
     const entrySpeed=car.worldSpeed(),lat=car.baseLatFriction;car.baseLatFriction=lat/Math.sqrt(1+q.grade*q.grade);
     car.update(dt,input,track);car.baseLatFriction=lat;
-    // Remove the flat game's idle settling only here; a free car must roll.
-    if(!holding&&car.throttleSm===0&&entrySpeed<.6){const idle=Math.max(.01,1-10*dt);car.vel.x/=idle;car.vel.y/=idle;}
     if(holding){car.pos.x=before.x;car.pos.y=before.y;car.vel.x=car.vel.y=0;car.omega=0;}
     const after=track.sample(car.pos.x,car.pos.y),side=after.dist<0?1:-1;
     if(after.distance>track.roadHalf+.45&&after.distance<track.roadHalf+5&&track.barrierAt(after.s,side)){
@@ -177,7 +175,7 @@ globalThis.DriftDownhill=(()=>{
     if(car.ride)car.ride.height+=track.terrainHeight(car.pos.x,car.pos.y)-track.terrainHeight(before.x,before.y);
     DriftRoadContact.update(track,car,dt,skin);
     const acceleration=(car.worldSpeed()-speedBefore)/dt,transfer=clamp(-acceleration*.65/(G*2.5),-.22,.22);d.loadFront=.5+transfer;d.loadRear=.5-transfer;
-    d.pitch=car.ride.pitch+clamp(acceleration*.006,-.045,.045);d.roll=car.ride.roll;d.y=car.ride.height;
+    d.pitch=car.ride.pitch;d.roll=car.ride.roll;d.y=car.ride.height;
     const result=advance(track,car,before,dt);if(!result.valid){const gained=Math.max(0,car.score-score);car.score=score;car.comboPoints=Math.max(0,car.comboPoints-gained);}
     return {...result,respawn:!!result.respawn||car.offTimer>=8};
   }

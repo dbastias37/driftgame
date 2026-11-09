@@ -1,16 +1,18 @@
 import * as T from '../vendor/three.module.min.js';
-import {SoftwareRenderer} from './software-renderer.js?v=1.0.0-prealpha.2';
-import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles} from './track-surface.js?v=1.0.0-prealpha.2';
-import {buildMountain} from './mountain-scene.js?v=1.0.0-prealpha.2';
-import {loadRX7,createRX7} from './rx7-model.js?v=1.0.0-prealpha.2';
-import {loadYugo,createYugo} from './yugo-model.js?v=1.0.0-prealpha.2';
-import {loadFujiwara,createFujiwara} from './fujiwara-model.js?v=1.0.0-prealpha.2';
-import {batchWorld,updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.2';
-import {Atmosphere,buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.2';
-import {CinematicDirector} from './cinematic-camera.js?v=1.0.0-prealpha.2';
-import {loadNova,loadSkyline,createReplacement,updateVehicleLights} from './replacement-model.js?v=1.0.0-prealpha.2';
+import {SoftwareRenderer} from './software-renderer.js?v=1.0.0-prealpha.3';
+import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles} from './track-surface.js?v=1.0.0-prealpha.3';
+import {buildMountain} from './mountain-scene.js?v=1.0.0-prealpha.3';
+import {loadRX7,createRX7} from './rx7-model.js?v=1.0.0-prealpha.3';
+import {loadYugo,createYugo} from './yugo-model.js?v=1.0.0-prealpha.3';
+import {loadFujiwara,createFujiwara} from './fujiwara-model.js?v=1.0.0-prealpha.3';
+import {batchWorld,updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.3';
+import {Atmosphere,buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.3';
+import {CinematicDirector} from './cinematic-camera.js?v=1.0.0-prealpha.3';
+import {loadNova,loadSkyline,createReplacement,updateVehicleLights} from './replacement-model.js?v=1.0.0-prealpha.3';
+import {applyVehiclePaint,disposePaint} from './vehicle-paint.js?v=1.0.0-prealpha.3';
+import {cloudTexture,TireSmokeRenderer} from './smoke-renderer.js?v=1.0.0-prealpha.3';
 const TAU=Math.PI*2;
-const SKINS={fujiwara:{color:0xe8e8da,roof:1.335,length:4.215},yugo:{color:0xce362b,roof:1.335,length:3.49},blue:{color:0x2955b8,roof:1.35,length:4.6,spoiler:true},red:{color:0xd54232,roof:1.16,length:4.5,stripes:true},yellow:{color:0xe6b52b,roof:.95,length:4.45,spoiler:true},gray:{color:0x16171a,roof:1.36,length:4.81}};
+const SKINS={fujiwara:{color:0xe8e8da,roof:1.335,length:4.215},yugo:{color:0xce362b,roof:1.335,length:3.49},blue:{color:0x2955b8,roof:1.35,length:4.6,spoiler:true},yellow:{color:0xe6b52b,roof:.95,length:4.45,spoiler:true},gray:{color:0x16171a,roof:1.36,length:4.81}};
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 function rng(seed=812){return()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};}
 export function disposeGroup(group){
@@ -31,6 +33,7 @@ function loft(parent,m,sections){
 function createCar(key,ghost=false){
   const style=SKINS[key]||SKINS.blue,root=new T.Group(),body=new T.Group();root.add(body);
   const paint=mat(style.color,{metalness:.42,roughness:.32}),black=mat(0x111a20),glass=mat(0x233d48,{metalness:.5,roughness:.17}),chrome=mat(0xc6d2d4,{metalness:.8,roughness:.3});
+  paint.name='body-paint';
   const L=style.length;
   loft(body,paint,[[-L/2,.54,.78],[-L*.42,.79,.96],[L*.3,.75,.96],[L*.5,.54,.79]]);
   box(body,black,0,.35,0,L*.91,.12,1.87);
@@ -72,7 +75,6 @@ function curbTexture(){
   const ctx=canvas.getContext('2d');ctx.fillStyle='#c85837';ctx.fillRect(0,0,32,4);ctx.fillStyle='#d7cec0';ctx.fillRect(32,0,32,4);
   const texture=new T.CanvasTexture(canvas);texture.wrapS=T.RepeatWrapping;texture.colorSpace=T.SRGBColorSpace;return texture;
 }
-function smokeTexture(){const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'#ffffffb0');gr.addColorStop(.3,'#ffffff65');gr.addColorStop(1,'#ffffff00');g.fillStyle=gr;g.fillRect(0,0,64,64);return new T.CanvasTexture(c);}
 export class DriftView3D{
   constructor(canvas,{quality='auto',onFailure=()=>{},loadVehicle=loadRX7,loadYugoVehicle=loadYugo,loadFujiwaraVehicle=loadFujiwara,loadNovaVehicle=loadNova,loadSkylineVehicle=loadSkyline,onVehicleFailure=()=>{}}={}){
     this.canvas=canvas;this.onFailure=onFailure;
@@ -84,9 +86,7 @@ export class DriftView3D{
     const hemi=new T.HemisphereLight(0xc7e4ee,0x56634a,2.3);this.scene.add(hemi);const sun=new T.DirectionalLight(0xffe4c6,3.1);sun.position.set(-110,180,60);this.scene.add(sun);this.atmosphere=new Atmosphere(this.scene,hemi,sun);this.atmosphere.set(0);
     this.camera=new T.PerspectiveCamera(58,1,.5,1200);this.world=new T.Group();this.scene.add(this.world);
     this.car=createCar('blue');this.scene.add(this.car.root);this.ghostCar=createCar('blue',true);this.scene.add(this.ghostCar.root);
-    this.smokeTexture=smokeTexture();this.smokeGeo=new T.BufferGeometry();this.smokePos=new Float32Array(450*3);this.smokeGeo.setAttribute('position',new T.BufferAttribute(this.smokePos,3).setUsage(T.DynamicDrawUsage));
-    this.smokeMat=new T.PointsMaterial({color:0xdde8e8,map:this.smokeTexture,size:2.8,transparent:true,opacity:.23,depthWrite:false,sizeAttenuation:true});
-    this.smoke=new T.Points(this.smokeGeo,this.smokeMat);this.smoke.frustumCulled=false;this.scene.add(this.smoke);
+    this.smokeTexture=cloudTexture();this.smokeRenderer=new TireSmokeRenderer(this.smokeTexture);this.smoke=this.smokeRenderer.mesh;this.smokeGeo=this.smokeRenderer.geometry;this.smokePos=this.smokeRenderer.positions;this.smokeMat=this.smokeRenderer.material;this.scene.add(this.smoke);
     this.trailGeo=new T.BufferGeometry();this.trailPos=new Float32Array(3000*2*6*3);this.trailGeo.setAttribute('position',new T.BufferAttribute(this.trailPos,3).setUsage(T.DynamicDrawUsage));
     this.trails=new T.Mesh(this.trailGeo,new T.MeshBasicMaterial({color:0x131b20,transparent:true,opacity:.42,depthWrite:false,side:T.DoubleSide}));this.trails.frustumCulled=false;this.trails.renderOrder=-40;this.scene.add(this.trails);
     this.rivalModels=new Map();this.rivalLabels=[];
@@ -156,12 +156,13 @@ export class DriftView3D{
   }
   setSkin(key,force=false){
     if(key===this.key&&!force)return;
-    this.scene.remove(this.car.root,this.ghostCar.root);disposeGroup(this.car.root);disposeGroup(this.ghostCar.root);
+    this.scene.remove(this.car.root,this.ghostCar.root);disposePaint(this.car);disposeGroup(this.car.root);disposeGroup(this.ghostCar.root);
     this.car=key==='blue'&&this.skylineTemplate?createReplacement(this.skylineTemplate):key==='gray'&&this.novaTemplate?createReplacement(this.novaTemplate):key==='fujiwara'&&this.fujiwaraTemplate?createFujiwara(this.fujiwaraTemplate):key==='yugo'&&this.yugoTemplate?createYugo(this.yugoTemplate):key==='yellow'&&this.rx7Template?createRX7(this.rx7Template):createCar(key);
     this.ghostCar=key==='blue'&&this.skylineTemplate?createReplacement(this.skylineTemplate,true):key==='gray'&&this.novaTemplate?createReplacement(this.novaTemplate,true):key==='fujiwara'&&this.fujiwaraTemplate?createFujiwara(this.fujiwaraTemplate,true):key==='yugo'&&this.yugoTemplate?createYugo(this.yugoTemplate,true):key==='yellow'&&this.rx7Template?createRX7(this.rx7Template,true):createCar(key,true);
     this.scene.add(this.car.root,this.ghostCar.root);this.key=key;
   }
-  applyCosmetics(model,cosmetics={}){
+  applyCosmetics(model,cosmetics={},skin=this.key){
+    applyVehiclePaint(model,skin,cosmetics?.paint);
     const color=cosmetics?.neon;
     if(color&&!model.neon){
       const m=new T.MeshBasicMaterial({color,transparent:true,opacity:.7,map:this.smokeTexture.clone(),depthWrite:false,side:T.DoubleSide});
@@ -171,26 +172,28 @@ export class DriftView3D{
   }
   updateRivals(rivals,dt){
     const ids=new Set(rivals.map(p=>p.id));
-    for(const [id,model] of this.rivalModels)if(!ids.has(id)){this.scene.remove(model.root);disposeGroup(model.root);this.rivalModels.delete(id);}
+    for(const [id,model] of this.rivalModels)if(!ids.has(id)){this.scene.remove(model.root);disposePaint(model);disposeGroup(model.root);this.rivalModels.delete(id);}
     for(const car of rivals){
       const key=car.skin,template=key==='blue'?this.skylineTemplate:key==='gray'?this.novaTemplate:key==='fujiwara'?this.fujiwaraTemplate:key==='yugo'?this.yugoTemplate:key==='yellow'?this.rx7Template:null;
       let model=this.rivalModels.get(car.id);
       if(!model||model.skin!==key||model.template!==template){
-        if(model){this.scene.remove(model.root);disposeGroup(model.root);}
+        if(model){this.scene.remove(model.root);disposePaint(model);disposeGroup(model.root);}
         model=(key==='blue'||key==='gray')&&template?createReplacement(template):key==='fujiwara'&&template?createFujiwara(template):key==='yugo'&&template?createYugo(template):key==='yellow'&&template?createRX7(template):createCar(key);
         model.skin=key;model.template=template;this.rivalModels.set(car.id,model);this.scene.add(model.root);
       }
       model.root.position.set(car.pos.x,0,car.pos.y);model.root.rotation.set(0,-car.angle,0,'YXZ');this.placeOnRoad(model,car,key,car.ride);
       for(const wheel of model.wheels){wheel.steer.rotation.y=wheel.front?-car.steerAngle:0;if(Number.isFinite(car.wheelTravel))wheel.spin.rotation.z=-car.wheelTravel/(wheel.radius||.36);else wheel.spin.rotation.z-=(car.vel.x*Math.cos(car.angle)+car.vel.y*Math.sin(car.angle))*dt/(wheel.radius||.36);}
-      updateVehicleLights(model,car,this.atmosphere.state?.night||0);this.atmosphere.tintCar(model);
+      this.applyCosmetics(model,car.cosmetics,key);updateVehicleLights(model,car,this.atmosphere.state?.night||0);this.atmosphere.tintCar(model);
     }
   }
   placeOnRoad(model,pose,skin,ride=null){
     const contact=ride||globalThis.DriftRoadContact.contacts(this.track,pose,skin);
     const mountain=!!this.track.downhill;
     model.root.position.y=mountain?contact.height:0;
-    model.body.position.y=mountain?0:contact.height;
+    model.body.position.set(0,mountain?0:contact.height,0);
     model.body.rotation.x=contact.roll;model.body.rotation.z=contact.pitch;
+    const cg=pose.bodyDimensions?.cgHeight||.55;
+    model.body.position.x=cg*Math.sin(contact.pitch);model.body.position.z=-cg*Math.sin(contact.roll)*Math.cos(contact.pitch);model.body.position.y+=cg*(1-Math.cos(contact.roll)*Math.cos(contact.pitch));
     for(const wheel of model.wheels){
       wheel.baseY??=wheel.steer.position.y;
       const support=contact.wheels.find(p=>(p.x>0)===wheel.front&&(p.z>0)===(wheel.steer.position.z>0));
@@ -199,10 +202,6 @@ export class DriftView3D{
     return contact;
   }
   effects(player){
-    this.smokeMat.color.set(player.cosmetics?.smokeColor||'#dde8e8');this.smokeMat.size=2.8*Math.sqrt(player.cosmetics?.smokeVolume||1);
-    const particles=player.smoke||[],count=Math.min(particles.length,this.low?140:450),stride=Math.max(1,Math.floor(particles.length/Math.max(1,count)));
-    for(let i=0;i<count;i++){const p=particles[i*stride];this.smokePos[i*3]=p.x;this.smokePos[i*3+1]=(this.track.downhill?this.track.surfaceHeight(p.x,p.y):0)+.4+p.life*.75;this.smokePos[i*3+2]=p.y;}
-    this.smokeGeo.setDrawRange(0,count);this.smokeGeo.attributes.position.needsUpdate=true;
     const trails=player.tireTrails||[],start=Math.max(1,trails.length-(this.low?1200:3000));let v=0;
     const range=this.drawFar||400;
     for(let i=start;i<trails.length;i++){
@@ -237,7 +236,6 @@ export class DriftView3D{
       this.car.root.traverse(o=>{if(o.isMesh&&o.material.transparent&&o.material.opacity===.23)o.visible=!falling;});
     }
     if(this.car.neon)this.car.neon.visible=!!player.cosmetics?.neon&&!falling;
-    this.car.body.rotation.x+=motion==='reduced'?0:clamp(player.omega*speed*.002,-.055,.055);
     for(const wheel of this.car.wheels){
       wheel.steer.rotation.y=wheel.front?-player.steerAngle:0;
       const rollingSpeed=this.car.imported&&player.vel?player.vel.x*Math.cos(a)+player.vel.y*Math.sin(a):speed;
@@ -249,7 +247,7 @@ export class DriftView3D{
     if(this.ghostCar.root.visible){const gp=ghost._sample();this.ghostCar.root.position.set(gp.x,0,gp.y);this.ghostCar.root.rotation.y=-gp.angle;this.placeOnRoad(this.ghostCar,{pos:gp,angle:gp.angle},skin);}
     this.camera.near=.3;this.drawFar=this.low?290:440;this.scene.fog.near=this.drawFar*.38;this.scene.fog.far=this.drawFar;this.camera.far=this.drawFar+80;
     this.updateRivals(rivals,dt);
-    this.effects(inMenu?{...player,smoke:[player,...rivals].flatMap(c=>c.smoke||[]),tireTrails:[player,...rivals].flatMap(c=>c.tireTrails||[])}:player);this.car.root.visible=camera!=='hood'||inMenu;
+    this.effects(inMenu?{...player,tireTrails:[player,...rivals].flatMap(c=>c.tireTrails||[])}:player);this.car.root.visible=camera!=='hood'||inMenu;
     const cinematic=['drone','cinematic','trackside','isometric','demo'].includes(camera),subject=inMenu&&rivals.length?{...player,pos:{x:[player,...rivals].reduce((s,c)=>s+c.pos.x,0)/(rivals.length+1),y:[player,...rivals].reduce((s,c)=>s+c.pos.y,0)/(rivals.length+1)}}:player,shot=cinematic?this.director.update({track,player:subject,time,mode:camera==='demo'?'cinematic':camera,anchor,reduced:motion==='reduced'}):null;
     this.cinematicLabel=shot?({drone:'Dron · seguimiento',trackside:'Curva · cámara fija',isometric:'Vista isométrica'}[shot.kind]):'';
     const desired=new T.Vector3(),target=new T.Vector3(),alpha=1-Math.exp(-Math.min(dt,.1)*5),angleDelta=Math.atan2(Math.sin(a-(this.yaw??a)),Math.cos(a-(this.yaw??a)));
@@ -284,7 +282,8 @@ export class DriftView3D{
       if(inMenu||distance>100)continue;const projected=new T.Vector3(car.pos.x,(car.ride?.height||0)+2.7,car.pos.y).project(this.camera);
       if(projected.z>-1&&projected.z<1&&Math.abs(projected.x)<1&&Math.abs(projected.y)<1)this.rivalLabels.push({name:car.name,x:(projected.x+1)*w/2,y:(1-projected.y)*h/2});
     }
+    this.smokeRenderer.update([player,...rivals].flatMap(c=>c.smoke||[]),this.camera,track,this.low,player.cosmetics);
     this.renderer.render(this.scene,this.camera);
   }
-  dispose(){this.disposed=true;this.canvas.removeEventListener('webglcontextlost',this.contextLost);this.atmosphere.dispose();disposeGroup(this.scene);this.renderer.dispose();}
+  dispose(){this.disposed=true;this.canvas.removeEventListener('webglcontextlost',this.contextLost);this.atmosphere.dispose();disposePaint(this.car);for(const model of this.rivalModels.values())disposePaint(model);disposeGroup(this.scene);this.renderer.dispose();}
 }

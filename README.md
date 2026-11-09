@@ -1,10 +1,22 @@
 # Drift Racer 1.0 pre-alpha
 
-Juego de drift 3D para navegador. Seis autos, campaña de veinte etapas y sesenta objetivos, taller por vehículo, veinte descensos, carreras online de hasta tres jugadores, editor y contrarreloj con fantasma local. Versión técnica: `1.0.0-prealpha.2`.
+Juego de drift 3D para navegador. Cinco autos, campaña de veinte etapas y sesenta objetivos, taller por vehículo, veinte descensos, carreras online de hasta tres jugadores, editor y contrarreloj con fantasma local. Versión técnica: `1.0.0-prealpha.3`.
 
-El garaje incluye el **Nissan Skyline R34 azul** y el **Chevrolet Nova SS negro**, convertidos de los modelos entregados, con texturas originales y ruedas independientes. Reemplazan las antiguas casillas azul y gris; se mantienen las mejoras, los récords y los ajustes de conducción asociados a esas casillas. Faros, luces de freno, suspensión, humo y huellas siguen el mismo estado de la carrera.
+El garaje incluye el **Nissan Skyline R34 azul** y el **Chevrolet Nova SS negro**, convertidos de los modelos entregados, con texturas originales y ruedas independientes. Reemplazan las antiguas casillas azul y gris; se mantienen las mejoras asociadas a esas casillas. Los cinco autos tienen pintura editable y la física revisada descrita abajo. Faros, luces de freno, suspensión, humo y huellas siguen el mismo estado de la carrera.
 
 [Jugar en Render](https://driftgame.onrender.com)
+
+## Conducción, pintura y humo (prealpha.3)
+
+- Se retira el C’Maro rojo. Sus niveles comprados e instalados se transfieren al Nova tomando el mayor nivel de cada pieza; las preferencias antiguas se migran por identidad, sin desplazar la selección de los otros autos.
+- **Garaje → Pintura:** siete colores, color personalizado y restauración del original, gratis y guardados por auto. La pintura cambia la carrocería y conserva cristales, ruedas, luces y gráficos. También se transmite a los rivales online y a la repetición.
+- Masa, inercia de giro, reparto de tracción, agarre combinado y transferencia de carga producen comportamientos distintos. El Nova tiene mayor inercia y balanceo; Skyline recupera adherencia con tracción repartida; Yugo conserva tracción delantera. La carrocería responde con muelles y amortiguación mientras las ruedas siguen el terreno.
+- Velocidad física de serie **+10%** frente a la versión anterior, medida en llano para los cinco autos. No se acelera el reloj de carrera. Los récords nuevos usan el sufijo `:physics-v2`; los registros anteriores permanecen guardados.
+- Humo emitido en los contactos de neumáticos, con nubes suaves que crecen, ascienden y se disipan. Una malla acotada agrupa las partículas para WebGL y render compatible; también se muestra en rivales online.
+
+Validación actual: **129 pruebas de núcleo aprobadas** y revisión de pintura/conducción en render compatible.
+
+Modelo, fuentes, mediciones y límites: [dinámica de vehículos](docs/vehicle-dynamics.md).
 
 ## Jugar y ejecutar
 
@@ -29,9 +41,9 @@ El garaje es el último paso: modelo 3D sobre una tarima giratoria, estadística
 
 - Cada etapa exige puntaje total, vuelta sin salidas/choques/recuperaciones y un combo de drift largo. Los objetivos crecen de 12.860 a 71.000 puntos y de 2.250 a 10.800 puntos de combo. Los tres se pueden conseguir en intentos separados; solo se guardan al completar una vuelta válida con las puertas de control existentes. No se termina la carrera al alcanzar el puntaje.
 - Primera obtención de cada objetivo: `650 + 100 × etapa` CR. Primera etapa completa: `1200 + 150 × etapa` CR adicionales. Repetición con objetivo de score: `450 + 40 × etapa` CR. Carrera rápida terminada: 900 CR. Descenso ganado: `1200 + 90 × ruta` CR. Victoria online confirmada por clasificación del servidor: 1500 CR; recibos locales evitan repetir el premio al reconectar.
-- Taller dentro del garaje: **20 módulos por cada uno de los seis autos**. Motor, admisión, alimentación, encendido, escape, volante motor, relación final, embrague, diferencial, neumáticos, frenos, refuerzos, aligeramiento, muelles, amortiguadores, dirección, control e impulso de drift, neón y humo. Tres niveles por módulo; neón tiene uno. El nivel 2 requiere seis objetivos de campaña; el 3, dieciocho. Cada vehículo tiene precios, denominaciones y coeficientes propios.
+- Taller dentro del garaje: **20 módulos por cada uno de los cinco autos**. Motor, admisión, alimentación, encendido, escape, volante motor, relación final, embrague, diferencial, neumáticos, frenos, refuerzos, aligeramiento, muelles, amortiguadores, dirección, control e impulso de drift, neón y humo. Tres niveles por módulo; neón tiene uno. El nivel 2 requiere seis objetivos de campaña; el 3, dieciocho. Cada vehículo tiene precios, denominaciones y coeficientes propios.
 - Las barras comparan serie, preparación instalada y próxima compra. Se añade un indicador específico cuando la pieza modifica respuesta, cambios, suspensión o drift. Son valores del juego, no mediciones de banco ni promesas de prestaciones reales. Los niveles comprados se pueden desactivar o volver a montar sin coste.
-- Las piezas se aplican una vez al crear el auto; reiniciar no acumula multiplicadores. La función física de serie conserva el código original. El impulso mecánico de drift se añade únicamente al auto preparado mediante una envoltura con rampa gradual; no altera el impulso visual de cámara. Suspensión conserva contactos y pivotes originales, ajustando rigidez/amortiguación. **Online mantiene preparación de serie para todos**; los premios financian el taller individual. Los récords TT de autos preparados usan una clave distinta por auto y configuración.
+- Las piezas se aplican una vez al crear el auto; reiniciar no acumula multiplicadores. La física de serie integra fuerzas de neumáticos, transferencia de carga e inercia. El impulso mecánico de drift se añade únicamente al auto preparado mediante una envoltura con rampa gradual; no altera el impulso visual de cámara. Suspensión conserva contactos y pivotes originales, ajustando rigidez/amortiguación. **Online mantiene preparación mecánica de serie y admite la pintura elegida**; los premios financian el taller individual. Los récords TT de autos preparados usan una clave distinta por auto y configuración.
 - Neón opcional de seis colores, sin luces dinámicas adicionales. Humo: volumen visual ×2, ×3 y color; no aumenta la capacidad de los buffers ni el multiplicador de puntos. El estilo y geometría de las carrocerías no cambian. La repetición conserva los efectos del auto grabado.
 - El perfil se guarda en `drift:career:v1` del navegador. Migra desbloqueos anteriores sin inventar dinero ni objetivos. Compras y premios solo se confirman si el guardado funciona. No hay cuenta ni sincronización en nube; borrar datos del navegador elimina este progreso.
 - **Solo 3D:** se retiran selectores, atajo V, sprites PNG y cámara de la vista plana del flujo activo. El código 2D queda bajo `LEGACY_2D_ENABLED=false`; no dibuja el mundo debajo de 3D. HUD y minimapa siguen usando Canvas. Si falla el entorno 3D, la carrera se pausa y ofrece recarga; el render compatible continúa siendo tridimensional.
@@ -94,7 +106,7 @@ El desnivel incluye la zona de frenado tras la meta. Las veinte rutas están dis
 - Salidas a la ladera: caída bajo gravedad, cuerpo rígido aproximado con inercia de caja y ocho puntos de contacto, impulsos, fricción y vuelcos. La cámara muestra el auto durante la caída, incluso si se conducía desde el capó.
 - **R** o **Recuperar** devuelve el auto al último punto seguro y consume una de tres vidas. Después de 4,5 s de caída se recupera automáticamente. El punto seguro avanza cada 60 m estando dentro de la carretera; no se elige la curva inferior más cercana.
 - La validación exige continuidad de avance sobre la carretera. Los atajos por el barranco no adelantan el sprint; volver sobre un tramo ya recorrido no permite repetir sus puntos. Los trazados revisados usan récords `downhill:v2:*`, separados de Challenge y TT. Los registros anteriores se conservan almacenados y no se comparan con carreteras distintas.
-- La simulación compartida sigue intacta. La vista 3D muestra el relieve y el vuelco; el render 2D está retirado de la interfaz desde 1.0. Las físicas de los circuitos anteriores permanecen intactas.
+- La simulación base de fuerzas se comparte con los circuitos; Cerro abajo añade gravedad, caídas y guardarraíles. La vista 3D muestra el relieve y el vuelco; el render 2D está retirado de la interfaz desde 1.0.
 
 Es una física jugable aproximada, no un simulador de neumáticos/deformación. Referencias técnicas: [componentes de gravedad en una pendiente, OpenStax](https://openstax.org/books/physics/pages/5-4-inclined-planes), [fricción y fuerza normal, OpenStax](https://openstax.org/books/university-physics-volume-1/pages/6-2-friction) y [modelo de masa apoyada por rueda, Unity](https://docs.unity3d.com/es/530/ScriptReference/WheelCollider-sprungMass.html). El código es propio y no utiliza Unity.
 
@@ -102,7 +114,7 @@ Es una física jugable aproximada, no un simulador de neumáticos/deformación. 
 
 - El combo acumula puntos a través de x1 → x2 → x3. Un cambio de dirección o la interrupción visual de las marcas de neumáticos no lo reinicia.
 - Hasta 0,45 s de transición sin deslizamiento conservan la cadena, sin generar puntos durante ese intervalo. Una histéresis de entrada/salida evita oscilaciones cerca del umbral. Salirse, detenerse, circular hacia atrás/en sentido contrario, colisionar o perder el derrape durante más tiempo corta puntos activos y multiplicador juntos. El total de la sesión conserva sus reglas anteriores.
-- Caída, recuperación y rechazo de avance no pueden restaurar un combo perdido. El control físico de motor, dirección, frenos, transmisión y efectos de neumáticos se compara con el fixture original.
+- Caída, recuperación y rechazo de avance no pueden restaurar un combo perdido. Las regresiones comprueban pasos de simulación, energía, frenado, cargas, suspensión, contactos de humo y equivalencia entre cliente y servidor. El fixture anterior sirve como referencia del aumento de velocidad.
 - Mantener **DRIFT** táctil activa también el acelerador, sin otra etiqueta ni pulsación. El freno tiene prioridad sobre esa asistencia; soltar/cancelar un dedo no suelta el otro pedal. Teclado: W/acelerador, Shift/drift, Espacio/freno, E/Q/cambios, sin asistencia añadida.
 - Anuncio de combo al 46% de la escala de escritorio en pantallas compactas; porcentaje de descenso junto al velocímetro, tanto vertical como horizontal.
 
@@ -144,7 +156,7 @@ Las entradas y módulos JavaScript usan una versión de URL común para evitar m
 - Medición reproducible de los escenarios de montaña sin farolas: Mirador 2.039 → 419 mallas; Quebrada 2.594 → 505; Cumbre 3.198 → 601 (81% menos en Cumbre). En la salida de Cumbre, 113 de esos sectores están dentro de la distancia de dibujo ligera, antes del descarte por encuadre. Son contadores de escena, **no una promesa de FPS**. La triangulación precisa del borde aumenta ligeramente los triángulos totales, pero evita solapamientos y reduce llamadas de dibujo.
 - Alturas de huellas persistentes calculadas una sola vez; terreno lejano omite búsquedas de carretera que no pueden influir en la altura. Resolución automática entre 0,65× y 1,5× según el tiempo de cuadro, con ajustes graduales cada tres segundos; simulación siempre a 60 Hz. Vistas previas limitadas a 30 FPS (12 en modo compatible); una vista detenida no se redibuja hasta cambiar. La escena de carrera se congela al pausar o terminar; el fondo del menú se limita a 30 FPS (10 en compatible).
 - Barra día/atardecer/noche en Configuración y en la selección de descenso/circuito. Preferencia guardada. Cielo degradado, luz ambiental y niebla coordinados. Farolas con halos y manchas de luz suaves adaptadas al suelo, que se desvanecen con la distancia. Faros de todos los autos con haces transparentes, luz sobre el pavimento y una sola luz dinámica sin sombras; sin bloom ni postprocesado. La iluminación no afecta la simulación.
-- Toyota AE86 Fujiwara como sexto auto: GLB suministrado de 145.452 bytes, 1.349 triángulos agrupados en carrocería y cuatro ruedas, atlas original y sprite 2D. Los pivotes, suspensión, humo y marcas de neumáticos corresponden al modelo. Ajuste jugable usando la física existente; no se presenta como simulación exacta de la ficha de un AE86 real.
+- Toyota AE86 Fujiwara: GLB suministrado de 145.452 bytes, 1.349 triángulos agrupados en carrocería y cuatro ruedas, atlas original y sprite 2D. Los pivotes, suspensión, humo y marcas de neumáticos corresponden al modelo. Ajuste jugable usando la física existente; no se presenta como simulación exacta de la ficha de un AE86 real.
 - 59 pruebas de regresión y revisión visual en navegador con render compatible. El navegador de revisión no ofrece WebGL: quedan pendientes mediciones de FPS en GPU real y teléfono físico.
 
 Referencias de implementación: [agrupación de geometría](https://threejs.org/manual/en/optimize-lots-of-objects.html), [niebla](https://threejs.org/manual/en/fog.html), [instancias](https://threejs.org/docs/#api/en/objects/InstancedMesh) de Three.js. Se usa la versión local r170 del proyecto.
@@ -169,13 +181,16 @@ La ayuda pausa la conducción. Cambiar de pestaña o perder foco también pausa 
 
 ## Una física, dos representaciones
 
-`Car`, el paso fijo de 1/60 s, las reglas de puntuación, los cambios, las penalizaciones de salida y las puertas de vueltas se conservan. La vista 3D lee `player`, `track` y el fantasma; no integra otra física ni reinicia carreras al cambiar de vista. La escena genera el asfalto a partir de los mismos puntos y ancho del circuito, incluidas las pistas dibujadas/importadas.
+`Car` usa la integración de fuerzas de `js/vehicle-dynamics.js`, con dos subpasos de 1/120 s dentro del paso fijo de 1/60 s. Se conservan reglas de puntuación, penalizaciones de salida y puertas de vueltas. La vista 3D lee `player`, `track` y el fantasma; no integra otra física ni reinicia carreras al cambiar de vista. La escena genera el asfalto a partir de los mismos puntos y ancho del circuito, incluidas las pistas dibujadas/importadas.
 
+- `js/vehicle-dynamics.js`: dinámica longitudinal, lateral y de giro compartida con el servidor.
+- `js/vehicle-paint.js`: máscaras de atlas, pintura independiente y liberación de materiales.
+- `js/tire-smoke.js` y `js/smoke-renderer.js`: emisión por neumático y malla de nubes con buffers limitados.
 - `js/downhill.js`: rutas abiertas, campo de alturas y física exclusiva de Cerro abajo.
 - `js/mountain-scene.js`: relieve, carretera abierta, vegetación, barreras y salida/meta del sprint.
 - `js/circuit-layouts.js`: veinte trazados originales con rectas, arcos tangentes, horquillas y enlaces; progresión de 720 a 2550 m en cinco etapas. El generador usa recetas de sectores y muestreo por distancia, sin ondulaciones radiales.
 - `js/road-contact.js`: perfil redondeado del borde (14 cm × 70 cm) y respuesta vertical por rueda, calculada con el mismo paso fijo en 2D y 3D. Agrega altura, inclinación y amortiguación; no altera dirección, tracción, frenado ni puntuación.
-- `js/view3d.js`: Three.js r170, modelos de los seis autos, ruedas orientables, humo, huellas, cámaras y entorno. La decoración no añade colisiones a las reglas originales.
+- `js/view3d.js`: Three.js r170, modelos de los cinco autos, ruedas orientables, humo, huellas, cámaras y entorno. La decoración no añade colisiones a las reglas originales.
 - `js/rx7-model.js`: adaptación del RX-7 FD RedSuns suministrado para el auto amarillo; conserva cuatro ruedas independientes, texturas y movimiento del juego. Créditos y procedencia en `assets/models/README.md`.
 - `js/track-surface.js`: une el área del circuito antes de triangular. Asfalto, línea de borde, piano y escapatoria son regiones contiguas sin superposición. El piano se eleva con seis bandas unidas y conserva sus franjas naranjas/blancas; utiliza el mismo campo de alturas que las ruedas. Se divide en sectores para descartar geometría fuera de cámara. No modifica puntos, ancho ni muestreo de físicas.
 - `js/software-renderer.js`: proyección 3D con búfer de profundidad sobre Canvas para equipos sin WebGL. Reduce resolución y detalle; es más lenta que WebGL y se recomienda calidad ligera si no resulta fluida.
@@ -184,11 +199,11 @@ La ayuda pausa la conducción. Cambiar de pestaña o perder foco también pausa 
 - `css/experience.css`: interfaz adaptable y estilo visual.
 - `vendor/`: Three.js (MIT) y Clipper 6.4.2 (Boost Software License 1.0, con aviso del subconjunto JSBN) distribuidos localmente. El juego no depende de una CDN para el 3D.
 
-Las geometrías, materiales y texturas de la pista anterior se liberan al cambiar de circuito. La calidad limita la resolución y la cantidad de árboles. El auto amarillo usa el GLB aportado, el Yugo usa su adaptación low poly y los otros tres mantienen sus modelos geométricos. Se conserva el balanceo visual original y se suma una suspensión vertical amortiguada al cruzar el piano. Las ruedas siguen el relieve de forma independiente; la carrocería responde al apoyo de los cuatro neumáticos. Los circuitos planos no añaden paredes ni bloqueos laterales; Cerro abajo sí incorpora tramos de guardarraíl.
+Las geometrías, materiales y texturas de la pista anterior se liberan al cambiar de circuito. La calidad limita la resolución y la cantidad de árboles. Los cinco autos usan modelos GLB; el Yugo tiene una adaptación low poly. La suspensión amortigua los pianos y la transferencia de carga inclina la carrocería al acelerar, frenar y girar. Las ruedas siguen el relieve de forma independiente; la carrocería responde al apoyo de los cuatro neumáticos. Los circuitos planos no añaden paredes ni bloqueos laterales; Cerro abajo sí incorpora tramos de guardarraíl.
 
 ## Datos guardados
 
-Se mantienen las claves `tt:*` y `challenge:*` y el formato de los fantasmas existentes. Las preferencias nuevas usan `drift:preferences:v3`. Los nuevos trazados tienen IDs distintos: los récords y fantasmas anteriores permanecen guardados, pero no se mezclan con los de rutas diferentes. Se conservan los desafíos desbloqueados y los mejores puntos históricos. Los datos pertenecen al navegador y dominio actuales: mantener `driftgame.onrender.com` evita cambiar ese origen. Borrar datos del sitio elimina el progreso.
+Se mantienen las claves anteriores `tt:*` y `challenge:*` y el formato de los fantasmas. Desde prealpha.3, los nuevos récords TT se guardan con `:physics-v2` por el cambio de física y velocidad. Las preferencias nuevas usan `drift:preferences:v3`. Los nuevos trazados tienen IDs distintos: los récords y fantasmas anteriores permanecen guardados, pero no se mezclan con los de rutas diferentes. Se conservan los desafíos desbloqueados y los mejores puntos históricos. Los datos pertenecen al navegador y dominio actuales: mantener `driftgame.onrender.com` evita cambiar ese origen. Borrar datos del sitio elimina el progreso.
 
 ## Pruebas
 
@@ -244,6 +259,6 @@ Sitio estático, directorio público `.` y sin paso de compilación. Mantener el
 
 En el menú, abre **Online beta**. Escribe tu nombre y crea una sala, o entra con el código de 6 caracteres de un amigo. El anfitrión elige uno de los 20 circuitos, 1–5 vueltas y el ambiente. Cada piloto elige su auto en el garage y marca **Estoy listo**. Con 2 o 3 pilotos listos, el anfitrión inicia la salida sincronizada.
 
-Las carreras son sin contacto. Se conserva la física de los seis autos en vista 3D. Shift activa la función de derrape que antes estaba en Espacio; Espacio frena. E/Q cambian marchas manuales. R vuelve al último control validado. Abrir el menú online no detiene la carrera. El servidor valida las vueltas y muestra la clasificación; al terminar, el anfitrión puede preparar otra carrera.
+Las carreras son sin contacto. Los cinco autos usan la misma física compartida del cliente y servidor. Shift activa la función de derrape que antes estaba en Espacio; Espacio frena. E/Q cambian marchas manuales. R vuelve al último control validado. Abrir el menú online no detiene la carrera. El servidor valida las vueltas y muestra la clasificación; al terminar, el anfitrión puede preparar otra carrera.
 
 La conexión usa WebSocket seguro, predicción local e interpolación de los dos rivales. Si se interrumpe, la plaza se conserva 20 segundos. Las salas beta viven en memoria y se pierden al reiniciar el servidor. En el plan gratuito de Render, la primera conexión puede tardar mientras despierta. Ver [operación y protocolo](server/README.md).

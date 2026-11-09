@@ -1,8 +1,10 @@
 /* 1.0 local career. Stock physics and online authority remain independent. */
 globalThis.DriftCareer=(()=>{
   'use strict';
-  const KEY='drift:career:v1',skins=['blue','red','yellow','gray','yugo','fujiwara'];
+  const KEY='drift:career:v1',skins=['blue','yellow','gray','yugo','fujiwara'];
   const colors=['#66e0ff','#ff7544','#c58bff','#82ed9b','#ffe27d','#f0f4ef'];
+  const paints=[{color:null,name:'Original'},{color:'#16191e',name:'Negro'},{color:'#f0f1ec',name:'Blanco'},{color:'#aeb8c3',name:'Plata'},{color:'#2456be',name:'Azul'},{color:'#c83232',name:'Rojo'},{color:'#e2b737',name:'Amarillo'},{color:'#26745c',name:'Verde'}];
+  const paint=value=>/^#[0-9a-f]{6}$/i.test(value||'')?value.toLowerCase():null;
   const finite=(n,d=0)=>Number.isFinite(n)?n:d,clamp=(n,a,b)=>Math.max(a,Math.min(b,n)),money=n=>Math.floor(clamp(finite(n),0,999999999));
   const rows=[
     ['engine','Motor','engine',1800,'Más fuerza disponible en todo el régimen.',{engineForce:.07}],
@@ -27,17 +29,20 @@ globalThis.DriftCareer=(()=>{
     ['smoke','Humo','smoke',900,'Nivel 1: volumen ×2. Nivel 2: ×3. Nivel 3: color.',{}]
   ];
   const catalog=rows.map(([id,name,icon,cost,description,effects])=>Object.freeze({id,name,icon,cost,description,effects,max:id==='neon'?1:3}));
-  const profiles={blue:{name:'R34 · respuesta equilibrada',factor:1,price:1,engine:'Preparación de seis cilindros en línea',induction:'Admisión de alto flujo',ignition:'Gestión electrónica'},red:{name:'V8 · par y masa',factor:.88,price:1.15,engine:'Preparación V8',induction:'Admisión V8',weight:'Aligeramiento del V8'},yellow:{name:'Rotativo · potencia progresiva',factor:.93,price:1.25,engine:'Preparación rotativa',induction:'Presión del turbo',ignition:'Gestión del rotativo'},gray:{name:'Nova SS · control progresivo',factor:1.08,price:.85,engine:'Preparación V8 del Nova SS',fuel:'Alimentación del V8'},yugo:{name:'1.1 · ligereza y carburación',factor:1.18,price:.65,engine:'Preparación del 1.1',induction:'Admisión del carburador',fuel:'Carburación',ignition:'Encendido electrónico',gearing:'Relaciones de cinco marchas'},fujiwara:{name:'4A · enlace de curvas',factor:1.04,price:1.05,engine:'Preparación 4A',induction:'Admisión del 4A',ignition:'Gestión del 4A'}};
+  const profiles={blue:{name:'R34 · respuesta equilibrada',factor:1,price:1,engine:'Preparación de seis cilindros en línea',induction:'Admisión de alto flujo',ignition:'Gestión electrónica'},yellow:{name:'Rotativo · potencia progresiva',factor:.93,price:1.25,engine:'Preparación rotativa',induction:'Presión del turbo',ignition:'Gestión del rotativo'},gray:{name:'Nova SS · control progresivo',factor:1.08,price:.85,engine:'Preparación V8 del Nova SS',fuel:'Alimentación del V8'},yugo:{name:'1.1 · ligereza y carburación',factor:1.18,price:.65,engine:'Preparación del 1.1',induction:'Admisión del carburador',fuel:'Carburación',ignition:'Encendido electrónico',gearing:'Relaciones de cinco marchas'},fujiwara:{name:'4A · enlace de curvas',factor:1.04,price:1.05,engine:'Preparación 4A',induction:'Admisión del 4A',ignition:'Gestión del 4A'}};
   function fresh(){return {version:1,cash:0,unlocked:1,missions:{},cars:{},wins:0,receipts:[]};}
   function clean(raw){
     const p=fresh();if(!raw||typeof raw!=='object')return p;
     p.receipts=Array.isArray(raw.receipts)?raw.receipts.filter(x=>typeof x==='string'&&x.length<100).slice(-100):[];
     p.cash=money(raw.cash);p.wins=money(raw.wins);p.unlocked=clamp(Math.floor(finite(raw.unlocked,1)),1,20);
     for(let i=1;i<=20;i++)p.missions[i]=[0,1,2].map(j=>raw.missions?.[i]?.[j]===true);
-    for(const skin of skins){const src=raw.cars?.[skin],car={owned:{},active:{},neonColor:colors[0],smokeColor:colors[5]};
+    for(const skin of skins){const src=raw.cars?.[skin],car={owned:{},active:{},neonColor:colors[0],smokeColor:colors[5],paintColor:paint(src?.paintColor)};
       for(const part of catalog){car.owned[part.id]=clamp(Math.floor(finite(src?.owned?.[part.id])),0,part.max);car.active[part.id]=clamp(Math.floor(finite(src?.active?.[part.id],car.owned[part.id])),0,car.owned[part.id]);}
       for(const key of ['neonColor','smokeColor'])if(colors.includes(src?.[key]))car[key]=src[key];p.cars[skin]=car;
-    }return p;
+    }
+    // Retired C'Maro purchases move to the Nova once; save drops the retired slot.
+    const old=raw.cars?.red;if(old)for(const part of catalog){const car=p.cars.gray,tier=clamp(Math.floor(finite(old.owned?.[part.id])),0,part.max);car.owned[part.id]=Math.max(car.owned[part.id],tier);car.active[part.id]=Math.max(car.active[part.id],clamp(Math.floor(finite(old.active?.[part.id],tier)),0,tier));}
+    return p;
   }
   function load(storage=globalThis.localStorage){try{const raw=storage.getItem(KEY);if(raw)return clean(JSON.parse(raw));const p=clean(fresh());p.unlocked=clamp(parseInt(storage.getItem('challenge:unlocked')||'1',10)||1,1,20);return p;}catch{return clean(fresh());}}
   function save(p,storage=globalThis.localStorage){try{storage.setItem(KEY,JSON.stringify(clean(p)));return true;}catch{return false;}}
@@ -58,13 +63,14 @@ globalThis.DriftCareer=(()=>{
   }
   function equip(skin,id,level,storage=globalThis.localStorage){const p=load(storage),c=p.cars[skin];if(!c||!part(skin,id)||!Number.isInteger(level)||level<0||level>c.owned[id])return false;c.active[id]=level;return save(p,storage);}
   function color(skin,key,value,storage=globalThis.localStorage){const p=load(storage),c=p.cars[skin];if(!c||!['neonColor','smokeColor'].includes(key)||!colors.includes(value))return false;c[key]=value;return save(p,storage);}
+  function setPaint(skin,value,storage=globalThis.localStorage){if(value!==null&&!paint(value))return false;const p=load(storage);if(!p.cars[skin])return false;p.cars[skin].paintColor=paint(value);return save(p,storage);}
   function onlineReward({key,place,finished,players},storage=globalThis.localStorage){
     if(typeof key!=='string'||key.length>99||place!==1||finished<8000||players<2)return {ok:false,reward:0};
     const p=load(storage);if(p.receipts.includes(key))return {ok:true,reward:0};
     p.cash=money(p.cash+1500);p.wins++;p.receipts.push(key);p.receipts=p.receipts.slice(-100);
     return save(p,storage)?{ok:true,reward:1500}:{ok:false,reward:0};
   }
-  function cosmetics(config){return {neon:config?.active.neon?config.neonColor:null,smokeVolume:config?.active.smoke>=2?3:config?.active.smoke===1?2:1,smokeColor:config?.active.smoke>=3?config.smokeColor:'#dde8e8'};}
+  function cosmetics(config){return {paint:config?.paintColor||null,neon:config?.active.neon?config.neonColor:null,smokeVolume:config?.active.smoke>=2?3:config?.active.smoke===1?2:1,smokeColor:config?.active.smoke>=3?config.smokeColor:'#dde8e8'};}
   const scalarKeys=['engineForce','throttleRate','handLatFriction','baseLatFriction','shiftDur','brakeForce','mass','steerRate','maxSteer'];
   function apply(car,skin,config){
     if(!config)return car;
@@ -111,5 +117,5 @@ car.cosmetics=cosmetics(config);car.upgradeSignature=catalog.map(x=>config.activ
       this.settled=true;this.complete=complete;return {ok:true,reward,complete,newMissions,profile:p};
     }
   }
-  return Object.freeze({KEY,catalog,profiles,skins,colors,load,save,stars,tierStars,objectives,part,price,purchase,equip,color,onlineReward,cosmetics,apply,metrics,Run});
+  return Object.freeze({KEY,catalog,profiles,skins,colors,paints,setPaint,load,save,stars,tierStars,objectives,part,price,purchase,equip,color,onlineReward,cosmetics,apply,metrics,Run});
 })();

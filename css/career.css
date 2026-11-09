@@ -38,3 +38,5 @@
 @media(max-width:650px){.part-categories{grid-template-columns:repeat(4,minmax(0,1fr))}.part-categories button{font-size:9px}.performance-row span{font-size:9px}}
 
 .series-specs-label{display:block;font:8px ui-monospace,monospace;color:#8fa19f;margin:12px 0}
+
+.garage-paint{border-top:1px solid #ffffff20;padding-top:12px;margin-top:14px}.garage-paint>div:first-child{display:flex;justify-content:space-between;font-size:12px}.garage-paint #paintName{color:#aebbbb}.garage-paint .color-options{gap:8px;margin:12px 0;flex-wrap:wrap}.garage-paint .color-options button{width:25px;height:25px;padding:0;border-radius:50%;line-height:20px;color:#fff;text-shadow:0 1px 4px #000}.custom-paint{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#b8c6c8}.custom-paint input{width:44px;height:26px;padding:0;border:1px solid #ffffff40;background:transparent;cursor:pointer}#paintStatus{font-size:10px;min-height:12px;margin:4px 0;color:#82ed9b}

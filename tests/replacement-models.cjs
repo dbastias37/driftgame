@@ -58,7 +58,7 @@ test('replacement vehicles load in player, garage, rivals and ghost; steer, spin
 });
 test('saved vehicle IDs, upgrades and stock tuning survive both replacements; wheel effects match both rear pivots',()=>{
  const r=harness();
- for(const [skin,name,tune] of [['gray','Chevrolet Nova SS',{engine:.95,lat:1,hand:1,drag:1.05,mass:.95}],['blue','Nissan Skyline R34',{engine:1.10,lat:.95,hand:.85,drag:.98,mass:.95}]]){
+ for(const [skin,name,tune] of [['gray','Chevrolet Nova SS',{engine:.95,lat:1,hand:1,drag:1.05,mass:1.28}],['blue','Nissan Skyline R34',{engine:1.10,lat:.95,hand:.85,drag:.98,mass:1.23}]]){
   assert.equal(r(`CAR_DATA.find(c=>c.sprite==='${skin}').name`),name);assert.deepEqual(r(`CAR_DATA.find(c=>c.sprite==='${skin}').tune`),tune);
   const result=r(`(()=>{const c=new Car(presetTrack(1));configureSelectedCar(c,CAR_DATA.find(d=>d.sprite==='${skin}'));DriftRoadContact.alignWheelEffects(c,'${skin}');c.pos={x:0,y:0};c.angle=0;c.spawnTrails({x:1,y:0},{x:0,y:1},1/60,1);c.trailOn=true;c.smokeAcc=1;c.updateSmoke(0,{x:1,y:0},{x:0,y:1},1,100,0);return {trail:c.tireTrails.at(-1),smoke:c.smoke,wheels:DriftRoadContact.wheelOffsets('${skin}').slice(0,2)};})()`);
   for(let i=0;i<2;i++){const w=result.wheels[i];close(result.trail['x'+(i+1)],w.x);close(result.trail['y'+(i+1)],w.z);assert(Math.abs(result.smoke[i].x-w.x)<.08);assert(Math.abs(result.smoke[i].y-w.z)<.08);}
@@ -68,7 +68,7 @@ test('saved vehicle IDs, upgrades and stock tuning survive both replacements; wh
 test('late model downloads cannot override another choice or recreate a disposed view',async()=>{
  const {templates}=await loaded,{DriftView3D}=await import('../js/view3d.js');let done;
  const make=()=>{const old=console.error;console.error=()=>{};try{return new DriftView3D(canvas(),{loadVehicle:null,loadYugoVehicle:null,loadFujiwaraVehicle:null,loadSkylineVehicle:null,loadNovaVehicle:()=>new Promise(r=>done=r)});}finally{console.error=old;}};
- let view=make();view.setSkin('gray');view.setSkin('red');done(templates.gray);await view.novaReady;assert.equal(view.key,'red');view.dispose();
+ let view=make();view.setSkin('gray');view.setSkin('blue');done(templates.gray);await view.novaReady;assert.equal(view.key,'blue');view.dispose();
  view=make();view.dispose();done(templates.gray);await view.novaReady;assert.equal(view.scene.children.length,0);
 });
 
