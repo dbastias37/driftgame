@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
-import './game-options.js?v=1.0.0-prealpha.4';
-import {cloudTexture} from './smoke-renderer.js?v=1.0.0-prealpha.4';
+import './game-options.js?v=1.0.0-prealpha.4.1';
+import {cloudTexture} from './smoke-renderer.js?v=1.0.0-prealpha.4.1';
 const fract=n=>n-Math.floor(n),random=n=>fract(Math.sin(n*78.233+12.9898)*43758.5453);
 
 export class WeatherEffects{

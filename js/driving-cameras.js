@@ -1,7 +1,7 @@
 import * as T from '../vendor/three.module.min.js';
 export const onboardCameras=new Set(['hood','fender','fenderRight','bumper','rear']);
 export function onboardShot(mode,model,dimensions={}){
-  const length=dimensions.length||4.4,width=dimensions.width||1.8;
+  const length=dimensions?.length||4.4,width=dimensions?.width||1.8;
   let eye,look;
   if(mode==='fender'||mode==='fenderRight'){const side=mode==='fender'?-1:1;eye=[length*.12,.72,side*(width*.5+.30)];look=[length*5,.68,side*(width*.5+.75)];}
   else if(mode==='bumper'){eye=[length*.5+.16,.38,0];look=[length*7,.5,0];}

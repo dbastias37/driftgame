@@ -36,7 +36,7 @@ Reproducir: `node scripts/benchmark-renderer.mjs /ruta/al/checkout psx` (omitir 
 
 ## Verificación
 
-- `npm run test:core`: **143 pruebas**. Incluye matriz cliente/servidor de 3 manejos × 5 climas, vueltas completas secas/mojadas en circuitos 1/8/20, cuenta regresiva sin movimiento de física, impulso/conservación de momento, colisiones desactivadas, repintado consecutivo y protección del atlas, cristales reales, zoom en diez cámaras, mapa y lluvia.
+- `npm run test:core`: **144 pruebas**. Incluye matriz cliente/servidor de 3 manejos × 5 climas, vueltas completas secas/mojadas en circuitos 1/8/20, cuenta regresiva sin movimiento de física, impulso/conservación de momento, colisiones desactivadas, repintado consecutivo y protección del atlas, cristales reales, zoom en diez cámaras, mapa y lluvia.
 - Shaders Basic y Standard con texturas, instancias/flat shading y niebla, más postproceso, compilados con OpenGL EGL/llvmpipe. Preparación: `node scripts/prepare-retro-shaders.mjs /tmp/drift-glsl`; validación opcional con Python y moderngl: `python scripts/validate-retro-shaders.py /tmp/drift-glsl`.
 - Revisión visual en navegador: portada, ajustes guardados, PSX/bit depth, lluvia/día, desplazamiento/zoom/recentrado de mapa, Nova rojo → verde → blanco, parrilla de cuatro, conducción, pausa y cámara de tapabarro.
 - El navegador remoto no ofrece WebGL. La revisión visual usa el render compatible; falta una medición en GPU de escritorio y teléfono reales.
