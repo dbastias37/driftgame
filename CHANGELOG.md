@@ -1,3 +1,13 @@
+## 1.0.0-prealpha.3 — 2026-11-09
+
+- Retira el C’Maro y migra sus mejoras al Nova sin perder niveles. Guarda la selección por ID estable.
+- Añade pintura gratuita por vehículo, paleta y selector personalizado. Máscaras de atlas conservan ruedas, cristales, luces y gráficos. Pintura compartida con rivales online y repetición.
+- Sustituye el giro directo por fuerzas longitudinales/laterales, momento de inercia, reparto de tracción, círculo de fricción y transferencia de carga. Muelles/amortiguadores hacen visible el peso de cada carrocería.
+- Aumenta 10% la velocidad efectiva de serie de los cinco autos, con relojes y gravedad sin escalar. Separa los nuevos récords TT con `:physics-v2`.
+- Renueva humo con emisión por contacto, crecimiento, elevación y opacidad individual; malla limitada para WebGL/render compatible y rivales online.
+- Protocolo online 2: sincroniza estados de carga/deslizamiento necesarios para la predicción. El cliente y servidor ejecutan exactamente las mismas trayectorias.
+- 129 pruebas de núcleo aprobadas. Regresiones de velocidad frente a la versión anterior, cargas, energía, respuesta de dirección, estabilidad temporal, suspensión, pintura y migración. Revisión visual en navegador compatible; GPU y tacto en teléfono físico pendientes.
+
 ## 1.0.0-prealpha.2 — 2026-11-09
 
 - Sustituye Sumaru/Subaru por Nissan Skyline R34 azul y Toiota/Corolla por Chevrolet Nova SS negro, a partir de los archivos del usuario.

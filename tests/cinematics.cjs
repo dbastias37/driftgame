@@ -12,7 +12,7 @@ test('x5 requires a drifting tire on the raised kerb; losing contact returns to 
 test('kerb contact follows each model wheel footprint, on both flat and mountain road edges',async()=>{
  await ready;const R=DriftRoadContact,flat={points:[{x:-100,y:0},{x:100,y:0},{x:100,y:100},{x:-100,y:100}],roadHalf:14};
  const mountain={...flat,downhill:true,sampleNearby:(x,y)=>({distance:Math.abs(y)}),surfaceHeight:()=>40};
- for(const track of [flat,mountain])for(const skin of ['blue','red','yellow','gray','yugo','fujiwara'])for(const side of [-1,1]){
+ for(const track of [flat,mountain])for(const skin of ['blue','yellow','gray','yugo','fujiwara'])for(const side of [-1,1]){
   const p=pose();p.pos.y=side*(14.51-Math.abs(R.wheelOffsets(skin)[0].z));assert.equal(R.curbWheels(track,p,skin),2,skin);
   p.pos.y=0;assert.equal(R.curbWheels(track,p,skin),0);p.pos.y=14.51;assert.equal(R.curbWheels(track,p,skin),0,'body over curb alone is insufficient');
  }

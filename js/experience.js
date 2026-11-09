@@ -22,9 +22,12 @@ $('#btnPlayNow').addEventListener('click',()=>{showMainMenu();$('#btnQuickRace')
 $('#btnBackTitle').addEventListener('click',()=>{hidePanels();state='title';$('#titleScreen').classList.remove('hidden');$('#btnPlayNow').focus();});
 $('#btnDemoPause').addEventListener('click',()=>{attractDemo.paused=!attractDemo.paused;$('#btnDemoPause').textContent=attractDemo.paused?'▶ EXHIBICIÓN':'Ⅱ EXHIBICIÓN';});
 const CAMERA_NAMES={chase:'Seguimiento',aerial:'Aérea',hood:'Capó',drone:'Dron cinematográfico'};
-if(Number.isInteger(savedPrefs.car)&&savedPrefs.car>=0&&savedPrefs.car<CAR_DATA.length){carIdx=savedPrefs.car;chosen=CAR_DATA[carIdx];}
+const oldCarOrder=['blue','red','yellow','gray','yugo','fujiwara'];
+const savedSkin=savedPrefs.carSkin||oldCarOrder[savedPrefs.car];
+const savedIndex=CAR_DATA.findIndex(c=>c.sprite===(savedSkin==='red'?'gray':savedSkin));
+if(savedIndex>=0){carIdx=savedIndex;chosen=CAR_DATA[carIdx];}
 if(savedPrefs.tx==='manual')document.querySelector('input[name="tx"][value="manual"]').checked=true;
-function saveRenderPrefs(){try{localStorage.setItem(PREF_KEY,JSON.stringify({...renderPrefs,car:carIdx,tx:selectedTx()}));}catch{}}
+function saveRenderPrefs(){try{localStorage.setItem(PREF_KEY,JSON.stringify({...renderPrefs,car:carIdx,carSkin:chosen.sprite,tx:selectedTx()}));}catch{}}
 function toast(message){$('#toast').textContent=message;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),3400);}
 function syncRenderUI(){
   $('#btnCamera').disabled=renderPrefs.view!=='3d';
@@ -242,8 +245,8 @@ $('#btnRecover').addEventListener('click',loseLifeAndRespawn);
 
 
 
-import('./view3d.js?v=1.0.0-prealpha.2').then(({DriftView3D})=>{
+import('./view3d.js?v=1.0.0-prealpha.3').then(({DriftView3D})=>{
   sceneView=new DriftView3D($('#scene3d'),{quality:renderPrefs.quality,onFailure:fail3D,onVehicleFailure:()=>toast('No se pudo cargar un modelo de auto. Recarga para volver a intentarlo.')});
   if(sceneView.software)toast('3D compatible activo · Calidad ligera');
 }).catch(fail3D);
-import('./menu-preview.js?v=1.0.0-prealpha.2').then(module=>{MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});
+import('./menu-preview.js?v=1.0.0-prealpha.3').then(module=>{MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});

@@ -7,7 +7,7 @@ export function createServer({origins=(process.env.ALLOWED_ORIGINS||'https://dri
   const server=http.createServer((req,res)=>{
     res.setHeader('Cache-Control','no-store');res.setHeader('Content-Type','application/json');
     if(origins.includes(req.headers.origin))res.setHeader('Access-Control-Allow-Origin',req.headers.origin);
-    if(req.url==='/'||req.url==='/health'){res.writeHead(200);res.end(JSON.stringify({ok:true,protocol:1,rooms:rooms.rooms.size}));}
+    if(req.url==='/'||req.url==='/health'){res.writeHead(200);res.end(JSON.stringify({ok:true,protocol:2,rooms:rooms.rooms.size}));}
     else{res.writeHead(404);res.end('{}');}
   });
   const wss=new WebSocketServer({noServer:true,maxPayload:8192,perMessageDeflate:false});

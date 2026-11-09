@@ -1,4 +1,4 @@
-/* Shared road height and vertical suspension. Planar Car physics is untouched.
+/* Shared road height and spring/damper suspension driven by tyre forces.
  * Loaded before the simulation and reused by the 3D mesh as a side-effect import.
  */
 globalThis.DriftRoadContact ||= (()=>{
@@ -66,6 +66,7 @@ globalThis.DriftRoadContact ||= (()=>{
   }
   function reset(track,car,skin){
     const pose=contacts(track,car,skin);
+    globalThis.DriftDynamics?.reset(car);
     car.ride={...pose,vy:0,vr:0,vp:0,lastX:car.pos.x,lastY:car.pos.y,lastAngle:car.angle,skin};
     return car.ride;
   }
@@ -82,7 +83,10 @@ globalThis.DriftRoadContact ||= (()=>{
     for(let i=1;i<=count;i++){
       const t=i/count;
       target=contacts(track,{pos:{x:r.lastX+(car.pos.x-r.lastX)*t,y:r.lastY+(car.pos.y-r.lastY)*t},angle:r.lastAngle+da*t},skin);
-      for(const [axis,velocity,k,damping] of [['height','vy',180,22],['roll','vr',140,20],['pitch','vp',140,20]]){
+      const handling=car.handling||{},stiffness=car.suspensionTune?.stiffness||1;
+      target.roll-=clamp((car.accelLat||0)/9.81*(handling.roll||.075)/stiffness,-.16,.16);
+      target.pitch+=clamp((car.accelLong||0)/9.81*(handling.pitch||.055)/stiffness,-.11,.11);
+      for(const [axis,velocity,k,damping] of [['height','vy',180,22],['roll','vr',handling.spring||62,handling.damp||10],['pitch','vp',(handling.spring||62)*1.15,(handling.damp||10)*1.1]]){
         r[velocity]+=(k*(car.suspensionTune?.stiffness||1)*(target[axis]-r[axis])-damping*(car.suspensionTune?.damping||1)*r[velocity])*h;
         r[axis]+=r[velocity]*h;
       }
@@ -94,14 +98,13 @@ globalThis.DriftRoadContact ||= (()=>{
     car._wheelEffectSkin=skin;
     if(car._wheelEffectsAligned)return;
     car._wheelEffectsAligned=true;
-    const spawn=car.spawnTrails,smoke=car.updateSmoke,update=car.update;
+    const spawn=car.spawnTrails,update=car.update;
     car.update=function(dt,input,track){this.braking=!!input.brake;return update.call(this,dt,input,track);};
     const align=(f,r,side)=>{
       const rear=wheelOffsets(car._wheelEffectSkin).find(p=>p.x<0&&(p.z>0)===(side>0));
       return {x:f.x*(rear.x+car.length*.5)+r.x*(rear.z-side*.9),y:f.y*(rear.x+car.length*.5)+r.y*(rear.z-side*.9)};
     };
     car.spawnTrails=function(f,r,dt,int){const previous=this.tireTrails.at(-1);spawn.call(this,f,r,dt,int);const t=this.tireTrails.at(-1);if(t&&t!==previous)for(const [side,n]of[[-1,1],[1,2]]){const d=align(f,r,side);t['x'+n]+=d.x;t['y'+n]+=d.y;}};
-    car.updateSmoke=function(dt,f,r,...rest){const old=new Set(this.smoke);smoke.call(this,dt,f,r,...rest);let n=0;for(const p of this.smoke)if(!old.has(p)){const d=align(f,r,n++%2?1:-1);p.x+=d.x;p.y+=d.y;}};
   }
   return Object.freeze({curb,profile,terrain,wheelOffsets,curbWheels,contacts,reset,update,alignWheelEffects});
 })();

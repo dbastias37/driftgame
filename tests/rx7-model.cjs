@@ -49,7 +49,7 @@ test('live RX-7 follows existing movement and body roll, steering and rolling on
   const player={pos:{x:100,y:0},vel:{x:10,y:0},angle:0,omega:.6,steerAngle:.35,handbrake:false,smoke:[],tireTrails:[],worldSpeed:()=>10};
   const before=JSON.stringify(player);view.render({track,player,skin:'yellow',dt:1/60});
   assert.ok(view.car.imported);assert.equal(JSON.stringify(player),before);
-  close(view.car.body.rotation.x,.012);close(view.car.root.position.x,100);
+  close(view.car.body.rotation.x,0);close(view.car.root.position.x,100);
   for(const w of view.car.wheels){close(w.steer.rotation.y,w.front?-.35:0);close(w.spin.rotation.z,-10/60/w.radius);}
   const centers=view.car.wheels.map(w=>w.steer.position.clone()),spins=view.car.wheels.map(w=>w.spin.rotation.z);
   view.render({track,player,skin:'yellow',dt:0});
@@ -62,7 +62,7 @@ test('live RX-7 follows existing movement and body roll, steering and rolling on
   player.pos={x:0,y:14.51-.768966};player.angle=0;
   globalThis.DriftRoadContact.reset(supportTrack,player,'yellow');
   const supported=JSON.stringify(player);view.render({track:supportTrack,player,skin:'yellow',motion:'reduced',dt:0});
-  assert.equal(JSON.stringify(player),supported);close(view.car.body.position.y,.07);assert.ok(view.car.body.rotation.x<-.08);
+  assert.equal(JSON.stringify(player),supported);close(view.car.body.position.y,.07+.55*(1-Math.cos(player.ride.roll)));assert.ok(view.car.body.rotation.x<-.08);
   for(const wheel of view.car.wheels)close(wheel.steer.position.y-wheel.baseY,wheel.steer.position.z>0?.14:0);
   view.dispose();
 });
@@ -71,7 +71,7 @@ test('late and failed downloads cannot switch a selected car or resurrect a disp
   const {template}=await loaded,{DriftView3D}=await import('../js/view3d.js');
   let resolve;const old=console.error;console.error=()=>{};let view;
   try{view=new DriftView3D(canvas(),{loadVehicle:()=>new Promise(r=>{resolve=r})});}finally{console.error=old;}
-  view.setSkin('yellow');view.setSkin('red');resolve(template);await view.assetReady;assert.equal(view.key,'red');assert.ok(!view.car.imported);view.dispose();
+  view.setSkin('yellow');view.setSkin('blue');resolve(template);await view.assetReady;assert.equal(view.key,'blue');assert.ok(!view.car.imported);view.dispose();
   console.error=()=>{};try{view=new DriftView3D(canvas(),{loadVehicle:()=>new Promise(r=>{resolve=r})});}finally{console.error=old;}
   view.dispose();resolve(template);await view.assetReady;assert.equal(view.scene.children.length,0);
   let reported=false;console.error=()=>{};try{view=new DriftView3D(canvas(),{loadVehicle:()=>Promise.reject(new Error('offline')),onVehicleFailure:()=>{reported=true}});}finally{console.error=old;}

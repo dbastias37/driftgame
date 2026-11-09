@@ -5,7 +5,7 @@ test('race and time trial choose the circuit before the garage and retain the ex
  for(const entry of ['btnQuickRace','btnModeTT']){
   const r=harness();r(`$('#${entry}').click()`);assert.equal(r(visible('circuitMenu')),true);assert.equal(r(visible('carPanel')),false);
   r('previewCircuit(17);confirmTrackPreview()');assert.equal(r(visible('carPanel')),true);assert.equal(r('preparedTrack.layout.level'),17);
-  r("carIdx=2;updatePanel();$('#btnCarBack').click()");assert.equal(r(visible('circuitMenu')),true);assert.equal(r('previewSelection.level'),17);
+  r("carIdx=CAR_DATA.findIndex(c=>c.sprite==='yellow');updatePanel();$('#btnCarBack').click()");assert.equal(r(visible('circuitMenu')),true);assert.equal(r('previewSelection.level'),17);
   r("confirmTrackPreview();$('#btnChooseStart').click()");assert.equal(r('state'),'countdown');assert.equal(r('track===preparedTrack'),true);assert.equal(r('chosen.sprite'),'yellow');assert.equal(r('mode'),entry==='btnModeTT'?'tt':'race');
  }
 });

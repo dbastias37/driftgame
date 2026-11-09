@@ -2,7 +2,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Drift Racer — 1.0 pre-alpha</title>
-<meta name="application-version" content="1.0.0-prealpha.1">
+<meta name="application-version" content="1.0.0-prealpha.3">
 <meta name="theme-color" content="#111719">
 <style>
   :root{--bg:#0b0b0b;--ink:#e6f1ff;}
@@ -220,10 +220,10 @@
   @media(max-height:500px){#carPreview{height:110px} #carPanel h2{font-size:19px} #times{top:122px} #ui{max-width:330px} #stickZone{width:120px;height:120px} #gasZone{height:135px}}
 .daytime-control{display:block;max-width:330px;margin:14px 0 8px;font-size:12px;color:#aebbbb}.daytime-control output{float:right;color:#ff7544}.daytime-control input{display:block;width:100%;margin:10px 0;accent-color:#ff7544;cursor:pointer}.daytime-ends{display:flex;justify-content:space-between;font-size:10px;color:#829597}
 </style>
-<link rel="stylesheet" href="css/experience.css?v=1.0.0-prealpha.2">
-<link rel="stylesheet" href="css/online.css?v=1.0.0-prealpha.2">
-<link rel="stylesheet" href="css/raw-menu.css?v=1.0.0-prealpha.2">
-<link rel="stylesheet" href="css/career.css?v=1.0.0-prealpha.2">
+<link rel="stylesheet" href="css/experience.css?v=1.0.0-prealpha.3">
+<link rel="stylesheet" href="css/online.css?v=1.0.0-prealpha.3">
+<link rel="stylesheet" href="css/raw-menu.css?v=1.0.0-prealpha.3">
+<link rel="stylesheet" href="css/career.css?v=1.0.0-prealpha.3">
 </head>
 <body>
   <div id="ui">
@@ -317,6 +317,7 @@
           <div class="garage-stats">
             <div>Aceleración<div class="bar"><i id="barAcc"></i></div></div><div>Torque<div class="bar"><i id="barTrq"></i></div></div><div>Velocidad máxima<div class="bar"><i id="barVmax"></i></div></div><div>Peso<div class="bar"><i id="barMass"></i></div></div>
           </div>
+          <section class="garage-paint" aria-label="Pintura de la carrocería"><div><b>Pintura</b><span id="paintName">Original</span></div><div id="paintOptions" class="color-options"></div><label class="custom-paint">Color personalizado <input id="paintCustom" type="color" value="#2955b8" aria-label="Elegir color de carrocería"></label><p id="paintStatus" role="status" aria-live="polite"></p></section>
           <div class="tx-select"><b>Transmisión</b><label><input type="radio" name="tx" value="auto" checked> Automática</label><label><input type="radio" name="tx" value="manual"> Manual</label></div>
           <button id="btnWorkshop" class="workshop-entry">TALLER <span>20 MÓDULOS ↗</span></button><p id="garageWallet" class="career-wallet"></p>
           <div class="garage-destination"><small>CIRCUITO ELEGIDO</small><b id="garageTrackName">—</b><p id="sessionBrief" class="muted"></p><button id="btnGarageTrack" class="text-button">Revisar circuito ↗</button></div>
@@ -456,16 +457,18 @@
   
   <audio id="radio" preload="none" crossorigin="anonymous"></audio>
 
-<script src="js/career.js?v=1.0.0-prealpha.2"></script>
-<script src="js/replay.js?v=1.0.0-prealpha.2"></script>
-<script src="js/drift-effects.js?v=1.0.0-prealpha.2"></script>
-<script src="js/attract-demo.js?v=1.0.0-prealpha.2"></script>
-<script src="js/circuit-layouts.js?v=1.0.0-prealpha.2"></script>
-<script src="js/vehicle-fit.js?v=1.0.0-prealpha.2"></script>
-<script src="js/road-contact.js?v=1.0.0-prealpha.2"></script>
-<script src="js/downhill.js?v=1.0.0-prealpha.2"></script>
-<script src="js/yugo-physics.js?v=1.0.0-prealpha.2"></script>
-<script src="js/online-rules.js?v=1.0.0-prealpha.2"></script>
+<script src="js/career.js?v=1.0.0-prealpha.3"></script>
+<script src="js/replay.js?v=1.0.0-prealpha.3"></script>
+<script src="js/drift-effects.js?v=1.0.0-prealpha.3"></script>
+<script src="js/attract-demo.js?v=1.0.0-prealpha.3"></script>
+<script src="js/circuit-layouts.js?v=1.0.0-prealpha.3"></script>
+<script src="js/vehicle-fit.js?v=1.0.0-prealpha.3"></script>
+<script src="js/road-contact.js?v=1.0.0-prealpha.3"></script>
+<script src="js/downhill.js?v=1.0.0-prealpha.3"></script>
+<script src="js/yugo-physics.js?v=1.0.0-prealpha.3"></script>
+<script src="js/vehicle-dynamics.js?v=1.0.0-prealpha.3"></script>
+<script src="js/tire-smoke.js?v=1.0.0-prealpha.3"></script>
+<script src="js/online-rules.js?v=1.0.0-prealpha.3"></script>
 <script>
 "use strict";
 
@@ -673,7 +676,6 @@ function mkLocal(path){
 const LEGACY_2D_ENABLED=false;
 const CAR_IMG=LEGACY_2D_ENABLED?{
   blue:   mkLocal('assets/cars/blue.png'),
-  red:    mkLocal('assets/cars/red.png'),
   yellow: mkLocal('assets/cars/yellow.png'),
   gray:   mkLocal('assets/cars/gray.png'),
   yugo:   mkLocal('assets/cars/yugo.png'),
@@ -848,38 +850,14 @@ class Car{
     this.lives=3; this.invuln=0; this.score=0; this.best=0; this.mult=1; this.driftTime=0; this.comboState=0; this.comboFlashTime=0; this.comboPhrase=''; this.comboPoints=0; this.comboBreak=0;
     this.tireTrails=[]; this._lastTrailOn=false; this.prevAngle=this.angle; this.prevSteerAngle=this.steerAngle; this.yawRate=0; this.steerVel=0; this.omega=0;
     this.trailOn=false; this.trailGrace=0; this.driftBreakTimer=0;
-    this.smoke=[]; this.smokeAcc=0; this.offTrack=false; this.offTimer=0; this.edgeShake=0;
+    this.smoke=[]; this.smokeAcc=0;this.smokeLimit=isTouchDevice?480:800; this.offTrack=false; this.offTimer=0; this.edgeShake=0;
     this.sprite=null;
     this._stripes=0;
-    this.wrongWay=false;
+    this.wrongWay=false;this.accelLong=this.accelLat=this.frontSlip=this.rearSlip=this.driveSlip=0;
   }
   worldSpeed(){ return H(this.vel.x,this.vel.y); }
   _physStep(dt,steer,thr,br){
-    if(this.shiftTimer>0) this.shiftTimer=Math.max(0,this.shiftTimer-dt);
-    const dThr=clamp(thr-this.throttleSm,-this.throttleRate*dt,this.throttleRate*dt); this.throttleSm+=dThr;
-    const sp=this.worldSpeed(), sf=clamp(1/(1+sp*.08),.25,1), maxNow=this.maxSteer*sf; this.steerTarget=steer*maxNow;
-    const sB=this.steerAngle, dS=clamp(this.steerTarget-this.steerAngle,-this.steerRate*dt,this.steerRate*dt); this.steerAngle+=dS; this.steerVel=(this.steerAngle-sB)/dt;
-    const f={x:C(this.angle),y:S(this.angle)}, r={x:-S(this.angle),y:C(this.angle)};
-    const vlong=this.vel.x*f.x+this.vel.y*f.y, vlat=this.vel.x*r.x+this.vel.y*r.y? (this.vel.x*r.x+this.vel.y*r.y) : 0;
-    const vlat2=this.vel.x*r.x+this.vel.y*r.y;
-    const gPow=this.gearPower[this.gear-1]||1, kmh=sp*3.6, maxK=this.gearMax[this.gear-1]||9999;
-    const shiftScale=this.shiftTimer>0?(0.45+0.55*(1-(this.shiftTimer/this.shiftDur))):1;
-    const bog=(this.gear>1 && kmh<maxK*0.38)? clamp(kmh/(maxK*0.38),0,1):1;
-    const trMin=this.tractionMin[this.gear-1]||0.85, trRamp=this.tractionRamp[this.gear-1]||40;
-    const traction=clamp(kmh/trRamp, trMin, 1);
-    let forceLong=this.throttleSm*this.engineForce*gPow*shiftScale*bog*traction - br*this.brakeForce*Math.sign(vlong);
-    forceLong+=-vlong*this.dragLinear - Math.sign(vlong)*vlong*vlong*this.dragQuad;
-    let latCoeff=this.handbrake?this.handLatFriction:this.baseLatFriction;
-    const dynDrop=clamp(Math.abs(this.omega)*0.35 + Math.abs(this.steerVel)*0.15,0,0.6); latCoeff*=1-0.25*dynDrop;
-    if(this.gear===1 && this.throttleSm>0.6 && kmh<32) latCoeff*=0.55;
-    const ax_local=forceLong/this.mass, ay_local=(-(this.vel.x*r.x+this.vel.y*r.y)*latCoeff)/this.mass;
-    const ax=ax_local*f.x+ay_local*r.x, ay=ax_local*f.y+ay_local*r.y;
-    this.vel.x+=ax*dt; this.vel.y+=ay*dt;
-    const desired=(this.worldSpeed()/this.length)*Math.tan(this.steerAngle);
-    this.omega += ((desired - this.omega)*3.2 - this.omega*1.1)*dt;
-    const aBefore=this.angle; this.angle += this.omega*dt; this.yawRate=(this.angle-aBefore)/dt;
-    this.pos.x+=this.vel.x*dt; this.pos.y+=this.vel.y*dt;
-    if(this.throttleSm===0 && sp<0.6){ const k=Math.max(0,1-10*dt); this.vel.x*=k; this.vel.y*=k; }
+    DriftDynamics.step(this,dt,steer,thr,br);
   }
   _updateScoreAndTrail(dt,track,f,r,kmh,vlat){
     const ENTER=.21; const s=track.sample(this.pos.x,this.pos.y);
@@ -930,6 +908,7 @@ class Car{
       ? clamp(input.steerAxis, -1, 1)
       : ((input.left ? -1 : 0) + (input.right ? 1 : 0));
     const thr=input.accel?1:0, br=input.brake?1:0; this.handbrake=!!input.handbrake;
+    this.braking=!!br;this._effectTrack=track;
     this._physStep(dt,steer,thr,br);
     const f={x:C(this.angle),y:S(this.angle)}, r={x:-S(this.angle),y:C(this.angle)};
     const vlong=this.vel.x*f.x+this.vel.y*f.y, vlat=this.vel.x*r.x+this.vel.y*r.y, kmh=this.worldSpeed()*3.6;
@@ -963,21 +942,7 @@ class Car{
   hit(track,s){ this.impactCount=(this.impactCount||0)+1;this.invuln=1; this.best=Math.max(this.best,this.score|0); this.score=0; this.breakFlow(); this.comboBreak=.8; this.pos.x=s.cx; this.pos.y=s.cy; this.vel.x*=-.25; this.vel.y*=.4; this.gear=Math.max(1,this.gear-1); camera.shake(8,280); }
   spawnTrails(f,r,dt,int){ const ro=-this.length*.5, rc={x:this.pos.x+f.x*ro,y:this.pos.y+f.y*ro}, ht=.9, lw={x:rc.x-r.x*ht,y:rc.y-r.y*ht}, rw={x:rc.x+r.x*ht,y:rc.y+r.y*ht}, a=clamp(.18+(int||0)*.1,.18,.9); this.tireTrails.push({x1:lw.x,y1:lw.y,x2:rw.x,y2:rw.y,a}); const MAX_TR=isTouchDevice?2500:4000; if(this.tireTrails.length>MAX_TR) this.tireTrails.splice(0,this.tireTrails.length-MAX_TR); }
   updateSmoke(dt,f,r,slip,kmh,vlat){
-    const nearRed1=(this.gear===1&&this.throttleSm>0.6&&kmh>this.gearMax[0]*0.9);
-    const rate=(this.trailOn||nearRed1)?(40+220*clamp(Math.max(0,slip-.18)/.6,0,1)*clamp(kmh/120,0,1))*(nearRed1?1.4:1):0; this.smokeAcc+=rate*dt;
-    if(dt>0.022) this.smokeAcc*=0.9;
-    const ro=-this.length*.5, rc={x:this.pos.x+f.x*ro,y:this.pos.y+f.y*ro}, wo=.9;
-    while(this.smokeAcc>=1){
-      this.smokeAcc-=1;
-      [{x:rc.x-r.x*wo,y:rc.y-r.y*wo},{x:rc.x+r.x*wo,y:rc.y+r.y*wo}].forEach(b=>{
-        const rnd=()=>Math.random()-.5, lat=rnd()*.5+vlat*.15, fwd=rnd()*.2-.1;
-        this.smoke.push({x:b.x+rnd()*.15,y:b.y+rnd()*.15,vx:r.x*lat+f.x*fwd,vy:r.y*lat+fwd, r:.4+Math.random()*.35,grow:.55+Math.random()*.35,a:.45+Math.random()*.25,life:0});
-      });
-    }
-    const drag=.92;
-    for(let i=this.smoke.length-1;i>=0;i--){ const p=this.smoke[i]; p.life+=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vx*=drag; p.vy*=drag; p.r+=p.grow*dt; p.a*=.98; if(p.life>1.2||p.a<.03) this.smoke.splice(i,1); }
-    const MAX_SM=isTouchDevice?900:1200;
-    if(this.smoke.length>MAX_SM) this.smoke.splice(0,this.smoke.length-MAX_SM);
+    DriftTireSmoke.update(this,dt,f,r,slip,kmh,vlat);
   }
   draw(g,cam){
     g.save(); g.translate(cam.tx,cam.ty); g.scale(cam.s,cam.s);
@@ -1205,7 +1170,7 @@ function startWithTrack(tr, m='race'){
   if(lapList) lapList.innerHTML='';
   camera.s=camera.targetS=(view.width<700||view.height<500)?Math.max(10,Math.min(18,view.height/30)):22;
   camera.tx=-player.pos.x*camera.s+view.width*.5;camera.ty=-player.pos.y*camera.s+view.height*.6;
-  currentTrackId = track.downhill?'DOWNHILL.v2.'+track.routeLevel:encodeTrack(track.points);
+  currentTrackId = (track.downhill?'DOWNHILL.v2.'+track.routeLevel:encodeTrack(track.points))+':physics-v2';
   if(mode==='tt'&&player.upgradeSignature?.replace(/0/g,''))currentTrackId+=':tuned:'+chosen.sprite+':'+player.upgradeSignature;
   replayUI?.reset();
   unlockControls();syncTouchHUD(); // Nueva sesión, mismos autos y datos guardados.
@@ -1624,12 +1589,11 @@ function loop(ms){
 
 /* ====== Panel de coche ====== */
 const CAR_DATA = [
-  {name:'Nissan Skyline R34', sprite:'blue',   color:'#2955b8', stripes:0, desc:'Coupé japonés azul con alerón y seis cilindros en línea. Drift estable y recuperaciones rápidas.', stats:{acc:.75,trq:.70,vmax:.82,mass:.75}, tune:{engine:1.10,lat:.95,hand:.85,drag:.98,mass:.95}},
-  {name:'Chevriolette C´Maro V8', sprite:'red', color:'#ff3b3b', stripes:2, desc:'Muscle car pesado con mucho par.',       stats:{acc:.68,trq:1.00,vmax:.86,mass:1.20}, tune:{engine:1.20,lat:.90,hand:.80,drag:1.02,mass:1.15}},
-  {name:'Mazda RX-7 FD · RedSuns', sprite:'yellow',         color:'#ffd93b', stripes:0, desc:'Muy veloz y estable.',                   stats:{acc:.90,trq:.82,vmax:1.00,mass:.92}, tune:{engine:1.25,lat:1.05,hand:.90,drag:.95,mass:.92}},
-  {name:'Chevrolet Nova SS', sprite:'gray',    color:'#16171a', stripes:0, desc:'Muscle car negro de silueta clásica, insignias SS y motor V8. Entrega progresiva y control predecible.',                 stats:{acc:.60,trq:.55,vmax:.70,mass:.95}, tune:{engine:.95,lat:1.00,hand:1.00,drag:1.05,mass:.95}},
+  {name:'Nissan Skyline R34', sprite:'blue',   color:'#2955b8', stripes:0, desc:'Seis cilindros y tracción integral con predominio trasero. Aplomo, dirección progresiva y recuperación estable.', stats:{acc:.75,trq:.70,vmax:.82,mass:.75}, tune:{engine:1.10,lat:.95,hand:.85,drag:.98,mass:1.23}},
+  {name:'Mazda RX-7 FD · RedSuns', sprite:'yellow',         color:'#ffd93b', stripes:0, desc:'Rotativo de tracción trasera y respuesta rápida. Dosifica el acelerador para sostener el sobreviraje y enlazar curvas.',                   stats:{acc:.90,trq:.82,vmax:1.00,mass:.92}, tune:{engine:1.25,lat:1.05,hand:.90,drag:.95,mass:.92}},
+  {name:'Chevrolet Nova SS', sprite:'gray',    color:'#16171a', stripes:0, desc:'V8 de tracción trasera. Más masa, inercia y recorrido de suspensión: prepara la frenada y acompaña el contravolante.',                 stats:{acc:.60,trq:.55,vmax:.70,mass:.95}, tune:{engine:.95,lat:1.00,hand:1.00,drag:1.05,mass:1.28}},
 ];
-CAR_DATA.push({name:'Yugo Koral 55',sprite:'yugo',color:'#ce362b',stripes:0,desc:'Ligero, corto y de reacciones ágiles. 55 CV · 790 kg · punta ≈145 km/h en llano. Drift adaptado al juego.',stats:{acc:.42,trq:.35,vmax:145/198,mass:790/1380},tune:{engine:1,lat:1,hand:1,drag:1,mass:1},specs:{power:'55 CV',torque:'77,4 Nm',speed:'≈145 km/h',mass:'790 kg'}});
+CAR_DATA.push({name:'Yugo Koral 55',sprite:'yugo',color:'#ce362b',stripes:0,desc:'Ligero, corto y de reacciones ágiles. 55 CV · 790 kg · punta de juego ≈160 km/h en llano. Tracción delantera y freno de mano para iniciar el drift.',stats:{acc:.42,trq:.35,vmax:145/198,mass:790/1380},tune:{engine:1,lat:1,hand:1,drag:1,mass:1},specs:{power:'55 CV',torque:'77,4 Nm',speed:'≈160 km/h (juego)',mass:'790 kg'}});
 CAR_DATA.push({name:'Toyota AE86 · Fujiwara',sprite:'fujiwara',color:'#e8e8da',stripes:0,desc:'El clásico panda de Fujiwara. Ligero, progresivo y ágil para enlazar las curvas del descenso.',stats:{acc:.76,trq:.62,vmax:.84,mass:.76},tune:{engine:1.08,lat:1.02,hand:.88,drag:1,mass:.82}});
 let carIdx=0, chosen=CAR_DATA[0];
 
@@ -1697,11 +1661,12 @@ function configureSelectedCar(car,data){
   if(data.sprite==='fujiwara'){car.bodyDimensions={length:4.215,width:1.7,height:1.335,cgHeight:.62};DriftRoadContact.alignWheelEffects(car,'fujiwara');}
   const fit=globalThis.DriftVehicleFit?.[data.sprite];
   if(fit){car.bodyDimensions={length:fit.length,width:fit.width,height:fit.height,cgHeight:fit.height*.46};DriftRoadContact.alignWheelEffects(car,data.sprite);}
-  car.skin=data.sprite;return car;
+  car.skin=data.sprite;DriftRoadContact.alignWheelEffects(car,data.sprite);DriftDynamics.configure(car,data.sprite);return car;
 }
 function applyChosen(){
   if(!player)return;configureSelectedCar(player,chosen);player.auto=selectedTx()==='auto';
   if(mode!=='online')DriftCareer.apply(player,chosen.sprite,DriftCareer.load().cars[chosen.sprite]);
+  else player.cosmetics={paint:DriftCareer.load().cars[chosen.sprite].paintColor};
 }
 
 /* Hook: botón Start (pizarra) */
@@ -1946,9 +1911,9 @@ function checkChallengeProgress(){
 }
 
 </script>
-<script src="js/experience.js?v=1.0.0-prealpha.2"></script>
-<script src="js/career-ui.js?v=1.0.0-prealpha.2"></script>
-<script src="js/replay-ui.js?v=1.0.0-prealpha.2"></script>
-<script src="js/online-config.js?v=1.0.0-prealpha.2"></script>
-<script src="js/online-client.js?v=1.0.0-prealpha.2"></script>
+<script src="js/experience.js?v=1.0.0-prealpha.3"></script>
+<script src="js/career-ui.js?v=1.0.0-prealpha.3"></script>
+<script src="js/replay-ui.js?v=1.0.0-prealpha.3"></script>
+<script src="js/online-config.js?v=1.0.0-prealpha.3"></script>
+<script src="js/online-client.js?v=1.0.0-prealpha.3"></script>
 </body></html>
