@@ -1,12 +1,12 @@
 import {randomBytes,randomInt} from 'node:crypto';
-import {Net,createTrack,createCar} from './engine.js';
+import {Net,Options,createTrack,createCar} from './engine.js';
 const ALPHABET='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const cleanName=n=>typeof n==='string'?n.normalize('NFKC').replace(/[^\p{L}\p{N} _.-]/gu,'').trim().slice(0,18)||'Piloto':'Piloto';
 const error=message=>({type:'error',message});
 export class Rooms {
   constructor({now=Date.now,countdown=4000,maxRooms=24}={}){this.rooms=new Map();this.now=now;this.countdown=countdown;this.maxRooms=maxRooms;}
   send(p,m){if(p.peer?.open)p.peer.send(m);}
-  view(r){return {type:'room',code:r.code,host:r.host,phase:r.phase,level:r.level,laps:r.laps,day:r.day,race:r.race,startAt:r.startAt,players:[...r.players.values()].map(p=>({id:p.id,name:p.name,skin:p.skin,paint:p.paint,auto:p.auto,ready:p.ready,connected:!!p.peer?.open,place:p.place||0,finished:p.finished||0,lap:Math.min(r.laps,(p.gates||0)/16|0)+1}))};}
+  view(r){return {type:'room',code:r.code,host:r.host,phase:r.phase,level:r.level,laps:r.laps,day:r.day,difficulty:r.difficulty,weather:r.weather,race:r.race,startAt:r.startAt,players:[...r.players.values()].map(p=>({id:p.id,name:p.name,skin:p.skin,paint:p.paint,auto:p.auto,ready:p.ready,connected:!!p.peer?.open,place:p.place||0,finished:p.finished||0,lap:Math.min(r.laps,(p.gates||0)/16|0)+1}))};}
   broadcast(r,m=this.view(r)){for(const p of r.players.values())this.send(p,m);}
   roomFor(peer){return this.rooms.get(peer.room);}
   handle(peer,m){
@@ -28,7 +28,7 @@ export class Rooms {
         if(m.type==='create'){
           if(this.rooms.size>=this.maxRooms){peer.send(error('Servidor beta lleno. Intenta en unos minutos.'));return;}
           let code;do{code=Array.from({length:6},()=>ALPHABET[randomInt(ALPHABET.length)]).join('');}while(this.rooms.has(code));
-          r={code,players:new Map(),phase:'lobby',level:1,laps:3,day:0,race:0,created:this.now(),updated:this.now(),chat:[],chatSeq:0};this.rooms.set(code,r);
+          r={code,players:new Map(),phase:'lobby',level:1,laps:3,day:0,...Options.conditions(m),race:0,created:this.now(),updated:this.now(),chat:[],chatSeq:0};this.rooms.set(code,r);
         }else r=this.rooms.get(String(m.code||'').trim().toUpperCase());
         if(!r){peer.send(error('No encontramos esa sala. Revisa el código.'));return;}
         if(r.phase!=='lobby'){peer.send(error('Esta carrera ya comenzó. Espera la próxima salida.'));return;}
@@ -56,13 +56,13 @@ export class Rooms {
       case 'ready':if(r.phase==='lobby'){p.ready=m.ready===true;this.broadcast(r);}break;
       case 'settings':
         if(r.phase==='lobby'&&r.host===p.id&&Number.isInteger(m.level)&&m.level>=1&&m.level<=20&&Number.isInteger(m.laps)&&m.laps>=1&&m.laps<=5&&Number.isFinite(m.day)&&m.day>=0&&m.day<=1){
-          r.level=m.level;r.laps=m.laps;r.day=m.day;for(const p of r.players.values())p.ready=false;this.broadcast(r);
+          r.level=m.level;r.laps=m.laps;r.day=m.day;Object.assign(r,Options.conditions({...r,...m}));for(const p of r.players.values())p.ready=false;this.broadcast(r);
         }break;
       case 'start':
         if(r.phase!=='lobby'||r.host!==p.id)return;
         if(r.players.size<2||![...r.players.values()].every(p=>p.ready&&p.peer?.open)){this.send(p,error('Se necesitan al menos 2 pilotos conectados y todos listos.'));return;}
         r.track=createTrack(r.level);r.phase='race';r.race++;r.startAt=this.now()+this.countdown;r.finishBy=0;r.order=[];
-        [...r.players.values()].forEach((p,slot)=>{p.car=createCar(r.track,p.skin,p.auto,slot);p.car.cosmetics={paint:p.paint};p.queue=[];p.ack=p.received=p.applied=p.gates=p.finished=p.place=p.progress=0;p.lastIndex=0;p.recoveryAt=0;p.epoch=0;});
+        [...r.players.values()].forEach((p,slot)=>{p.car=createCar(r.track,p.skin,p.auto,slot,r);p.car.cosmetics={paint:p.paint};p.queue=[];p.ack=p.received=p.applied=p.gates=p.finished=p.place=p.progress=0;p.lastIndex=0;p.recoveryAt=0;p.epoch=0;});
         this.broadcast(r);for(const p of r.players.values())this.send(p,this.snapshot(r,p));break;
       case 'inputs':
         if(r.phase!=='race'||p.finished||m.race!==r.race||m.epoch!==p.epoch||!Array.isArray(m.commands)||m.commands.length>12)return;
@@ -77,7 +77,7 @@ export class Rooms {
     }
   }
   recover(r,p){
-    const i=Math.floor((p.gates%16)*r.track.points.length/16),a=r.track.point(i);p.car.pos={x:a.x,y:a.y};p.car.angle=r.track.tangentAt(i);p.car.vel={x:0,y:0};p.car.omega=p.car.throttleSm=p.car.offTimer=p.car.accelLong=p.car.accelLat=0;p.car.breakFlow();p.lastIndex=i;p.progress=p.gates;
+    const i=Math.floor((p.gates%16)*r.track.points.length/16),a=r.track.point(i);p.car.pos={x:a.x,y:a.y};p.car.angle=r.track.tangentAt(i);p.car.vel={x:0,y:0};p.car.handbrakeMix=0;p.car.omega=p.car.throttleSm=p.car.offTimer=p.car.accelLong=p.car.accelLat=0;p.car.breakFlow();p.lastIndex=i;p.progress=p.gates;
     p.queue=[];p.received=p.ack;p.epoch++;p.recoveryAt=this.now()+2000;
     this.send(p,{type:'reset',race:r.race,epoch:p.epoch,ack:p.ack,state:Net.capture(p.car)});
   }

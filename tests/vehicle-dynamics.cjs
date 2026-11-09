@@ -14,7 +14,7 @@ test('actual offline configuration and authoritative server produce identical tr
 });
 test('new handling uses a separate time-trial record namespace and preserves old records',()=>{
   const r=harness();const result=r(`(()=>{const t=presetTrack(1),old=encodeTrack(t.points);saveTT('best',old,{time:42,samples:[]});startWithTrack(t,'tt');return {key:currentTrackId,old:loadTT('best',old),current:loadTT('best',currentTrackId)};})()`);
-  assert.match(result.key,/:physics-v2$/);assert.equal(result.old.time,42);assert.equal(result.current,null);
+  assert.match(result.key,/:physics-v3$/);assert.equal(result.old.time,42);assert.equal(result.current,null);
 });
 test('all five cars reach 10% higher actual flat-road terminal speed than the previous physics',()=>{
   const r=harness(),legacy=fs.readFileSync('tests/fixtures/car-v0.2.txt','utf8').replace('class Car{','class LegacyCar{');

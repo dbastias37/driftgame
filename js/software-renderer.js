@@ -1,21 +1,25 @@
 import * as T from '../vendor/three.module.min.js';
+import {processRetroPixels} from './retro-renderer.js?v=1.0.0-prealpha.4';
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 // A depth-buffered CPU fallback for devices without WebGL. It projects exactly
 // the same scene and camera; it has no access to the driving simulation.
 export class SoftwareRenderer{
-  constructor(canvas){this.canvas=canvas;this.ctx=canvas.getContext('2d');if(!this.ctx)throw new Error('Canvas rendering unavailable');this.software=true;this.textureCache=new WeakMap();this.spriteGeometry=new T.PlaneGeometry(1,1);this.sun=new T.Vector3(-.5,.8,.3).normalize();}
+  constructor(canvas){this.canvas=canvas;this.ctx=canvas.getContext('2d');if(!this.ctx)throw new Error('Canvas rendering unavailable');this.software=true;this.textureCache=new WeakMap();this.geometryCache=new WeakMap();this.retro=DriftOptions.retro(DriftOptions.presets.clean);this.spriteGeometry=new T.PlaneGeometry(1,1);this.sun=new T.Vector3(-.5,.8,.3).normalize();}
+  setRetro(options){if(this.retro.resolution!==options.resolution){this.retro=options;if(this.requestedSize)this.setSize(...this.requestedSize);}else this.retro=options;}
   setPixelRatio(){}
-  setSize(w,h){const s=Math.min(1,640/w,420/h);this.w=Math.round(w*s);this.h=Math.round(h*s);this.canvas.width=this.w;this.canvas.height=this.h;this.frame=this.ctx.createImageData(this.w,this.h);this.depth=new Float32Array(this.w*this.h);}
+  setRenderScale(scale){if(this.renderScale===scale)return;this.renderScale=scale;if(this.requestedSize)this.setSize(...this.requestedSize);}
+  setSize(w,h){this.requestedSize=[w,h];const s=Math.min(1,600*(this.renderScale||1)/w,Math.min(400*(this.renderScale||1),this.retro.resolution||400)/h);this.w=Math.max(1,Math.round(w*s));this.h=Math.max(1,Math.round(h*s));this.canvas.width=this.w;this.canvas.height=this.h;this.frame=this.ctx.createImageData(this.w,this.h);this.frame32=new Uint32Array(this.frame.data.buffer);this.postScratch=new Uint8ClampedArray(this.frame.data.length);this.depth=new Float32Array(this.w*this.h);}
   dispose(){this.frame=null;this.depth=null;this.spriteGeometry.dispose();}
   render(scene,camera){
     scene.updateMatrixWorld();camera.updateMatrixWorld();camera.matrixWorldInverse.copy(camera.matrixWorld).invert();
     const w=this.w,h=this.h,pixels=this.frame.data,zbuffer=this.depth;zbuffer.fill(0);
     const background=scene.background?.isColor?scene.background.clone().convertLinearToSRGB():null;
     const sky=scene.userData.sky,top=sky?.top.clone().convertLinearToSRGB(),bottom=sky?.bottom.clone().convertLinearToSRGB();
-    for(let y=0;y<h;y++){const t=Math.min(1,y/(h*.67));for(let x=0;x<w;x++){const i=(y*w+x)*4;for(const [k,key] of ['r','g','b'].entries())pixels[i+k]=Math.round(255*(sky?top[key]+(bottom[key]-top[key])*t:background?background[key]:0));pixels[i+3]=background||sky?255:0;}}
+    for(let y=0;y<h;y++){const t=Math.min(1,y/(h*.67)),red=Math.round(255*(sky?top.r+(bottom.r-top.r)*t:background?.r||0)),green=Math.round(255*(sky?top.g+(bottom.g-top.g)*t:background?.g||0)),blue=Math.round(255*(sky?top.b+(bottom.b-top.b)*t:background?.b||0));this.frame32.fill(((background||sky?255:0)<<24)|(blue<<16)|(green<<8)|red,y*w,(y+1)*w);}
     const projectionView=new T.Matrix4().multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse),frustum=new T.Frustum().setFromProjectionMatrix(projectionView),sphere=new T.Sphere();
     const transparent=[],view=new T.Matrix4(),instance=new T.Matrix4(),model=new T.Matrix4(),normalMatrix=new T.Matrix3();
-    const project=v=>{const p=v.clone().applyMatrix4(camera.projectionMatrix);return {x:(p.x+1)*w/2,y:(1-p.y)*h/2,z:1/-v.z,u:(v.u||0)/-v.z,v:(v.v||0)/-v.z};};
+    const projected=new T.Vector3(),normal=new T.Vector3();
+    const project=(v,out={})=>{const p=projected.copy(v).applyMatrix4(camera.projectionMatrix),snap=this.retro.jitter;let x=(p.x+1)*w/2,y=(1-p.y)*h/2;if(snap){x=Math.round(x/snap)*snap;y=Math.round(y/snap)*snap;}out.x=x;out.y=y;out.z=1/-v.z;out.u=(v.u||0)/-v.z;out.v=(v.v||0)/-v.z;return out;};
     const clip=vertices=>{const out=[];for(let i=0;i<vertices.length;i++){const a=vertices[i],b=vertices[(i+1)%vertices.length],ina=a.z<=-.2,inb=b.z<=-.2;if(ina)out.push(a);if(ina!==inb){const t=(-.2-a.z)/(b.z-a.z),p=a.clone().lerp(b,t);p.u=a.u+(b.u-a.u)*t;p.v=a.v+(b.v-a.v)*t;out.push(p);}}return out;};
     const raster=(a,b,c,rgb,alpha,write,tex,alphaTest,fog,fogRGB,additive)=>{
       const area=(b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x);if(Math.abs(area)<.02)return;
@@ -29,7 +33,8 @@ export class SoftwareRenderer{
         for(let x=rowMin;x<=rowMax;x++,wa+=ax,wb+=bx){const wc=1-wa-wb;if(wa<-.00001||wb<-.00001||wc<-.00001)continue;const z=wa*a.z+wb*b.z+wc*c.z,index=y*w+x;if(z<zbuffer[index]-1e-7)continue;const k=index*4;
           let red=rgb[0],green=rgb[1],blue=rgb[2],opacity=alpha;
           if(tex){
-            let u=(wa*a.u+wb*b.u+wc*c.u)/z,v=(wa*a.v+wb*b.v+wc*c.v)/z;
+            const affine=this.retro.affine;let u=(wa*a.u+wb*b.u+wc*c.u)/z,v=(wa*a.v+wb*b.v+wc*c.v)/z;
+            if(affine){u+=(wa*a.u/a.z+wb*b.u/b.z+wc*c.u/c.z-u)*affine;v+=(wa*a.v/a.z+wb*b.v/b.z+wc*c.v/c.z-v)*affine;}
             u=tex.repeat?((u%1)+1)%1:clamp(u,0,.9999);v=tex.repeat?((v%1)+1)%1:clamp(v,0,.9999);
             const row=tex.flipY?1-v:v,ti=(Math.min(tex.h-1,Math.floor(row*tex.h))*tex.w+Math.min(tex.w-1,Math.floor(u*tex.w)))*4;
             const mask=tex.data[ti+3]/255;if(mask*alpha<alphaTest||mask===0)continue;
@@ -49,22 +54,26 @@ export class SoftwareRenderer{
       view.multiplyMatrices(camera.matrixWorldInverse,matrix);normalMatrix.getNormalMatrix(matrix);
       const count=Math.min(idx?idx.count:pos.count,geo.drawRange.count),start=geo.drawRange.start||0,col=material.color.clone().convertLinearToSRGB();
       const vertexColor=material.vertexColors?geo.attributes.color:null;const uv=geo.attributes.uv;let tex=null;if(material.map?.image?.getContext){if(!this.textureCache.has(material.map)){const image=material.map.image;this.textureCache.set(material.map,{w:image.width,h:image.height,data:image.getContext('2d').getImageData(0,0,image.width,image.height).data,repeat:material.map.wrapS===T.RepeatWrapping,flipY:material.map.flipY!==false});}tex=this.textureCache.get(material.map);}
-      const vertices=Array.from({length:pos.count},(_,i)=>{const v=new T.Vector3().fromBufferAttribute(pos,i).applyMatrix4(view);v.u=uv?uv.getX(i):0;v.v=uv?uv.getY(i):0;return v;});
+      let cached=this.geometryCache.get(geo);if(!cached||cached.vertices.length!==pos.count){cached={vertices:Array.from({length:pos.count},()=>new T.Vector3()),projected:Array.from({length:pos.count},()=>({})),version:-1,normals:new Float32Array((idx?idx.count:pos.count))};this.geometryCache.set(geo,cached);}
+      const vertices=cached.vertices;for(let i=0;i<pos.count;i++){const v=vertices[i];v.fromBufferAttribute(pos,i).applyMatrix4(view);v.u=uv?uv.getX(i):0;v.v=uv?uv.getY(i):0;if(v.z<=-.2)project(v,cached.projected[i]);}
+      if(cached.version!==pos.version){const a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3();for(let k=0;k<(idx?idx.count:pos.count);k+=3){a.fromBufferAttribute(pos,idx?idx.getX(k):k);b.fromBufferAttribute(pos,idx?idx.getX(k+1):k+1).sub(a);c.fromBufferAttribute(pos,idx?idx.getX(k+2):k+2).sub(a);b.cross(c).normalize();cached.normals[k]=b.x;cached.normals[k+1]=b.y;cached.normals[k+2]=b.z;}cached.version=pos.version;}
       for(let k=start;k<start+count;k+=3){
-        const vi=[0,1,2].map(n=>idx?idx.getX(k+n):k+n);if(vi.some(i=>i>=pos.count))break;
-        let v=vi.map(i=>vertices[i]);if(v.every(p=>p.z>-.2)||v.every(p=>p.z< -camera.far))continue;
-        const normal=new T.Vector3().fromBufferAttribute(pos,vi[1]).sub(new T.Vector3().fromBufferAttribute(pos,vi[0])).cross(new T.Vector3().fromBufferAttribute(pos,vi[2]).sub(new T.Vector3().fromBufferAttribute(pos,vi[0]))).normalize().applyMatrix3(normalMatrix).normalize();
-        const depth=-(v[0].z+v[1].z+v[2].z)/3;v=clip(v);if(v.length<3)continue;const pts=v.map(project);
+        const vi=idx?[idx.getX(k),idx.getX(k+1),idx.getX(k+2)]:[k,k+1,k+2];if(vi[2]>=pos.count)break;
+        const a=vertices[vi[0]],b=vertices[vi[1]],c=vertices[vi[2]];
+        if(a.z>-.2&&b.z>-.2&&c.z>-.2||a.z< -camera.far&&b.z< -camera.far&&c.z< -camera.far)continue;
+        const depth=-(a.z+b.z+c.z)/3;
+        const pts=a.z<=-.2&&b.z<=-.2&&c.z<=-.2?[cached.projected[vi[0]],cached.projected[vi[1]],cached.projected[vi[2]]]:clip([a,b,c]).map(v=>project(v));if(pts.length<3)continue;
         if(pts.every(p=>p.x<0)||pts.every(p=>p.x>w)||pts.every(p=>p.y<0)||pts.every(p=>p.y>h))continue;
-        const area=(pts[1].x-pts[0].x)*(pts[2].y-pts[0].y)-(pts[1].y-pts[0].y)*(pts[2].x-pts[0].x);if(material.side!==T.DoubleSide&&area>0)continue;
+        const area=(pts[1].x-pts[0].x)*(pts[2].y-pts[0].y)-(pts[1].y-pts[0].y)*(pts[2].x-pts[0].x);if(Math.abs(area)<.15||material.side!==T.DoubleSide&&area>0)continue;
+        normal.set(cached.normals[k],cached.normals[k+1],cached.normals[k+2]).applyMatrix3(normalMatrix).normalize();
         let light=material.isMeshBasicMaterial||material.isSpriteMaterial?1:(.72+.32*Math.max(0,normal.dot(this.sun)))*(scene.userData.daylight??1);if(material.emissive)light+=material.emissiveIntensity*.12;
         const fog=scene.fog?clamp((depth-scene.fog.near)/(scene.fog.far-scene.fog.near),0,1):0,fogColor=scene.fog?.color.clone().convertLinearToSRGB();
         const shade=vertexColor?new T.Color().setRGB(...['getX','getY','getZ'].map(method=>vi.reduce((sum,i)=>sum+vertexColor[method](i),0)/3)).multiply(material.color).convertLinearToSRGB():col;
         const rgb=[shade.r,shade.g,shade.b].map(c=>Math.round(255*clamp(c*light,0,1))),fogRGB=fogColor?[fogColor.r*255,fogColor.g*255,fogColor.b*255]:[0,0,0];
-        for(let i=1;i<pts.length-1;i++){const args=[pts[0],pts[i],pts[i+1],rgb,material.opacity*(vertexColor?.itemSize===4?vi.reduce((sum,i)=>sum+vertexColor.getW(i),0)/3:1),material.depthWrite,tex,material.alphaTest||0,fog,fogRGB,material.blending===T.AdditiveBlending];if(material.transparent)transparent.push({args,depth});else raster(...args);}
+        for(let i=1;i<pts.length-1;i++){const args=[pts[0],pts[i],pts[i+1],rgb,material.opacity*(vertexColor?.itemSize===4?vi.reduce((sum,i)=>sum+vertexColor.getW(i),0)/3:1),material.depthWrite,tex,material.alphaTest||0,fog,fogRGB,material.blending===T.AdditiveBlending];if(material.transparent){args[0]={...args[0]};args[1]={...args[1]};args[2]={...args[2]};transparent.push({args,depth});}else raster(...args);}
       }
     };
     scene.traverseVisible(obj=>{if(obj.isSprite){const p=new T.Vector3(),q=new T.Quaternion(),s=new T.Vector3();obj.matrixWorld.decompose(p,q,s);model.compose(p,camera.quaternion,s);drawMesh({geometry:this.spriteGeometry,material:obj.material},model);return;}if(!obj.isMesh)return;if(obj.isInstancedMesh){for(let i=0;i<obj.count;i++){obj.getMatrixAt(i,instance);model.multiplyMatrices(obj.matrixWorld,instance);drawMesh(obj,model);}}else drawMesh(obj,obj.matrixWorld);});
-    transparent.sort((a,b)=>b.depth-a.depth).forEach(f=>raster(...f.args));this.ctx.putImageData(this.frame,0,0);
+    transparent.sort((a,b)=>b.depth-a.depth).forEach(f=>raster(...f.args));processRetroPixels(pixels,w,h,this.retro,this.postScratch);this.ctx.putImageData(this.frame,0,0);
   }
 }
