@@ -1,6 +1,8 @@
 # Drift Racer 1.0 pre-alpha
 
-Juego de drift 3D para navegador. Seis autos, campaña de veinte etapas y sesenta objetivos, taller por vehículo, veinte descensos, carreras online de hasta tres jugadores, editor y contrarreloj con fantasma local. Versión técnica: `1.0.0-prealpha.1`.
+Juego de drift 3D para navegador. Seis autos, campaña de veinte etapas y sesenta objetivos, taller por vehículo, veinte descensos, carreras online de hasta tres jugadores, editor y contrarreloj con fantasma local. Versión técnica: `1.0.0-prealpha.2`.
+
+El garaje incluye el **Nissan Skyline R34 azul** y el **Chevrolet Nova SS negro**, convertidos de los modelos entregados, con texturas originales y ruedas independientes. Reemplazan las antiguas casillas azul y gris; se mantienen las mejoras, los récords y los ajustes de conducción asociados a esas casillas. Faros, luces de freno, suspensión, humo y huellas siguen el mismo estado de la carrera.
 
 [Jugar en Render](https://driftgame.onrender.com)
 
@@ -42,7 +44,7 @@ Validación 1.0: 111 pruebas de núcleo aprobadas, incluidas 16 nuevas de campa�
 
 ## Inicio, menú raw y continuidad (0.9.0)
 
-- Portada con **Jugar ahora** antes del menú. Exhibición 3D precargada de tres pilotos (Fujiwara, RX-7 y GTI), con circuito y día/noche aleatorios, líneas de drift, contravolante, ruedas y humo. Usa una repetición de trayectorias preparadas: no conecta a online ni avanza la carrera del usuario. Pausa independiente de la demo y pausa de trabajo cuando queda oculta.
+- Portada con **Jugar ahora** antes del menú. Exhibición 3D precargada de tres pilotos (Fujiwara, RX-7 y Skyline R34), con circuito y día/noche aleatorios, líneas de drift, contravolante, ruedas y humo. Usa una repetición de trayectorias preparadas: no conecta a online ni avanza la carrera del usuario. Pausa independiente de la demo y pausa de trabajo cuando queda oculta.
 - La demo reutiliza modelos y cámaras existentes; se precalcula a 20 muestras/s, con buffers inferiores a 2 MB en los veinte circuitos. Render limitado a 30 fps en portada (10 en el modo compatible por software). No descarga un video.
 - Pantallas completas, tipografía gruesa, navegación vertical y tira horizontal de pistas. Flechas arriba/abajo recorren modos, Enter selecciona y Escape retrocede. Se mantienen garaje final, estadísticas, transmisión, importación, editor, online y chat.
 - Líneas manga más visibles, intensidad persistente **0–300%** y modos auto/centro/desactivado. Cámara con resorte amortiguado y apertura muy pequeña; no modifica motor, adherencia ni suspensión. Movimiento reducido anula los efectos.

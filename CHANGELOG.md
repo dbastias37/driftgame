@@ -1,3 +1,11 @@
+## 1.0.0-prealpha.2 — 2026-11-09
+
+- Sustituye Sumaru/Subaru por Nissan Skyline R34 azul y Toiota/Corolla por Chevrolet Nova SS negro, a partir de los archivos del usuario.
+- Conserva geometría, UV y texturas; prepara cuatro pivotes de rueda por vehículo y alinea neumáticos, huellas, humo y suspensión.
+- Conecta faros y luces traseras a ambiente y frenos, incluidos rivales y repeticiones; el registro mantiene el mismo límite de memoria.
+- Unifica nombres, descripciones, taller, exhibición, créditos y sprites de compatibilidad. Conserva IDs `blue`/`gray`, compras, progreso y tuning.
+- Añade pruebas de GLB, pivotes, marcha atrás, luces, progreso y carga tardía. No cambia la física base.
+
 # 0.5.1 — Carga coherente tras publicar
 
 - Versionar las entradas y dependencias JavaScript evita que la caché de Render mezcle menús antiguos con la escena nueva. Corrige la barra día/noche inactiva durante la propagación.
