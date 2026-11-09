@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
-import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.4';
-import {updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.4';
+import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.4.1';
+import {updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.4.1';
 
 const material=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.82,...extra});
 function box(parent,m,x,y,z,w,h,d){const mesh=new T.Mesh(new T.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);parent.add(mesh);return mesh;}
@@ -54,7 +54,7 @@ export class MenuPreview3D extends DriftView3D{
   resetPreview(){this.previewPan.set(0,0,0);this.previewZoom=1;this.previewPitch=.98;this.previewRevision=null;}
   renderPreview({kind,track,skin='blue',dt=0,spinning=true,timeOfDay=0,cosmetics={},weather='clear',retro,player,time=0,camera='chase'}){
     this.setTimeOfDay(timeOfDay,weather);this.setRetro(retro);
-    if(kind==='settings'&&player){this.previewMode=kind;this.scene.add(this.car.root);this.smoke.visible=this.trails.visible=true;super.render({track,player:{...player,skin,cosmetics,ride:null,bodyDimensions:null},skin,dt,time,timeOfDay,weather,retro,camera});return;}
+    if(kind==='settings'&&player){this.previewMode=kind;this.scene.add(this.car.root);this.smoke.visible=this.trails.visible=true;super.render({track,player:{...player,worldSpeed:()=>player.worldSpeed(),skin,cosmetics,ride:null,bodyDimensions:null},skin,dt,time,timeOfDay,weather,retro,camera});return;}
 
     const width=Math.max(1,this.canvas.clientWidth||800),height=Math.max(1,this.canvas.clientHeight||500);
     if(this.width!==width||this.height!==height){this.width=width;this.height=height;this.renderer.setSize(width,height,false);this.camera.aspect=width/height;}
