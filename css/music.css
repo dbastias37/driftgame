@@ -9,3 +9,9 @@
 @media(prefers-reduced-motion:reduce){#musicNotice{transition:opacity .15s;transform:none}}
 #musicDock #musicDockTitle:hover{color:#101821}
 body:has(#titleScreen:not(.hidden)) #musicNotice{top:90px;bottom:auto}
+
+/* Compact launcher stays accessible on touch screens; the controls are temporary. */
+#musicDock{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .18s,visibility .18s}
+#musicDock.visible{opacity:1;visibility:visible;pointer-events:auto}
+#musicReveal{position:fixed;bottom:12px;right:12px;z-index:4501;width:36px;height:36px;padding:0;border:1px solid #627384;background:#101821d9;color:var(--orange);font-size:22px}
+@media(max-width:700px){body.in-game #musicReveal{bottom:145px}}

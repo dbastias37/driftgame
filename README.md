@@ -1,3 +1,9 @@
+## 1.0.0-prealpha.12 — Banda sonora completa
+
+22 MP3 registrados con los títulos y artistas proporcionados. La música comienza al entrar al menú y cambia al seleccionar pista, entrar al garaje y comenzar carrera. Fundidos de 200/260 ms coordinados con el cambio visual a negro; ajustes y pausa no saltan de tema, y la pausa musical manual se conserva.
+
+La barra musical se oculta después de 4 segundos. N cambia de tema y muestra la barra, M pausa/reanuda, B o ♫ abren los controles. Aviso de título y artista durante 5 segundos. Validación: 197 pruebas de núcleo y recorrido con audio real en navegador.
+
 ## 1.0.0-prealpha.11 — Menús, mando y transiciones
 
 - Cuatro sonidos sintetizados originales: mover, confirmar, volver y salir a carrera. Volumen independiente y prueba en Ajustes → Música.

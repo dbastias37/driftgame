@@ -1,3 +1,114 @@
 {
-  "tracks": []
+  "tracks": [
+    {
+      "file": "001.mp3",
+      "title": "Japanese Nascar Mobile",
+      "artist": "Flying weeds"
+    },
+    {
+      "file": "002.mp3",
+      "title": "Finding the New Sounds",
+      "artist": "Sumotori Dreams"
+    },
+    {
+      "file": "003.mp3",
+      "title": "Charly Dirty Fingers Garcia",
+      "artist": "Apple Moustache"
+    },
+    {
+      "file": "004.mp3",
+      "title": "Mondongo flux",
+      "artist": "Gilberto Traxxx"
+    },
+    {
+      "file": "005.mp3",
+      "title": "No more Remixes",
+      "artist": "Silvian Experience"
+    },
+    {
+      "file": "006.mp3",
+      "title": "Criminal Smookes liminal",
+      "artist": "Silvian Experience"
+    },
+    {
+      "file": "007.mp3",
+      "title": "Skrisht!",
+      "artist": "Policia Sobornado"
+    },
+    {
+      "file": "008.mp3",
+      "title": "La costa mía",
+      "artist": "Policia Sobornado"
+    },
+    {
+      "file": "009.mp3",
+      "title": "Son of light",
+      "artist": "Bastias Bloom"
+    },
+    {
+      "file": "010.mp3",
+      "title": "Nation of Lazytude",
+      "artist": "Bastias Bloom"
+    },
+    {
+      "file": "011.mp3",
+      "title": "Flotando",
+      "artist": "Hermes Costello"
+    },
+    {
+      "file": "012.mp3",
+      "title": "4:12AM",
+      "artist": "Hermes Costello"
+    },
+    {
+      "file": "013.mp3",
+      "title": "Zillenial Desire",
+      "artist": "Simply Dummer"
+    },
+    {
+      "file": "014.mp3",
+      "title": "Silence",
+      "artist": "Blavatsky"
+    },
+    {
+      "file": "015.mp3",
+      "title": "Solve Et Coagula",
+      "artist": "Max Pain"
+    },
+    {
+      "file": "016.mp3",
+      "title": "Pomodoro",
+      "artist": "Max Pain"
+    },
+    {
+      "file": "017.mp3",
+      "title": "Jumanji",
+      "artist": "6 Floors"
+    },
+    {
+      "file": "018.mp3",
+      "title": "Dr. Soviety",
+      "artist": "6 Floors"
+    },
+    {
+      "file": "019.mp3",
+      "title": "Dextrosativa",
+      "artist": "Hishiko Nawara"
+    },
+    {
+      "file": "020.mp3",
+      "title": "Adolfinho Dreams",
+      "artist": "Hishiko Nawara"
+    },
+    {
+      "file": "021.mp3",
+      "title": "Desert path lag",
+      "artist": "St. Lockpick"
+    },
+    {
+      "file": "022.mp3",
+      "title": "Fire Sonnet",
+      "artist": "St. Lockpick"
+    }
+  ]
 }

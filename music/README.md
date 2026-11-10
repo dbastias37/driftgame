@@ -1,6 +1,12 @@
+# Banda sonora: 22 temas
+
+La lista `playlist.json` registra `001.mp3` a `022.mp3`, con títulos y artistas. La reproducción comienza al entrar al menú tras pulsar Jugar ahora. Seleccionar pista, entrar al garaje y salir a carrera cambian a la siguiente canción con 200 ms de bajada y 260 ms de subida, coordinados con el negro visual. La pausa musical manual se respeta. Ajustes y pausa de carrera no cambian la canción.
+
+La barra se oculta tras 4 segundos sin interacción. N cambia de tema y la muestra; M pausa/reanuda; B o el botón ♫ muestran los controles. El aviso de título y artista dura 5 segundos.
+
 # Música de DR1FT
 
-Coloca aquí archivos MP3 reales: `track-001.mp3`, `track-002.mp3`, `track-003.mp3`… Usa minúsculas, sin espacios ni tildes. El orden de la lista es el orden de reproducción.
+Coloca aquí archivos MP3 reales: `001.mp3`, `002.mp3`, `003.mp3`… Usa minúsculas, sin espacios ni tildes. El orden de la lista es el orden de reproducción.
 
 Después de agregar archivos, ejecuta desde la raíz del repositorio:
 
