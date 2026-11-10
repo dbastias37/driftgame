@@ -1,5 +1,5 @@
 import * as T from '../vendor/three.module.min.js';
-import {buildMountainTerrain} from './mountain-terrain.js?v=1.0.0-prealpha.12';
+import {buildMountainTerrain} from './mountain-terrain.js?v=1.0.0-prealpha.16';
 import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.12';
 const mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.88,...extra});
 function mesh(parent,geo,material,x=0,y=0,z=0){const o=new T.Mesh(geo,material);o.position.set(x,y,z);parent.add(o);return o;}

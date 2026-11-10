@@ -25,7 +25,7 @@ export class TireSmokeRenderer{
     for(let i=0;i<particles.length;i+=stride){const p=particles[i];if((p.a??.25)>.005)selected.push(p);}
     // Back-to-front within one draw call; every puff has its own size and alpha.
     const cx=camera.position.x,cy=camera.position.y,cz=camera.position.z;
-    const height=p=>p.height??((track.downhill?track.surfaceHeight(p.x,p.y):0)+.3+p.life*.6);
+    const height=p=>p.height??(((track.downhill||track.elevated)?track.surfaceHeight(p.x,p.y):0)+.3+p.life*.6);
     const distance=p=>(p.x-cx)**2+(height(p)-cy)**2+(p.y-cz)**2;
     selected.sort((a,b)=>distance(b)-distance(a));
     this.right.setFromMatrixColumn(camera.matrixWorld,0);this.up.setFromMatrixColumn(camera.matrixWorld,1);

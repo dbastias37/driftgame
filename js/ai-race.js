@@ -8,13 +8,13 @@ globalThis.DriftRace=(()=>{
     const weather=DriftOptions.weathers[car.conditions?.weather]||DriftOptions.weathers.clear;
     const key=[car.skin,car.conditions?.difficulty,weather.grip,car.pace||1].join(':');let cache=plans.get(track);if(!cache)plans.set(track,cache=new Map());if(cache.has(key))return cache.get(key);
     const n=track.points.length,spacing=track.totalLength/n||4,span=Math.max(2,Math.round(8/spacing)),speeds=new Float32Array(n),distances=new Float32Array(n),grip=weather.grip*(DriftOptions.difficulties[car.conditions?.difficulty]?.grip||1);
-    for(let i=0;i<n;i++){const a=track.point(i-span),b=track.point(i),c=track.point(i+span),ab=Math.hypot(b.x-a.x,b.y-a.y),bc=Math.hypot(c.x-b.x,c.y-b.y),ac=Math.hypot(c.x-a.x,c.y-a.y),curvature=2*Math.abs((b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x))/Math.max(.01,ab*bc*ac);speeds[i]=clamp(Math.sqrt(7.8*({blue:.91,gray:.86,yugo:.82,fujiwara:.95}[car.skin]||1)*grip/Math.max(.0001,curvature)),12,46)*(car.pace||1);const next=track.point(i+1);distances[i]=Math.hypot(next.x-b.x,next.y-b.y);}
+    for(let i=0;i<n;i++){const a=track.point(i-span),b=track.point(i),c=track.point(i+span),ab=Math.hypot(b.x-a.x,b.y-a.y),bc=Math.hypot(c.x-b.x,c.y-b.y),ac=Math.hypot(c.x-a.x,c.y-a.y),curvature=2*Math.abs((b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x))/Math.max(.01,ab*bc*ac);speeds[i]=clamp(Math.sqrt((track.elevated?5.2:7.8)*({blue:.91,gray:.86,yugo:.82,fujiwara:.95}[car.skin]||1)*grip/Math.max(.0001,curvature)),12,46)*(car.pace||1);const next=track.point(i+1);distances[i]=Math.hypot(next.x-b.x,next.y-b.y);}
     const decel=5.2*grip;
-    for(let pass=0;pass<3;pass++)for(let i=n-1;i>=0;i--)speeds[i]=Math.min(speeds[i],Math.sqrt(speeds[(i+1)%n]**2+2*decel*distances[i]));
+    for(let pass=0;pass<3;pass++)for(let i=n-1;i>=0;i--)speeds[i]=Math.min(speeds[i],Math.sqrt(speeds[(i+1)%n]**2+2*(track.elevated?Math.max(2,decel+9.81*track.sample(track.points[i].x,track.points[i].y).grade):decel)*distances[i]));
     const plan={speeds,spacing};cache.set(key,plan);return plan;
   }
   function drive(car,track,index=track.nearestIndex(car.pos.x,car.pos.y),traffic=[]){
-    const speed=car.worldSpeed(),plan=speedPlan(track,car),look=Math.max(3,Math.round((8+speed*.72)/plan.spacing)),center=track.point(index),tangent=track.tangentAt(index),f={x:Math.cos(tangent),y:Math.sin(tangent)},right={x:-f.y,y:f.x},lateral=(car.pos.x-center.x)*right.x+(car.pos.y-center.y)*right.y;
+    const speed=car.worldSpeed(),plan=speedPlan(track,car),look=Math.max(3,Math.round((8+speed*(track.elevated?.55:.72))/plan.spacing)),center=track.point(index),tangent=track.tangentAt(index),f={x:Math.cos(tangent),y:Math.sin(tangent)},right={x:-f.y,y:f.x},lateral=(car.pos.x-center.x)*right.x+(car.pos.y-center.y)*right.y;
     let offset=0,trafficLimit=Infinity,nearest=Infinity;
     for(const other of traffic){if(other===car)continue;const dx=other.pos.x-car.pos.x,dy=other.pos.y-car.pos.y,gap=dx*f.x+dy*f.y,side=dx*right.x+dy*right.y,width=((car.bodyDimensions?.width||1.8)+(other.bodyDimensions?.width||1.8))/2;
       if(gap>-5&&gap<Math.max(18,speed*.95)&&Math.abs(side)<width+1&&gap<nearest){nearest=gap;const otherLane=lateral+side,pass=car._aiPassSide||(otherLane<=0?1:-1);car._aiPassSide=pass;offset=clamp(otherLane+pass*(width+1.4),-track.roadHalf+3,track.roadHalf-3);if(gap>0&&gap<12)trafficLimit=Math.max(2,other.worldSpeed()+Math.max(0,gap-5)*1.5);}}
@@ -23,7 +23,7 @@ globalThis.DriftRace=(()=>{
     if(nearest<12&&speed<7){const forward=clamp(nearest-3,2,5);target.x=car.pos.x+f.x*forward+right.x*(offset-lateral);target.y=car.pos.y+f.y*forward+right.y*(offset-lateral);}
     const distance=Math.hypot(target.x-car.pos.x,target.y-car.pos.y),error=wrap(Math.atan2(target.y-car.pos.y,target.x-car.pos.x)-car.angle),outside=Math.max(0,Math.abs(lateral)-track.roadHalf*.65);
     const desired=Math.min(trafficLimit,plan.speeds[index]*clamp(1-Math.max(0,Math.abs(error)-.45)*.34-outside*.035,.4,1)),excess=speed-desired;
-    const steering=Math.atan2(2*Math.sin(error)*car.length,Math.max(2,distance))*1.22;
+    const steering=Math.atan2(2*Math.sin(error)*car.length,Math.max(2,distance))*(track.elevated?1.8:1.22);
     const factor=clamp(1/(1+speed*.065),.18,1),axis=clamp(steering/(car.maxSteer*factor),-1,1);
     // A coast band and separate brake/release thresholds prevent pedal chatter.
     car._aiBraking=excess>(car._aiBraking?.35:1.6);

@@ -22,7 +22,7 @@ function radial(){
 function glowMaterial(map,color,opacity){return new T.MeshBasicMaterial({map,color,transparent:true,opacity,depthWrite:false,side:T.DoubleSide,blending:T.AdditiveBlending,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});}
 function patch(track,x,z,radius,material){
   const geometry=new T.PlaneGeometry(radius*2,radius*2,6,6);geometry.rotateX(-Math.PI/2);const p=geometry.attributes.position;
-  for(let i=0;i<p.count;i++){const px=x+p.getX(i),pz=z+p.getZ(i);p.setXYZ(i,px,(track.downhill?track.surfaceHeight(px,pz):globalThis.DriftRoadContact.terrain(track).height(px,pz))+.08,pz);}
+  for(let i=0;i<p.count;i++){const px=x+p.getX(i),pz=z+p.getZ(i);p.setXYZ(i,px,((track.downhill||track.elevated)?track.surfaceHeight(px,pz):globalThis.DriftRoadContact.terrain(track).height(px,pz))+.08,pz);}
   geometry.computeBoundingSphere();const mesh=new T.Mesh(geometry,material);mesh.renderOrder=2;return mesh;
 }
 export function buildStreetLights(track,world){
@@ -30,11 +30,11 @@ export function buildStreetLights(track,world){
   const map=radial(),poolMat=glowMaterial(map,0xffd593,0),haloMat=glowMaterial(map,0xffdfad,0),metal=new T.MeshStandardMaterial({color:0x283b43,roughness:.85}),bulb=new T.MeshBasicMaterial({color:0xffe5b5});
   const positions=[];
   if(track.lampSites){for(const p of track.lampSites)positions.push({...p,h:0,n:{x:0,y:0},side:1});}
-  else if(track.downhill){for(let s=45;s<track.length-20;s+=105){const p=track.atDistance(s);positions.push({...p,n:track.normalAt(p.i),side:Math.floor(s/105)%2?1:-1});}}
+  else if(track.downhill||track.elevated){for(let s=45;s<track.length-20;s+=105){const p=track.atDistance(s);if(track.elevated&&track.featureAt(s,'tunnel'))continue;positions.push({...p,n:track.normalAt(p.i),side:Math.floor(s/105)%2?1:-1});}}
   else{let distance=0,next=45;for(let i=1;i<track.points.length;i++){distance+=Math.hypot(track.points[i].x-track.points[i-1].x,track.points[i].y-track.points[i-1].y);if(distance>=next){positions.push({...track.points[i],h:0,n:track.normalAt(i),side:positions.length%2?1:-1});next+=105;}}}
   const poleGeo=new T.BoxGeometry(.17,8,.17),armGeo=new T.BoxGeometry(2,.15,.15),bulbGeo=new T.BoxGeometry(.9,.12,.4);
   for(const p of positions){
-    const x=p.x+p.n.x*(track.roadHalf+2.6)*p.side,z=p.y+p.n.y*(track.roadHalf+2.6)*p.side,h=p.h||0;
+    const x=p.x+p.n.x*(track.roadHalf+2.6)*p.side,z=p.y+p.n.y*(track.roadHalf+2.6)*p.side,h=track.elevated?track.surfaceHeight(x,z):p.h||0;
     const pole=new T.Mesh(poleGeo,metal);pole.position.set(x,h+4,z);group.add(pole);
     const arm=new T.Mesh(armGeo,metal);arm.position.set(x-p.n.x*p.side,h+8,z-p.n.y*p.side);arm.rotation.y=-Math.atan2(p.n.y,p.n.x);group.add(arm);
     const light=new T.Mesh(bulbGeo,bulb);light.position.set(x-p.n.x*1.8*p.side,h+7.92,z-p.n.y*1.8*p.side);group.add(light);
@@ -70,7 +70,8 @@ export class Atmosphere{
     this.sun.color.copy(state.sun);this.sun.intensity=state.direct;this.sun.position.set(-110,180-state.night*130,60);
   }
   update(camera,car,track,street,{overview=false,garage=false,far=400}={}){
-    const state=this.state||atmosphereAt(0),night=state.night;
+    const state=this.state||atmosphereAt(0),q=track.elevated&&!overview?track.sample(car.root.position.x,car.root.position.z):null,tunnel=q&&track.featureAt(q.s,'tunnel'),cover=tunnel?smooth(clamp(Math.min(q.s-tunnel.start,tunnel.end-q.s)/26,0,1)):0,night=Math.max(state.night,cover*.8);
+    this.hemi.intensity=state.ambient*(1-cover*.55);this.sun.intensity=state.direct*(1-cover*.94);
     if(this.scene.fog)this.scene.fog.color.copy(state.horizon);
     if(street){street.poolMat.opacity=night*.58;street.haloMat.opacity=night*.48;street.bulb.color.copy(new T.Color(0xa9b5b5).lerp(new T.Color(0xffe5b5),night));
       for(const lamp of street.lamps){const d=camera.position.distanceTo(lamp.light.position),fade=overview?1:1-smooth(clamp((d-100)/120,0,1)),visible=night*fade>.001;lamp.pool.visible=visible;lamp.halo.visible=visible;lamp.pool.material.opacity=night*.58*fade;lamp.halo.material.opacity=night*.48*fade;}
@@ -83,8 +84,8 @@ export class Atmosphere{
     front.forEach((p,i)=>{this.halos[i].position.copy(p);this.cones[i].position.copy(p).add(new T.Vector3(9.5,-.5,0));this.cones[i].rotation.y=0;});
     this.beamMat.opacity=night*.016;this.haloMat.opacity=night*.56;this.spot.intensity=night*95;
     const p=this.pool.geometry.attributes.position,forward=new T.Vector3(1,0,0).applyQuaternion(car.root.quaternion),side=new T.Vector3(0,0,1).applyQuaternion(car.root.quaternion);
-    this.pool.visible=Math.abs(car.root.position.y-(track.downhill?track.surfaceHeight(car.root.position.x,car.root.position.z):0))<2;
-    if(this.pool.visible){for(let i=0;i<p.count;i++){const lateral=this.poolBase[i*3],ahead=this.poolBase[i*3+2]+19,x=car.root.position.x+forward.x*ahead+side.x*lateral,z=car.root.position.z+forward.z*ahead+side.z*lateral;p.setXYZ(i,x,(track.downhill?track.surfaceHeight(x,z):globalThis.DriftRoadContact.terrain(track).height(x,z))+.09,z);}p.needsUpdate=true;}
+    this.pool.visible=Math.abs(car.root.position.y-((track.downhill||track.elevated)?track.surfaceHeight(car.root.position.x,car.root.position.z):0))<2;
+    if(this.pool.visible){for(let i=0;i<p.count;i++){const lateral=this.poolBase[i*3],ahead=this.poolBase[i*3+2]+19,x=car.root.position.x+forward.x*ahead+side.x*lateral,z=car.root.position.z+forward.z*ahead+side.z*lateral;p.setXYZ(i,x,((track.downhill||track.elevated)?track.surfaceHeight(x,z):globalThis.DriftRoadContact.terrain(track).height(x,z))+.09,z);}p.needsUpdate=true;}
     this.pool.material.opacity=night*.62;
     // Imported pixel atlases stay readable but respond to the same atmosphere.
   }
