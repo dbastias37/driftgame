@@ -1,6 +1,6 @@
 /* Shared input polling and a non-driving diagnostic page. */
 let padUIStamp=0,padUISignature='',padDeviceSignature='',padButtonNodes=[],padAxisNodes=[],padMappingNodes=[];
-const padActionNames={accel:'Acelerar',brake:'Frenar',handbrake:'Drift',camera:'Cámara',recover:'Reaparecer',pause:'Pausa',up:'Subir marcha',down:'Bajar marcha',confirm:'Confirmar menú',cancel:'Volver en menú'};
+const padActionNames={accel:'Acelerar',brake:'Frenar',reverse:'Freno / marcha atrás',handbrake:'Drift',camera:'Cámara',recover:'Reaparecer',pause:'Pausa',up:'Subir marcha',down:'Bajar marcha',confirm:'Confirmar menú',cancel:'Volver en menú'};
 function padSettingsVisible(){return !$('#settingsMenu').classList.contains('hidden')&&!$('[data-settings-pane="gamepad"]').classList.contains('hidden');}
 function syncPadProfile(){const p=gamepad.profile;$('#padEnabled').checked=p.enabled;$('#padAxis').value=p.axis;$('#padInvert').checked=p.invert;$('#padDeadzone').value=Math.round(p.deadzone*100);$('#padSensitivity').value=Math.round(p.sensitivity*100);$('#padDeadzoneValue').textContent=Math.round(p.deadzone*100)+'%';$('#padSensitivityValue').textContent=p.sensitivity.toFixed(2)+'×';for(const {key,select} of padMappingNodes)select.value=p.bind[key];}
 function buildPadDiagnostics(){

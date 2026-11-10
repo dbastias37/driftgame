@@ -247,7 +247,7 @@
 
   <div id="help" role="dialog" aria-label="Controles">
     <b>Controles</b><br>
-    A/← Izq · D/→ Der · W/↑ Acelerar · Espacio / S / ↓ Freno · Shift Derrape<br>
+    A/← Izq · D/→ Der · W/↑ Acelerar · Espacio Freno · S / ↓ Freno y marcha atrás · Shift Derrape<br>
     R Volver a la pista (cuesta 1 vida) · Al terminar: reintentar<br>
     Escape Menú · E / Q Subir / bajar marcha · G Fantasma · H Ayuda<br>C Cambiar cámara<br>
     Rueda = Zoom (arriba acerca, abajo aleja)<br><button id="btnHelpClose" class="text-button">Cerrar ayuda</button>
@@ -441,7 +441,7 @@
         <section data-settings-pane="gamepad" role="tabpanel" class="hidden">
           <p class="setting-hint" id="padStatus" role="status">Conecta un mando USB y pulsa un botón para detectarlo.</p><p id="padName">PS4 / USB genérico</p>
           <label class="setting">Dispositivo<select id="padDevice" disabled><option>Sin mando</option></select></label>
-          <p class="setting-hint">Menús: análogo / cruceta para mover · X (cruz) para confirmar · círculo para volver. R2: acelerar · L2: frenar · Cruz: drift · Triángulo: cámara · Cuadrado: reaparecer · Options: pausa · R1/L1: marchas.</p>
+          <p class="setting-hint">Menús: análogo / cruceta para mover · X (cruz) para confirmar · círculo para volver. R2: acelerar · L2: frenar · Círculo: freno y marcha atrás · Cruz: drift · Triángulo: cámara · Cuadrado: reaparecer · Options: pausa · R1/L1: marchas.</p>
           <div id="padCalibration" class="hidden">
             <label class="setting">Usar mando<input id="padEnabled" type="checkbox" checked role="switch"></label>
             <div id="padButtons" class="pad-buttons" aria-label="Prueba de botones"></div><div id="padAxes" class="pad-axes" aria-label="Prueba de ejes"></div><output id="padOutput"></output>
@@ -522,16 +522,16 @@
 <script src="js/road-contact.js?v=1.0.0-prealpha.12"></script>
 <script src="js/downhill.js?v=1.0.0-prealpha.12"></script>
 <script src="js/yugo-physics.js?v=1.0.0-prealpha.12"></script>
-<script src="js/gamepad.js?v=1.0.0-prealpha.12"></script>
+<script src="js/gamepad.js?v=1.0.0-prealpha.12-reverse1"></script>
 <script src="js/instruments.js?v=1.0.0-prealpha.12"></script>
 <script src="js/game-options.js?v=1.0.0-prealpha.12"></script>
 <script src="js/training.js?v=1.0.0-prealpha.12"></script>
 <script src="js/track-props.js?v=1.0.0-prealpha.12"></script>
 <script src="js/ai-race.js?v=1.0.0-prealpha.12"></script>
-<script src="js/vehicle-dynamics.js?v=1.0.0-prealpha.12"></script>
+<script src="js/vehicle-dynamics.js?v=1.0.0-prealpha.12-reverse1"></script>
 <script src="js/engine-audio.js?v=1.0.0-prealpha.13"></script>
 <script src="js/tire-smoke.js?v=1.0.0-prealpha.12"></script>
-<script src="js/online-rules.js?v=1.0.0-prealpha.12"></script>
+<script src="js/online-rules.js?v=1.0.0-prealpha.12-reverse1"></script>
 <script>
 "use strict";
 
@@ -972,6 +972,7 @@ class Car{
       ? clamp(input.steerAxis, -1, 1)
       : ((input.left ? -1 : 0) + (input.right ? 1 : 0));
     const thr=clamp(Number(input.accel)||0,0,1), br=clamp(Number(input.brake)||0,0,1); this.handbrake=!!input.handbrake;
+    this.reverseRequested=!!input.reverse;
     this.braking=!!br;this._effectTrack=track;
     this._physStep(dt,steer,thr,br);
     const f={x:C(this.angle),y:S(this.angle)}, r={x:-S(this.angle),y:C(this.angle)};
@@ -1373,7 +1374,8 @@ function input(){
   const kLeft  = keys.has('a') || keys.has('arrowleft');
   const kRight = keys.has('d') || keys.has('arrowright');
   const kAccel = keys.has('w') || keys.has('arrowup');
-  const kBrake = keys.has(' ') || keys.has('s') || keys.has('arrowdown');
+  const kBrake = keys.has(' ');
+  const kReverse = keys.has('s') || keys.has('arrowdown');
   const kHand  = keys.has('shift');
 
   const hudOn = touchHUD?.classList.contains('show');
@@ -1382,7 +1384,7 @@ function input(){
   const steerAxis = Math.abs(steerDigital) > 0 ? steerDigital : Math.abs(steerAxisTouch)>.02?steerAxisTouch:gamepad.state.steerAxis;
   const accel     = ((hudOn) ? (touch.accel || (touch.handbrake && !touch.brake && !kBrake)) : false) || kAccel;
 
-  return {left:kLeft,right:kRight,accel:accel?true:gamepad.state.accel||false,brake:(kBrake || (hudOn&&touch.brake))?true:gamepad.state.brake||false,handbrake:kHand || (hudOn&&touch.handbrake) || gamepad.state.handbrake,steerAxis};
+  return {left:kLeft,right:kRight,reverse:kReverse || !!gamepad.state.reverse,accel:accel?true:gamepad.state.accel||false,brake:(kBrake || (hudOn&&touch.brake))?true:gamepad.state.brake||false,handbrake:kHand || (hudOn&&touch.handbrake) || gamepad.state.handbrake,steerAxis};
 }
 
 function computeDeltaIndex(p,c,L){
@@ -1872,8 +1874,8 @@ function checkChallengeProgress(){
 }
 
 </script>
-<script src="js/experience.js?v=1.0.0-prealpha.12"></script>
-<script src="js/gamepad-ui.js?v=1.0.0-prealpha.12"></script>
+<script src="js/experience.js?v=1.0.0-prealpha.12-reverse1"></script>
+<script src="js/gamepad-ui.js?v=1.0.0-prealpha.12-reverse1"></script>
 <script src="js/career-ui.js?v=1.0.0-prealpha.12"></script>
 <script src="js/replay-ui.js?v=1.0.0-prealpha.12"></script>
 <script src="js/online-config.js?v=1.0.0-prealpha.12"></script>

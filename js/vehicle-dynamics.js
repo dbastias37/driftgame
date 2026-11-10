@@ -45,12 +45,22 @@ globalThis.DriftDynamics=(()=>{
     const before=c.steerAngle,rate=c.steerRate*p.steer/(1+speed*.012);
     c.steerAngle+=clamp(c.steerTarget-c.steerAngle,-rate*dt,rate*dt);c.steerVel=(c.steerAngle-before)/dt;
     const cos=Math.cos(c.angle),sin=Math.sin(c.angle),vx=c.vel.x*cos+c.vel.y*sin,vy=-c.vel.x*sin+c.vel.y*cos;
+    // Reverse is a separate driving command: ordinary brakes never propel the car.
+    const reverse=!!c.reverseRequested && thr===0;
+    const reversing=reverse && vx<=.15 && br===0;
+    if(reverse && !reversing)br=1;
+    if(reverse)c.throttleSm=0;
     const kmh=speed*3.6,gear=c.gear-1,maxK=c.gearMax[gear]||9999;
     const shift=c.shiftTimer>0?.45+.55*(1-c.shiftTimer/c.shiftDur):1,bog=c.gear>1&&kmh<maxK*.38?clamp(kmh/(maxK*.38),0,1):1;
     const traction=clamp(kmh/(c.tractionRamp[gear]||40),c.tractionMin[gear]||.85,1);
     let engine=c.throttleSm*c.engineForce*(c.gearPower[gear]||1)*shift*bog*traction;
     const roadLoad=Math.max(0,vx*c.dragLinear+vx*Math.abs(vx)*c.dragQuad);
     engine=Math.min(engine,Math.max(0,roadLoad+m*(maxK/3.6-vx)/dt));
+    if(reversing){
+      // Limit reverse to 25 km/h and keep braking available via L2 / Space.
+      const limit=25/3.6,load=vx*c.dragLinear+vx*Math.abs(vx)*c.dragQuad;
+      engine=-Math.min(c.engineForce*.4,Math.max(0,-load+m*(limit+vx)/dt));
+    }
     const a=L*(1-p.front),b=L*p.front,loadShift=p.cg*(m*(c.accelLong||0)+vx*c.dragLinear+Math.sign(vx)*vx*vx*c.dragQuad)/L;
     const fzF=clamp(weight*p.front-loadShift,weight*.12,weight*.88),fzR=weight-fzF;
     const grip=Math.sqrt(clamp(c.baseLatFriction/(c._stockGrip||2200),.55,1.8));
@@ -89,7 +99,7 @@ globalThis.DriftDynamics=(()=>{
     c.accelLat=(c.accelLat||0)+(ay-(c.accelLat||0))*smooth;
     c.frontLoad=fzF;c.rearLoad=fzR;c.frontSlip=alphaF;c.rearSlip=alphaR;
     c.driveSlip=clamp((Math.abs(frontDemand-fxF)+Math.abs(rearDemand-fxR))/Math.max(1,weight),0,2);
-    if(speed<.18&&thr===0&&!c.descent){const k=Math.exp(-dt*18);c.vel.x*=k;c.vel.y*=k;c.omega*=k;}
+    if(speed<.18&&thr===0&&!reversing&&!c.descent){const k=Math.exp(-dt*18);c.vel.x*=k;c.vel.y*=k;c.omega*=k;}
   }
   return Object.freeze({SPEED_SCALE,profiles,configure,reset,step});
 })();

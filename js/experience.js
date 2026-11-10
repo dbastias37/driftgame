@@ -74,7 +74,7 @@ const instrumentCluster=new DriftInstruments.Cluster($('#instrumentCanvas'));
 document.fonts?.ready.then(()=>{instrumentCluster.face=null;});
 function updateDriveHUD(dt=1/60){
   if(!player)return;if(mode==='downhill')updateDescentHUD();const t=instrumentCluster.draw(player,dt);
-  $('#driveSpeed').textContent=String(Math.round(t.speed)).padStart(3,'0');$('#driveGear').textContent=player.gear;
+  $('#driveSpeed').textContent=String(Math.round(t.speed)).padStart(3,'0');$('#driveGear').textContent=(player.vel.x*Math.cos(player.angle)+player.vel.y*Math.sin(player.angle)<-.15)?'R':player.gear;
   $('#driveRpm').textContent=String(Math.round(t.rpm/10)*10);$('#driveTx').textContent=player.auto?'AUTO':'MANUAL';
   $('#driveHud').classList.toggle('redline',t.rpm>t.redline*.94);
 }
