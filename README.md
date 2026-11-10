@@ -1,10 +1,18 @@
 # Drift Racer 1.0 pre-alpha
 
-Juego de drift 3D para navegador. Cinco autos, campaña de veinte etapas y sesenta objetivos, taller por vehículo, veinte descensos, carreras online de hasta tres jugadores, editor y contrarreloj con fantasma local. Versión técnica: `1.0.0-prealpha.6`.
+Juego de drift 3D para navegador. Cinco autos, campaña de veinte etapas y sesenta objetivos, taller por vehículo, veinte descensos, carreras online de hasta tres jugadores, editor y contrarreloj con fantasma local. Versión técnica: `1.0.0-prealpha.7`.
 
 El garaje incluye el **Nissan Skyline R34 azul** y el **Chevrolet Nova SS negro**, convertidos de los modelos entregados, con texturas originales y ruedas independientes. Reemplazan las antiguas casillas azul y gris; se mantienen las mejoras asociadas a esas casillas. Los cinco autos tienen pintura editable y la física revisada descrita abajo. Faros, luces de freno, suspensión, humo y huellas siguen el mismo estado de la carrera.
 
 [Jugar en Render](https://driftgame.onrender.com)
+
+## Vibración y objetos de pista (prealpha.7)
+
+**Ajustes → Cámara** permite regular por separado la vibración de auto/ruedas y cámara (0–200%). Es leve, aumenta con la velocidad y conserva la física de manejo. Las líneas de velocidad son vectores dentro de la escena 3D y pasan por el render PSX. Los faroles encendidos iluminan pequeñas motas de polvo.
+
+Los circuitos, descensos y Mercado Ocho incluyen neumáticos sueltos junto a algunas curvas: reciben impulso, vuelcan, rebotan y se asientan. El primer golpe resta 100 puntos y rompe el combo. Se congelan en pausa, se reponen al reiniciar y su movimiento se guarda en las repeticiones de carrera.
+
+[Controles, alcance y validación](docs/road-feedback-props.md).
 
 ## Mercado Ocho, tipografía y salida (prealpha.6)
 
@@ -36,7 +44,7 @@ La vista de mapas se desplaza, gira y acerca; la pintura puede cambiarse repetid
 - Velocidad física de serie **+10%** frente a la versión anterior, medida en llano para los cinco autos. No se acelera el reloj de carrera. Los récords nuevos usan el sufijo `:physics-v2`; los registros anteriores permanecen guardados.
 - Humo emitido en los contactos de neumáticos, con nubes suaves que crecen, ascienden y se disipan. Una malla acotada agrupa las partículas para WebGL y render compatible; también se muestra en rivales online.
 
-Validación actual: **167 pruebas de núcleo aprobadas**, compilación de shaders y revisión visual en render compatible.
+Validación actual: **176 pruebas de núcleo aprobadas**, 40 carreras de rivales con obstáculos y revisión visual en render compatible. Las versiones anteriores también verificaron la compilación de shaders.
 
 Modelo, fuentes, mediciones y límites: [dinámica de vehículos](docs/vehicle-dynamics.md).
 

@@ -8,6 +8,8 @@ const renderPrefs={
   impulse:savedPrefs.impulse==='off'?'off':'on',
   speedLines:['car','center','off'].includes(savedPrefs.speedLines)?savedPrefs.speedLines:'car',
   speedLinesIntensity:Number.isFinite(savedPrefs.speedLinesIntensity)?Math.max(0,Math.min(3,savedPrefs.speedLinesIntensity)):1.5,
+  vehicleVibration:Number.isFinite(savedPrefs.vehicleVibration)?clamp(savedPrefs.vehicleVibration,0,2):.65,
+  cameraVibration:Number.isFinite(savedPrefs.cameraVibration)?clamp(savedPrefs.cameraVibration,0,2):.35,
   timeOfDay:Math.max(0,Math.min(1,Number(savedPrefs.timeOfDay)||0)),
   quality:['auto','high','low'].includes(savedPrefs.quality)?savedPrefs.quality:'auto',
   touch:['auto','on','off'].includes(savedPrefs.touch)?savedPrefs.touch:'auto',
@@ -36,6 +38,7 @@ function syncRenderUI(){
   $('#btnCamera').disabled=renderPrefs.view!=='3d';
   $('#viewBadge').textContent='3D / '+CAMERA_NAMES[renderPrefs.camera].toUpperCase();
   $('#speedLinesIntensity').value=Math.round(renderPrefs.speedLinesIntensity*100);$('#speedLinesIntensityLabel').textContent=Math.round(renderPrefs.speedLinesIntensity*100)+'%';
+  for(const key of ['vehicleVibration','cameraVibration']){$('#'+key).value=Math.round(renderPrefs[key]*100);$('#'+key+'Label').textContent=Math.round(renderPrefs[key]*100)+'%';}
   $('#impulseSetting').value=renderPrefs.impulse;$('#speedLinesSetting').value=renderPrefs.speedLines;
   syncDaytimeUI();
   $('#touchSetting').value=renderPrefs.touch;$('#cameraSetting').value=renderPrefs.camera;$('#qualitySetting').value=renderPrefs.quality;$('#motionSetting').value=renderPrefs.motion;
@@ -115,6 +118,7 @@ $('#cameraSetting').addEventListener('change',e=>{renderPrefs.camera=e.target.va
 $('#qualitySetting').addEventListener('change',e=>{renderPrefs.quality=e.target.value;sceneView?.setQuality(renderPrefs.quality);menuPreview?.setQuality(renderPrefs.quality);saveRenderPrefs();});
 for(const [id,key] of [['impulseSetting','impulse'],['speedLinesSetting','speedLines']])$('#'+id).addEventListener('change',e=>{renderPrefs[key]=e.target.value;driftEffect.reset();saveRenderPrefs();});
 $('#speedLinesIntensity').addEventListener('input',e=>{renderPrefs.speedLinesIntensity=Number(e.target.value)/100;$('#speedLinesIntensityLabel').textContent=e.target.value+'%';saveRenderPrefs();});
+for(const key of ['vehicleVibration','cameraVibration'])$('#'+key).addEventListener('input',e=>{renderPrefs[key]=clamp(Number(e.target.value)/100,0,2);$('#'+key+'Label').textContent=Math.round(renderPrefs[key]*100)+'%';saveRenderPrefs();});
 $('#motionSetting').addEventListener('change',e=>{renderPrefs.motion=e.target.value;driftEffect.reset();previewSpinning=e.target.value!=='reduced';saveRenderPrefs();});
 // Keep tab navigation inside the active menu; gameplay keys remain unchanged.
 addEventListener('keydown',e=>{
@@ -161,13 +165,15 @@ function showCustomTrackPreview(track,origin='import'){
 function updateTrackPreviewDetails(){
   if(!previewSelection)return;
   const {track:t,level,challenge}=previewSelection,prefix=challenge?'challenge':'circuit';
+  DriftTrackProps.prepare(t,{enabled:mode!=='online'});
   const length=t.layout?.length||t.points.reduce((s,p,i)=>{const q=t.points[(i+1)%t.points.length];return s+Math.hypot(p.x-q.x,p.y-q.y);},0);
   $('#'+prefix+'PreviewName').textContent=t.layout?.name||'Circuito personalizado';
   $('#'+prefix+'PreviewDetails').textContent=`${(length/1000).toFixed(2)} km · ${Math.round(t.roadHalf*2)} m de ancho${t.layout?' · '+t.layout.stage:''}`;
   const locked=challenge&&level>unlockedLevel,button=$(challenge?'#btnChallengeContinue':'#btnCircuitContinue');
   button.disabled=locked;button.textContent=locked?'SUPERA EL DESAFÍO ANTERIOR':'ELEGIR AUTO ↗';
   $('#circuitPreviewGoal').textContent=t.downhill?`Objetivo: ${t.goal.toLocaleString('es-CL')} pts antes del 100% · 3 vidas · Mejor: ${downhillBest(t.routeLevel).score.toLocaleString('es-CL')} pts`:'';
-  if(t.training){$('#circuitPreviewDetails').textContent='Estacionamiento abierto · Recorrido en ocho · Zona libre';$('#circuitPreviewGoal').textContent='Derrapa para sumar. Derribar un cono resta 100 puntos. Sin límite de tiempo ni vidas.';}
+  if(t.training){$('#circuitPreviewDetails').textContent='Estacionamiento abierto · Recorrido en ocho · Zona libre';$('#circuitPreviewGoal').textContent='Derrapa para sumar. Evita conos y neumáticos: −100 por golpe. Sin límite de tiempo ni vidas.';}
+  if(!t.training&&t.trackProps?.props.length)$('#circuitPreviewGoal').textContent+=($('#circuitPreviewGoal').textContent?' · ':'')+'Neumáticos móviles en curvas: −100 por golpe';
   if(t.downhill)$('#circuitPreviewDetails').textContent=`${(t.finishS/1000).toFixed(2)} km · ↓ ${Math.round(t.drop)} m · Pendiente ${Math.round(t.drop/t.length*100)}% media`;
   if(challenge)$('#challengePreviewGoal').textContent=`Una vuelta · ${DriftCareer.load().missions[level].filter(Boolean).length}/3 objetivos · Se conservan entre intentos${locked?' · Completa la etapa anterior':''}`;
   document.querySelectorAll('[data-circuit],.btnPickChallenge,[data-downhill-pick]').forEach(b=>{
@@ -212,7 +218,7 @@ function renderPreparationPreview(dt,time){
     // invisible previews and the racing renderer do not render behind it.
     if(time-previewLastFrame<1/(menuPreview.software?18:60))return true;
     const elapsed=previewLastFrame?Math.min(.1,time-previewLastFrame):dt;previewLastFrame=time;
-    menuPreview.renderPreview({...preview,skin:chosen.sprite,dt:elapsed,spinning:previewSpinning,timeOfDay:renderPrefs.timeOfDay,cosmetics:garageCosmetics,retro:renderPrefs.retro,weather:renderPrefs.weather,player:demoFrame.player,time:demoFrame.time,camera:renderPrefs.camera});
+    menuPreview.renderPreview({...preview,skin:chosen.sprite,dt:elapsed,spinning:previewSpinning,timeOfDay:renderPrefs.timeOfDay,cosmetics:garageCosmetics,retro:renderPrefs.retro,weather:renderPrefs.weather,player:demoFrame.player,time:demoFrame.time,camera:renderPrefs.camera,vibration:{vehicle:renderPrefs.vehicleVibration,camera:renderPrefs.cameraVibration},motion:renderPrefs.motion,speedLines:{mode:renderPrefs.speedLines,intensity:renderPrefs.speedLinesIntensity,amount:Math.max(0,(demoFrame.player.worldSpeed()*3.6-22)/100),time:demoFrame.time}});
     status?.classList.add('hidden');
   }catch(error){console.warn('Preview unavailable',error);previewFailed=true;}
   return true;
@@ -279,9 +285,9 @@ $('#btnRecover').addEventListener('click',loseLifeAndRespawn);
 
 
 
-import('./view3d.js?v=1.0.0-prealpha.6').then(async({DriftView3D})=>{
+import('./view3d.js?v=1.0.0-prealpha.7').then(async({DriftView3D})=>{
   await document.fonts?.load('32px DriftDisplay');
   sceneView=new DriftView3D($('#scene3d'),{quality:renderPrefs.quality,onFailure:fail3D,onVehicleFailure:()=>toast('No se pudo cargar un modelo de auto. Recarga para volver a intentarlo.')});
   if(sceneView.software)toast('3D compatible activo · Calidad ligera');
 }).catch(fail3D);
-import('./menu-preview.js?v=1.0.0-prealpha.6').then(async module=>{await document.fonts?.load('32px DriftDisplay');MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});
+import('./menu-preview.js?v=1.0.0-prealpha.7').then(async module=>{await document.fonts?.load('32px DriftDisplay');MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});

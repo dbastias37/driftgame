@@ -6,7 +6,7 @@ replayUI=(()=>{
   const names={cinematic:'Montaje',drone:'Dron',isometric:'Isométrica',trackside:'Curva'};
   function syncButtons(){for(const id of buttons){const b=$('#'+id);if(b)b.disabled=!!track?.training||recorder.duration<2||!!online?.racing;}}
   function reset(){if(session)close();clock=0;recorder.reset({track,skin:chosen.sprite,timeOfDay:renderPrefs.timeOfDay,...raceConditions});driftEffect.reset();syncButtons();}
-  function capture(dt=1/60){if(player&&track&&!track.training&&!session){clock+=Math.min(dt,.25);recorder.capture(clock,player,mode==='online'?online?.rivals()||[]:offlineRivals);}syncButtons();}
+  function capture(dt=1/60){if(player&&track&&!track.training&&!session){clock+=Math.min(dt,.25);recorder.capture(clock,player,mode==='online'?online?.rivals()||[]:offlineRivals,track.trackProps?.props||[]);}syncButtons();}
   function open(){
     if(session||recorder.duration<2||online?.racing)return;
     returnState=state;returnLocked=controlsLocked;clearInputs();controlsLocked=true;state='replay';

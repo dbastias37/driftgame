@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
-import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.6';
-import {updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.6';
+import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.7';
+import {updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.7';
 
 const material=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.82,...extra});
 function box(parent,m,x,y,z,w,h,d){const mesh=new T.Mesh(new T.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);parent.add(mesh);return mesh;}
@@ -52,9 +52,9 @@ export class MenuPreview3D extends DriftView3D{
   orbitBy(dx,dy=0){this.droneAngle+=dx;this.previewPitch=Math.max(.2,Math.min(1.5,this.previewPitch+dy));}
   zoomPreviewBy(factor){this.previewZoom=Math.max(.3,Math.min(3,this.previewZoom*factor));}
   resetPreview(){this.previewPan.set(0,0,0);this.previewZoom=1;this.previewPitch=.98;this.previewRevision=null;}
-  renderPreview({kind,track,skin='blue',dt=0,spinning=true,timeOfDay=0,cosmetics={},weather='clear',retro,player,time=0,camera='chase'}){
+  renderPreview({kind,track,skin='blue',dt=0,spinning=true,timeOfDay=0,cosmetics={},weather='clear',retro,player,time=0,camera='chase',vibration={},motion='full',speedLines={}}){
     this.setTimeOfDay(timeOfDay,weather);this.setRetro(retro);
-    if(kind==='settings'&&player){this.previewMode=kind;this.scene.add(this.car.root);this.smoke.visible=this.trails.visible=true;super.render({track,player:{...player,worldSpeed:()=>player.worldSpeed(),skin,cosmetics,ride:null,bodyDimensions:null},skin,dt,time,timeOfDay,weather,retro,camera});return;}
+    if(kind==='settings'&&player){this.previewMode=kind;this.scene.add(this.car.root);this.smoke.visible=this.trails.visible=true;super.render({track,player:{...player,worldSpeed:()=>player.worldSpeed(),skin,cosmetics,ride:null,bodyDimensions:null},skin,dt,time,timeOfDay,weather,retro,camera,vibration,motion,speedLines});return;}
 
     const width=Math.max(1,this.canvas.clientWidth||800),height=Math.max(1,this.canvas.clientHeight||500);
     if(this.width!==width||this.height!==height){this.width=width;this.height=height;this.renderer.setSize(width,height,false);this.camera.aspect=width/height;}
@@ -72,7 +72,7 @@ export class MenuPreview3D extends DriftView3D{
       this.atmosphere.tintCar(this.car,true);this.retro.render(this.garage.scene,this.camera,width,height);
     }else if(track){
       if(this.track!==track){this.build(track);this.resetPreview();}
-      this.car.root.visible=false;this.ghostCar.root.visible=false;this.smoke.visible=false;this.trails.visible=false;
+      this.speedVectors.mesh.visible=false;this.lampDust.mesh.visible=false;this.car.root.visible=false;this.ghostCar.root.visible=false;this.smoke.visible=false;this.trails.visible=false;
       if(spinning)this.droneAngle+=Math.min(dt,.1)*.055;
       const b=track.bounds,cx=b.minX+b.w/2,cz=b.minY+b.h/2,radius=Math.hypot(b.w,b.h,track.maxHeight||0)/2+track.roadHalf+22,centerY=track.downhill?track.maxHeight/2:0;
       this.previewRadius=radius;this.camera.fov=43;

@@ -39,17 +39,18 @@ globalThis.DriftTraining=(()=>{
   }
   function bounds(car){return car.bodyDimensions||{length:4.4,width:1.8,height:1.4};}
   function inertia(car){const d=bounds(car);return car.mass*(d.length*d.length+d.width*d.width)/12*(car.handling?.yaw||1);}
-  function coneContact(car,cone){
-    if(cone.z>bounds(car).height)return null;
+  function coneContact(car,cone,properties=material){
+    const base=Number.isFinite(cone.ground)?cone.ground-(car.ride?.height||0):0;
+    if(cone.z+base>bounds(car).height||cone.z+base+properties.height<-.03)return null;
     const c=Math.cos(car.angle),s=Math.sin(car.angle),d=bounds(car),dx=cone.x-car.pos.x,dy=cone.y-car.pos.y,lx=dx*c+dy*s,ly=-dx*s+dy*c;
     let qx=clamp(lx,-d.length/2,d.length/2),qy=clamp(ly,-d.width/2,d.width/2),nx=lx-qx,ny=ly-qy,dist=Math.hypot(nx,ny);
-    if(dist>=material.radius)return null;
+    if(dist>=properties.radius)return null;
     if(dist<1e-6){const ex=d.length/2-Math.abs(lx),ey=d.width/2-Math.abs(ly);if(ex<ey){nx=Math.sign(lx)||1;ny=0;qx=nx*d.length/2;dist=-ex;}else{nx=0;ny=Math.sign(ly)||1;qy=ny*d.width/2;dist=-ey;}}
     else{nx/=dist;ny/=dist;}
-    return {nx:nx*c-ny*s,ny:nx*s+ny*c,rx:qx*c-qy*s,ry:qx*s+qy*c,depth:material.radius-dist};
+    return {nx:nx*c-ny*s,ny:nx*s+ny*c,rx:qx*c-qy*s,ry:qx*s+qy*c,depth:properties.radius-dist};
   }
-  function strike(car,cone){
-    const hit=coneContact(car,cone);if(!hit)return false;
+  function strike(car,cone,properties=material){
+    const material=properties,hit=coneContact(car,cone,material);if(!hit)return false;
     const {nx,ny,rx,ry,depth}=hit,inv=1/car.mass,ic=1/inertia(car),lever=rx*ny-ry*nx;
     const vx=cone.vx-car.vel.x+(car.omega||0)*ry,vy=cone.vy-car.vel.y-(car.omega||0)*rx,closing=vx*nx+vy*ny;
     const correction=Math.max(0,depth-.002)*.8/(inv+1/material.mass);

@@ -4,16 +4,17 @@ globalThis.DriftReplay=(()=>{
   const angle=(a,b,t)=>a+Math.atan2(Math.sin(b-a),Math.cos(b-a))*t;
   class Recorder{
     constructor(seconds=MAX_SECONDS){this.maxSeconds=seconds;this.capacity=Math.ceil(seconds*HZ)+1;this.clear();}
-    clear(){this.count=0;this.head=0;this.lastTime=-Infinity;this.channels=new Map();this.times=new Float64Array(this.capacity);this.meta=null;}
+    clear(){this.count=0;this.head=0;this.lastTime=-Infinity;this.channels=new Map();this.propChannels=[];this.times=new Float64Array(this.capacity);this.meta=null;}
     reset(meta){this.clear();this.meta=meta;}
     index(i){return (this.head-this.count+i+this.capacity)%this.capacity;}
     get start(){return this.count?this.times[this.index(0)]:0;}
     get end(){return this.count?this.times[this.index(this.count-1)]:0;}
     get duration(){return this.end-this.start;}
-    get bytes(){return this.times.byteLength+[...this.channels.values()].reduce((s,c)=>s+c.data.byteLength,0);}
-    capture(time,player,rivals=[]){
+    get bytes(){return this.times.byteLength+[...this.channels.values()].reduce((s,c)=>s+c.data.byteLength,0)+this.propChannels.reduce((s,c)=>s+c.byteLength,0);}
+    capture(time,player,rivals=[],props=[]){
       if(!this.meta||!Number.isFinite(time)||time-this.lastTime<1/HZ-1e-6)return false;
       const slot=this.head;this.times[slot]=time;
+      props.slice(0,12).forEach((p,id)=>{const a=this.propChannels[id]??=new Float32Array(this.capacity*7);a.set([p.x,p.y,p.z,p.ground,p.tiltX,p.tiltY,p.heading||0],slot*7);});
       for(const [id,car,skin] of [['self',player,this.meta.skin],...rivals.slice(0,2).map(c=>[c.id,c,c.skin])]){
         let channel=this.channels.get(id);
         if(!channel){channel={id,skin,name:car.name||'',color:car.color,cosmetics:car.cosmetics?{...car.cosmetics}:null,dimensions:car.bodyDimensions?{...car.bodyDimensions}:null,data:new Float32Array(this.capacity*STRIDE),last:null,travel:0,first:time};this.channels.set(id,channel);}
@@ -42,7 +43,8 @@ globalThis.DriftReplay=(()=>{
         if(pick(27))pose.descent={motion:pick(16)?'falling':'driving',y:get(17),roll:rot(18),pitch:rot(19),s:get(26)};
         poses.push(pose);
       }
-      return {time,player:poses.find(p=>p.id==='self'),rivals:poses.filter(p=>p.id!=='self')};
+      const props=this.propChannels.map((data,id)=>{const read=n=>data[i*7+n]+(data[j*7+n]-data[i*7+n])*u;return {id,x:read(0),y:read(1),z:read(2),ground:read(3),tiltX:read(4),tiltY:read(5),heading:read(6)};});
+      return {time,player:poses.find(p=>p.id==='self'),rivals:poses.filter(p=>p.id!=='self'),props};
     }
   }
   return {Recorder,MAX_SECONDS,HZ};
