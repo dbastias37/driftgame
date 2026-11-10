@@ -1,24 +1,24 @@
 import * as T from '../vendor/three.module.min.js';
-import {SoftwareRenderer} from './software-renderer.js?v=1.0.0-prealpha.8';
-import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles,groundGeometry} from './track-surface.js?v=1.0.0-prealpha.8';
-import {buildMountain} from './mountain-scene.js?v=1.0.0-prealpha.8';
-import {loadRX7,createRX7} from './rx7-model.js?v=1.0.0-prealpha.8';
-import {loadYugo,createYugo} from './yugo-model.js?v=1.0.0-prealpha.8';
-import {loadFujiwara,createFujiwara} from './fujiwara-model.js?v=1.0.0-prealpha.8';
-import {batchWorld,updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.8';
-import {Atmosphere,buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.8';
-import {CinematicDirector} from './cinematic-camera.js?v=1.0.0-prealpha.8';
-import {loadNova,loadSkyline,createReplacement,updateVehicleLights} from './replacement-model.js?v=1.0.0-prealpha.8';
-import {applyVehiclePaint,disposePaint} from './vehicle-paint.js?v=1.0.0-prealpha.8';
-import {cloudTexture,TireSmokeRenderer} from './smoke-renderer.js?v=1.0.0-prealpha.8';
-import {RetroRenderer} from './retro-renderer.js?v=1.0.0-prealpha.8';
-import {WeatherEffects} from './weather.js?v=1.0.0-prealpha.8';
-import {buildTraining} from './training-scene.js?v=1.0.0-prealpha.8';
-import {onboardCameras,onboardShot,startShot} from './driving-cameras.js?v=1.0.0-prealpha.8';
-import {applyRoadFeedback,roadFeedback} from './road-feedback.js?v=1.0.0-prealpha.8';
-import {SceneSpeedLines} from './scene-speed-lines.js?v=1.0.0-prealpha.8';
-import {LampDust} from './lamp-dust.js?v=1.0.0-prealpha.8';
-import {buildTrackProps} from './track-props-scene.js?v=1.0.0-prealpha.8';
+import {SoftwareRenderer} from './software-renderer.js?v=1.0.0-prealpha.9';
+import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles,groundGeometry} from './track-surface.js?v=1.0.0-prealpha.9';
+import {buildMountain} from './mountain-scene.js?v=1.0.0-prealpha.9';
+import {loadRX7,createRX7} from './rx7-model.js?v=1.0.0-prealpha.9';
+import {loadYugo,createYugo} from './yugo-model.js?v=1.0.0-prealpha.9';
+import {loadFujiwara,createFujiwara} from './fujiwara-model.js?v=1.0.0-prealpha.9';
+import {batchWorld,updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.9';
+import {Atmosphere,buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.9';
+import {CinematicDirector} from './cinematic-camera.js?v=1.0.0-prealpha.9';
+import {loadNova,loadSkyline,createReplacement,updateVehicleLights} from './replacement-model.js?v=1.0.0-prealpha.9';
+import {applyVehiclePaint,disposePaint} from './vehicle-paint.js?v=1.0.0-prealpha.9';
+import {cloudTexture,TireSmokeRenderer} from './smoke-renderer.js?v=1.0.0-prealpha.9';
+import {RetroRenderer} from './retro-renderer.js?v=1.0.0-prealpha.9';
+import {WeatherEffects} from './weather.js?v=1.0.0-prealpha.9';
+import {buildTraining} from './training-scene.js?v=1.0.0-prealpha.9';
+import {onboardCameras,onboardShot,startShot} from './driving-cameras.js?v=1.0.0-prealpha.9';
+import {applyRoadFeedback,roadFeedback} from './road-feedback.js?v=1.0.0-prealpha.9';
+import {SceneSpeedLines} from './scene-speed-lines.js?v=1.0.0-prealpha.9';
+import {LampDust} from './lamp-dust.js?v=1.0.0-prealpha.9';
+import {buildTrackProps} from './track-props-scene.js?v=1.0.0-prealpha.9';
 const TAU=Math.PI*2;
 const SKINS={fujiwara:{color:0xe8e8da,roof:1.335,length:4.215},yugo:{color:0xce362b,roof:1.335,length:3.49},blue:{color:0x2955b8,roof:1.35,length:4.6,spoiler:true},yellow:{color:0xe6b52b,roof:.95,length:4.45,spoiler:true},gray:{color:0x16171a,roof:1.36,length:4.81}};
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -155,8 +155,6 @@ export class DriftView3D{
     for(const sign of [-1,1])box(gate,metal,0,3.7,sign*(half+3),.55,7.4,.55);
     box(gate,metal,0,7.4,0,.75,.85,(half+3)*2);box(gate,orange,.4,7.4,0,.08,.32,half*1.5);
     for(let row=0;row<2;row++)for(let j=0;j<Math.ceil(half*2);j++){const check=box(gate,(j+row)%2?white:metal,row*.65,.055,j-half+.5,.65,.025,1);check.renderOrder=-55;}
-    const signCanvas=document.createElement('canvas');signCanvas.width=512;signCanvas.height=64;const sg=signCanvas.getContext('2d');sg.fillStyle='#17242b';sg.fillRect(0,0,512,64);sg.fillStyle='#e8ece4';sg.font='bold 40px DriftDisplay';sg.textAlign='center';sg.fillText('DR1FT',256,46);const signTexture=new T.CanvasTexture(signCanvas);signTexture.colorSpace=T.SRGBColorSpace;
-    const sign=mesh(new T.PlaneGeometry(Math.min(10,half),1.15),new T.MeshBasicMaterial({map:signTexture,side:T.DoubleSide}),gate,-.45,7.4,0);sign.rotation.y=-Math.PI/2;
     // Distant scenery stays beyond runoff; no new collision rules are introduced.
     const treeGeo=new T.ConeGeometry(2.2,7,5),treeMat=mat(0x284b43),trunkMat=mat(0x514b3c),trees=new T.InstancedMesh(treeGeo,treeMat,200),trunks=new T.InstancedMesh(new T.CylinderGeometry(.22,.35,3,5),trunkMat,200);
     let ti=0;const treeLimit=this.low?65:200;for(let attempt=0;attempt<700&&ti<treeLimit;attempt++){

@@ -1,14 +1,9 @@
 import * as T from '../vendor/three.module.min.js';
-import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.8';
-import {buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.8';
+import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.9';
+import {buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.9';
 
 const mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.88,...extra});
 function box(g,m,x,y,z,w,h,d){const o=new T.Mesh(new T.BoxGeometry(w,h,d),m);o.position.set(x,y,z);g.add(o);return o;}
-function sign(g,text,x,y,z,w,h,color='#eee9ce',background='#214c50'){
-  const c=document.createElement('canvas');c.width=512;c.height=128;const ctx=c.getContext('2d');ctx.fillStyle=background;ctx.fillRect(0,0,512,128);ctx.fillStyle=color;ctx.font='80px DriftDisplay, Impact, sans-serif';ctx.textAlign='center';ctx.fillText(text,256,96);
-  const texture=new T.CanvasTexture(c);texture.colorSpace=T.SRGBColorSpace;texture.magFilter=T.NearestFilter;texture.minFilter=T.NearestFilter;
-  const o=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({map:texture,side:T.DoubleSide}));o.position.set(x,y,z);g.add(o);return o;
-}
 export function buildTraining(track,world){
   const asphalt=mat(0x444d52),concrete=mat(0x939d98),white=mat(0xcbd0b8),yellow=mat(0xe6bc52),dark=mat(0x192c32),teal=mat(0x255b61),orange=mat(0xf68734),glass=mat(0x345562,{metalness:.4,roughness:.24}),green=mat(0x3b5941),trunk=mat(0x554b3d);
   asphalt.userData.roadSurface=true;
@@ -34,13 +29,11 @@ export function buildTraining(track,world){
   box(world,white,0,7.8,-104,150,.4,10);for(const x of [-70,-35,35,70])box(world,teal,x,3.8,-101,.5,7.6,.5);
   for(let x=-74;x<=74;x+=12){box(world,dark,x,3.6,-108.65,10,6.5,.2);box(world,glass,x,3.6,-108.45,9.6,6.1,.12);box(world,white,x,3.6,-108.3,.10,6.2,.1);}
   for(const x of [-14,14]){box(world,teal,x,2.7,-108.15,7,5.4,.25);box(world,glass,x,2.6,-107.95,6.4,5.1,.12);box(world,white,x,2.4,-107.8,.12,4.8,.1);}
-  sign(world,'MERCADO / 08',0,12.5,-108.55,50,5.4);sign(world,'ENTRADA',-14,6.4,-107.8,8,1.5);sign(world,'SALIDA',14,6.4,-107.8,8,1.5);
   for(const x of [-65,-39,42,68]){box(world,dark,x,15,-123,12,2,6);for(let i=0;i<6;i++)box(world,concrete,x-4+i*1.5,16.1,-123,.6,.2,5);}
   // Landscaped outer edges keep the eight and central crossing completely clear.
   for(const x of [-117,117])for(const z of [-75,-48,-18,13,44,77]){box(world,concrete,x,.25,z,5,.5,12);for(let j=-3;j<=3;j+=3){const bush=new T.Mesh(new T.IcosahedronGeometry(2.5,0),green);bush.position.set(x,1.8,z+j);bush.scale.y=.7;world.add(bush);}}
   for(const x of [-55,-12,12,55]){box(world,concrete,x,.25,99,12,.5,5);for(let j=-3;j<=3;j+=3){const bush=new T.Mesh(new T.IcosahedronGeometry(2.3,0),green);bush.position.set(x+j,1.6,99);world.add(bush);}}
   for(const x of [-131,131])for(let z=-100;z<110;z+=35){box(world,trunk,x,2.4,z,.6,4.8,.6);const tree=new T.Mesh(new T.IcosahedronGeometry(4,0),green);tree.position.set(x,6,z);world.add(tree);}
-  sign(world,'ZONA LIBRE',58,3,97,14,3);box(world,dark,58,1.5,97,.24,3,.24);
   const street=buildStreetLights(track,world);batchWorld(world,80);
   // Moving props are added after batching, so their transforms stay live.
   const props=new T.Group();props.name='training-props';world.add(props);const count=track.coneSpawns.length;
