@@ -172,8 +172,8 @@ function updateTrackPreviewDetails(){
   const locked=challenge&&level>unlockedLevel,button=$(challenge?'#btnChallengeContinue':'#btnCircuitContinue');
   button.disabled=locked;button.textContent=locked?'SUPERA EL DESAFÍO ANTERIOR':'ELEGIR AUTO ↗';
   $('#circuitPreviewGoal').textContent=t.downhill?`Objetivo: ${t.goal.toLocaleString('es-CL')} pts antes del 100% · 3 vidas · Mejor: ${downhillBest(t.routeLevel).score.toLocaleString('es-CL')} pts`:'';
-  if(t.training){$('#circuitPreviewDetails').textContent='Estacionamiento abierto · Recorrido en ocho · Zona libre';$('#circuitPreviewGoal').textContent='Derrapa para sumar. Evita conos y neumáticos: −100 por golpe. Sin límite de tiempo ni vidas.';}
-  if(!t.training&&t.trackProps?.props.length)$('#circuitPreviewGoal').textContent+=($('#circuitPreviewGoal').textContent?' · ':'')+'Neumáticos móviles en curvas: −100 por golpe';
+  if(t.training){$('#circuitPreviewDetails').textContent='Estacionamiento abierto · Recorrido en ocho · Zona libre';$('#circuitPreviewGoal').textContent='Derrapa para sumar. Evita conos y pilas: −100 por obstáculo. Sin límite de tiempo ni vidas.';}
+  if(!t.training&&t.trackProps?.props.length)$('#circuitPreviewGoal').textContent+=($('#circuitPreviewGoal').textContent?' · ':'')+'Pilas de neumáticos en curvas: −100 por pila';
   if(t.downhill)$('#circuitPreviewDetails').textContent=`${(t.finishS/1000).toFixed(2)} km · ↓ ${Math.round(t.drop)} m · Pendiente ${Math.round(t.drop/t.length*100)}% media`;
   if(challenge)$('#challengePreviewGoal').textContent=`Una vuelta · ${DriftCareer.load().missions[level].filter(Boolean).length}/3 objetivos · Se conservan entre intentos${locked?' · Completa la etapa anterior':''}`;
   document.querySelectorAll('[data-circuit],.btnPickChallenge,[data-downhill-pick]').forEach(b=>{
@@ -263,12 +263,12 @@ function updateDescentHUD(){
   $('#descentPoints').textContent=`${Math.floor(player.score).toLocaleString('es-CL')} / ${track.goal.toLocaleString('es-CL')} pts`;
   $('#descentPoints').classList.toggle('complete',complete);$('#descentGrade').textContent=`↓ ${Math.round(track.sample(player.pos.x,player.pos.y).grade*100)}%`;
   $('#descentRemaining').textContent=Math.max(0,Math.ceil(track.finishS-d.s))+' m a meta';
-  $('#descentHint').textContent=d.motion==='falling'?'¡Fuera de la carretera! R / Recuperar · cuesta 1 vida':complete?'Objetivo cumplido. Llega a la meta para ganar.':'Suma puntos avanzando en drift antes de llegar al 100%.';
+  $('#descentHint').textContent=d.motion==='falling'?'¡Fuera de la carretera! R / Recuperar · cuesta 1 vida':complete?'Objetivo cumplido. Llega a la meta para ganar.':'Suma puntos derrapando antes de llegar al 100%.';
 }
 function finishDownhill(){
   const won=player.score>=track.goal;player.descent.s=track.finishS;state=won?'downhillWon':'downhillFailed';
   if(won){const best=downhillBest(track.routeLevel);if(player.score>best.score)try{localStorage.setItem('downhill:v2:'+track.routeLevel,JSON.stringify({score:Math.floor(player.score),time:raceTime}));}catch{}}
-  updateDescentHUD();showOverlay({title:won?'¡Cerro conquistado!':'Llegaste, pero faltaron puntos',msg:`${track.layout.name} · Sprint completado: <b>100%</b><br>Puntaje: <b>${Math.floor(player.score).toLocaleString('es-CL')} / ${track.goal.toLocaleString('es-CL')}</b> pts · Tiempo: <b>${formatTime(raceTime)}</b>${won?careerReward(true):'<br>Vuelve a intentarlo: enlaza los derrapes antes de la meta.'}`});
+  updateDescentHUD();showOverlay({title:won?'¡Cerro conquistado!':'Llegaste, pero faltaron puntos',msg:`${track.layout.name} · Descenso completado: <b>100%</b><br>Puntaje: <b>${Math.floor(player.score).toLocaleString('es-CL')} / ${track.goal.toLocaleString('es-CL')}</b> pts · Tiempo: <b>${formatTime(raceTime)}</b>${won?careerReward(true):'<br>Vuelve a intentarlo: enlaza los derrapes antes de la meta.'}`});
 }
 $('#btnRecover').addEventListener('click',loseLifeAndRespawn);
 
@@ -285,9 +285,9 @@ $('#btnRecover').addEventListener('click',loseLifeAndRespawn);
 
 
 
-import('./view3d.js?v=1.0.0-prealpha.7').then(async({DriftView3D})=>{
+import('./view3d.js?v=1.0.0-prealpha.8').then(async({DriftView3D})=>{
   await document.fonts?.load('32px DriftDisplay');
   sceneView=new DriftView3D($('#scene3d'),{quality:renderPrefs.quality,onFailure:fail3D,onVehicleFailure:()=>toast('No se pudo cargar un modelo de auto. Recarga para volver a intentarlo.')});
   if(sceneView.software)toast('3D compatible activo · Calidad ligera');
 }).catch(fail3D);
-import('./menu-preview.js?v=1.0.0-prealpha.7').then(async module=>{await document.fonts?.load('32px DriftDisplay');MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});
+import('./menu-preview.js?v=1.0.0-prealpha.8').then(async module=>{await document.fonts?.load('32px DriftDisplay');MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});

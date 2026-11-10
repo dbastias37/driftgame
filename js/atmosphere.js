@@ -1,5 +1,5 @@
 import * as T from '../vendor/three.module.min.js';
-import './game-options.js?v=1.0.0-prealpha.7';
+import './game-options.js?v=1.0.0-prealpha.8';
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const smooth=n=>n*n*(3-2*n);
 const palettes=[{at:0,sky:0x708f9e,horizon:0x9fb4b6,sun:0xffe4c6,ground:0x56634a,ambient:2.3,direct:3.1},

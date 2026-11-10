@@ -41,8 +41,8 @@ test('exhibition renders three moving cars and preserves the recording across ci
  const {DriftView3D}=await import('../js/view3d.js'),{createTrack}=await import('../server/engine.js');await import('../js/replay.js');await import('../js/attract-demo.js');
  const oldError=console.error;console.error=()=>{};let view;try{view=new DriftView3D(canvas(),{loadVehicle:null,loadYugoVehicle:null,loadFujiwaraVehicle:null});}finally{console.error=oldError;}
  try{const demo=new DriftAttract.Demo(createTrack(3),{day:1}),shots=new Set(),positions=[];
- for(const time of [0,7,14,21]){demo.time=time;const frame=demo.frame(0),before=JSON.stringify(frame);view.render({...frame,skin:frame.player.skin,camera:'demo',inMenu:true,dt:1/30,timeOfDay:1});assert.equal(view.rivalModels.size,2);assert.equal(JSON.stringify(frame),before);shots.add(view.cinematicLabel);positions.push([view.car.root.position.x,view.car.root.position.z]);assert.ok(Number.isFinite(view.screenFocus.x));}
- assert.equal(shots.size,3);assert.notDeepEqual(positions[0],positions[1]);assert.ok(view.car.wheels.every(w=>Number.isFinite(w.spin.rotation.z)));
+ for(const time of [0,7,14,21,28,35,42,49,56]){demo.time=time;const frame=demo.frame(0),before=JSON.stringify(frame);view.render({...frame,skin:frame.player.skin,camera:'demo',inMenu:true,dt:1/30,timeOfDay:1});assert.equal(view.rivalModels.size,2);assert.equal(JSON.stringify(frame),before);shots.add(view.cinematicLabel);positions.push([view.car.root.position.x,view.car.root.position.z]);assert.ok(Number.isFinite(view.screenFocus.x));assert.equal(view.car.root.visible,!['Capó','Parachoques'].includes(view.cinematicLabel));}
+ assert.deepEqual([...shots].sort(),['Dron · seguimiento','Tapabarro izquierdo','Curva · cámara fija','Mirada trasera','Capó','Tapabarro derecho','Parachoques','Vista aérea'].sort());assert.notDeepEqual(positions[0],positions[1]);assert.ok(view.car.wheels.every(w=>Number.isFinite(w.spin.rotation.z)));
  }finally{view.dispose();}
 });
 

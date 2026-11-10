@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
 import C from '../vendor/clipper.module.js';
-import './road-contact.js?v=1.0.0-prealpha.7';
+import './road-contact.js?v=1.0.0-prealpha.8';
 
 // Visual footprint only. Never resample or replace the simulation's track.points.
 // Integer clipping removes folds in tight bends before triangulation, including
@@ -95,7 +95,14 @@ export function trackSurface(track){
       markers.push({x:(p.X+(q.X-p.X)*t)/SCALE,z:(p.Y+(q.Y-p.Y)*t)/SCALE});
     }
   }
-  const result={half,regions,curbContours,footprint,markers};
+  // Grass and road must not cover the same pixels with independently snapped
+  // triangles. A small Y offset / polygonOffset cannot prevent their depth
+  // planes from crossing after PSX projection. Cut a real hole instead and
+  // share the runoff boundary at exactly the same height.
+  const xs=track.points.map(p=>p.x),zs=track.points.map(p=>p.y),minX=Math.min(...xs),maxX=Math.max(...xs),minZ=Math.min(...zs),maxZ=Math.max(...zs);
+  const cx=(minX+maxX)/2,cz=(minZ+maxZ)/2,hx=Math.max(1100,(maxX-minX)/2+600),hz=Math.max(1100,(maxZ-minZ)/2+600);
+  const ground=subtract([[point({x:cx-hx,y:cz-hz}),point({x:cx+hx,y:cz-hz}),point({x:cx+hx,y:cz+hz}),point({x:cx-hx,y:cz+hz})]],paths(footprint));
+  const result={half,regions,curbContours,footprint,markers,ground};
   cache.set(track,result);
   return result;
 }
@@ -147,6 +154,8 @@ export function surfaceGeometry(tree,curbContours=null,height=()=>HEIGHT){
   geometry.setIndex(indices);geometry.computeVertexNormals();
   return geometry;
 }
+
+export function groundGeometry(track){return surfaceGeometry(trackSurface(track).ground);}
 
 // Nested offset bands retain the unioned footprint even at custom crossings.
 // A shared height query joins every strip without vertical steps or end caps.

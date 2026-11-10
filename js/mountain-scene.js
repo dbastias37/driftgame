@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
-import {buildMountainTerrain} from './mountain-terrain.js?v=1.0.0-prealpha.7';
-import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.7';
+import {buildMountainTerrain} from './mountain-terrain.js?v=1.0.0-prealpha.8';
+import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.8';
 const mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.88,...extra});
 function mesh(parent,geo,material,x=0,y=0,z=0){const o=new T.Mesh(geo,material);o.position.set(x,y,z);parent.add(o);return o;}
 function box(p,m,x,y,z,w,h,d){return mesh(p,new T.BoxGeometry(w,h,d),m,x,y,z);}
@@ -33,7 +33,12 @@ export function buildMountain(track,world,low=false){
   const half=track.roadHalf;
   for(const side of [-1,1])band(track,world,sand,side<0?-half-1.3:half+.86,side<0?-half-.86:half+1.3,()=>.02);
   asphalt.userData.roadSurface=true;
-  band(track,world,asphalt,-half+.16,half-.16,()=>.02);
+  // Lane paint is an adjacent region, never a second near-coplanar ribbon.
+  // Its vertices and height match the asphalt, including at each dash end.
+  const painted=s=>Math.floor(s/7)%2===0;
+  band(track,world,asphalt,-half+.16,-.09,()=>.02);
+  band(track,world,asphalt,.09,half-.16,()=>.02);
+  band(track,world,asphalt,-.09,.09,()=>.02,s=>!painted(s));
   const start=track.points[0],heading=track.tangentAt(0),apron=box(world,asphalt,start.x-Math.cos(heading)*5,start.h-.04,start.y-Math.sin(heading)*5,10,.12,half*2);apron.rotation.y=-heading;
   const curbCanvas=document.createElement('canvas');curbCanvas.width=64;curbCanvas.height=4;const cg=curbCanvas.getContext('2d');cg.fillStyle='#c85837';cg.fillRect(0,0,32,4);cg.fillStyle='#dde0d3';cg.fillRect(32,0,32,4);
   const curbMap=new T.CanvasTexture(curbCanvas);curbMap.wrapS=T.RepeatWrapping;curbMap.colorSpace=T.SRGBColorSpace;
@@ -46,7 +51,7 @@ export function buildMountain(track,world,low=false){
       band(track,world,curbMat,side<0?-bb:aa,side<0?-aa:bb,o=>.02+globalThis.DriftRoadContact.profile(Math.abs(o)-half));
     }
   }
-  band(track,world,mat(0xcfc8a3),-.09,.09,()=>.045,s=>Math.floor(s/7)%2===0);
+  band(track,world,mat(0xcfc8a3),-.09,.09,()=>.02,painted);
   const object=new T.Object3D(),treeGeo=new T.ConeGeometry(2.8,10,5),treeMat=mat(0x284b43),trees=new T.InstancedMesh(treeGeo,treeMat,low?230:650);let ti=0,seed=734;
   const random=()=>((seed=(1664525*seed+1013904223)>>>0)/4294967296);
   for(let i=0;i<5000&&ti<trees.count;i++){

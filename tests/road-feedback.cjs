@@ -27,25 +27,43 @@ test('dust appears inside nearby lamp light volumes at night, freezes by time an
  dust.update(camera,street,2,{night:1,low:true});assert.equal(dust.geometry.drawRange.count,12*6);
 });
 test('all circuit and downhill tyre placements are deterministic, sparse and clear of the starting line',()=>{
- const r=harness();const layouts=r(`Array.from({length:40},(_,i)=>{const t=i<20?presetTrack(i+1):DriftDownhill.createTrack(Track,i-19),a=DriftTrackProps.spawns(t),b=DriftTrackProps.spawns(t),start=t.point(0);return {n:a.length,same:JSON.stringify(a)===JSON.stringify(b),clear:a.every(p=>Math.hypot(p.x-start.x,p.y-start.y)>20),finite:a.every(p=>Number.isFinite(p.ground)),open:a.every(p=>Math.abs(t.sample(p.x,p.y).dist??t.sample(p.x,p.y).distance)>=t.roadHalf-.5)}})`);
- for(const [i,t] of layouts.entries()){assert(t.n>=3&&t.n<=9,JSON.stringify({i,...t}));assert(t.same&&t.clear&&t.finite&&t.open);}
+ const r=harness();const layouts=r(`Array.from({length:40},(_,i)=>{const t=i<20?presetTrack(i+1):DriftDownhill.createTrack(Track,i-19),a=DriftTrackProps.spawns(t),b=DriftTrackProps.spawns(t),start=t.point(0);return {n:a.length,units:a.reduce((n,p)=>n+p.count,0),counts:a.every(p=>[3,4,5].includes(p.count)),same:JSON.stringify(a)===JSON.stringify(b),clear:a.every(p=>Math.hypot(p.x-start.x,p.y-start.y)>20),finite:a.every(p=>Number.isFinite(p.ground)),open:a.every(p=>Math.abs(t.sample(p.x,p.y).dist??t.sample(p.x,p.y).distance)>=t.roadHalf-.5)}})`);
+ for(const [i,t] of layouts.entries()){assert(t.n>=3&&t.n<=9,JSON.stringify({i,...t}));assert(t.same&&t.clear&&t.finite&&t.open&&t.counts);assert(t.units<=36);}
 });
 test('tyre strikes exchange momentum, tumble, penalize only once, break clean runs and settle',()=>{
- const r=harness();r(`startWithTrack(presetTrack(1),'challenge');state='running';var run=track.trackProps,p=run.props[0];run.props=[p];player.angle=0;player.pos={x:p.x-5,y:p.y};player.vel={x:25,y:0};player.score=600;run.last.set(player,{...player.pos});player.pos.x+=3;run.step(.12,[player]);careerRun.observe(player,.12)`);
- assert(r('p.down&&p.z>0'));assert(r('Math.hypot(p.vx,p.vy)>15'));assert(r('player.vel.x<25'));assert.equal(r('player.score'),500);assert.equal(r('careerRun.clean'),false);assert.equal(r('run.hits'),1);
+ const r=harness();r(`startWithTrack(presetTrack(1),'challenge');state='running';var run=track.trackProps,p=run.props[0];run.piles=[run.piles[0]];run.props=run.piles[0].units;player.angle=0;player.pos={x:p.x-5,y:p.y};player.vel={x:25,y:0};player.score=600;run.last.set(player,{...player.pos});player.pos.x+=3;run.step(.12,[player]);careerRun.observe(player,.12)`);
+ assert(r('p.down&&run.props.some(p=>p.z>.25)'));assert(r('run.props.every(p=>p.down&&!p.sleep)'));assert.equal(r('run.piles[0].intact'),false);assert(r('Math.hypot(p.vx,p.vy)>15'));assert(r('player.vel.x<25'));assert.equal(r('player.score'),500);assert.equal(r('careerRun.clean'),false);assert.equal(r('run.hits'),1);
  r('player.pos={x:0,y:0};player.vel={x:0,y:0};run.last.delete(player);for(let i=0;i<2400;i++)run.step(1/60,[player])');assert(r('p.sleep'));assert.equal(r('p.z'),0);
  r('player.angle=0;player.pos={x:p.x-2,y:p.y};player.vel={x:10,y:0};run.last.delete(player);run.step(1/60,[player])');assert.equal(r('run.hits'),1);assert.equal(r('player.score'),500);
 });
 test('fast tyre sweeps do not skip contacts, teleports do not hit everything on the way, pause and restart are coherent',()=>{
- const r=harness();r(`startWithTrack(presetTrack(1),'race');state='running';var run=track.trackProps,p=run.props[0];run.props=[p];player.angle=0;player.pos={x:p.x-6,y:p.y};player.vel={x:90,y:0};run.last.set(player,{...player.pos});player.pos.x+=9;run.step(.1,[player])`);assert(r('p.down'));
+ const r=harness();r(`startWithTrack(presetTrack(1),'race');state='running';var run=track.trackProps,p=run.props[0];run.piles=[run.piles[0]];run.props=run.piles[0].units;player.angle=0;player.pos={x:p.x-6,y:p.y};player.vel={x:90,y:0};run.last.set(player,{...player.pos});player.pos.x+=9;run.step(.1,[player])`);assert(r('p.down'));
  r('setPaused(true)');const before=r('({time:run.time,props:run.props})');r('for(let i=0;i<120;i++)simulate(SIM_DT)');assert.deepEqual(r('({time:run.time,props:run.props})'),before);
  r('restartRaceSameTrack()');assert(r('track.trackProps.props.every(p=>!p.down&&p.sleep)'));r(`run=track.trackProps;p=run.props[0];player.angle=0;run.last.set(player,{x:p.x-30,y:p.y});player.pos={x:p.x+30,y:p.y};player.vel={x:0,y:0};run.step(1/60,[player])`);assert(r('!p.down'));
  r("startWithTrack(presetTrack(1),'online')");assert.equal(r('track.trackProps'),null);
 });
 test('tyres remain on mountain surfaces and replay seeks restore their recorded poses without touching live props',()=>{
- const surface=harness();surface(`startWithTrack(DriftDownhill.createTrack(Track,2),'downhill');var run=track.trackProps,p=run.props[0];p.sleep=false;p.vx=8;p.vy=2;p.vz=3;var maxAir=0;for(let i=0;i<3600;i++){run.step(1/60,[]);if(!Number.isFinite(p.z)||p.z<0||Math.abs(p.ground-track.terrainHeight(p.x,p.y))>.00001)throw new Error('Invalid tyre surface');maxAir=Math.max(maxAir,p.z);}`);assert(surface('maxAir>.1'));assert(surface('p.sleep&&p.z===0'));
- const r=harness();r(`startWithTrack(DriftDownhill.createTrack(Track,2),'downhill');state='running';var p=track.trackProps.props[0];var rec=new DriftReplay.Recorder(2);rec.reset({skin:chosen.sprite});rec.capture(0,player,[],track.trackProps.props);p.x+=2;p.z=1.4;p.tiltX=.5;rec.capture(.05,player,[],track.trackProps.props);var original=JSON.stringify(track.trackProps.props);var middle=rec.sample(.025)`);
- assert(r('middle.props.length>0'));assert(Math.abs(r('middle.props[0].z')-.7)<1e-6);assert(r('original===JSON.stringify(track.trackProps.props)'));assert(r('rec.bytes<40000'));
+ const surface=harness();surface(`startWithTrack(DriftDownhill.createTrack(Track,2),'downhill');var run=track.trackProps,p=run.props[0];run.piles[0].intact=false;p.sleep=false;p.vx=8;p.vy=2;p.vz=3;var maxAir=0;for(let i=0;i<3600;i++){run.step(1/60,[]);if(!Number.isFinite(p.z)||p.z<0||Math.abs(p.ground-track.terrainHeight(p.x,p.y))>.00001)throw new Error('Invalid tyre surface');maxAir=Math.max(maxAir,p.z);}`);assert(surface('maxAir>.1'));assert(surface('p.sleep&&p.z===0'));
+ const r=harness();r(`startWithTrack(DriftDownhill.createTrack(Track,2),'downhill');state='running';var p=track.trackProps.props[0];var rec=new DriftReplay.Recorder(2);rec.reset({skin:chosen.sprite});rec.capture(0,player,[],track.trackProps.props);p.x+=2;p.z=1.4;p.tiltX=.5;track.trackProps.props.at(-1).tiltX=1.2;rec.capture(.05,player,[],track.trackProps.props);var original=JSON.stringify(track.trackProps.props);var middle=rec.sample(.025)`);
+ assert(r('middle.props.length>0'));assert(Math.abs(r('middle.props[0].z')-.7)<1e-6);assert(r('original===JSON.stringify(track.trackProps.props)'));assert.equal(r('middle.props.length'),r('track.trackProps.props.length'));assert(r('rec.bytes<60000'));
+ assert(Math.abs(r('middle.props.at(-1).tiltX')-.6)<1e-6);
+});
+test('three piles per curve start with 3, 4 and 5 grounded rings and stay asleep until impact',()=>{
+ const r=harness();r(`startWithTrack(presetTrack(1),'race');var run=track.trackProps,before=JSON.stringify(run.props);for(let i=0;i<600;i++)run.step(1/60,[])`);
+ assert.equal(r('run.props.length'),36);assert.equal(r('run.piles.length'),9);assert.deepEqual(Array.from(r('run.piles.map(p=>p.units.length)')),[3,4,5,3,4,5,3,4,5]);assert(r('before===JSON.stringify(run.props)'));
+ assert(r('run.piles.every(s=>s.units.every((p,i)=>p.z===i*.24&&p.sleep))'));
+});
+test('stack impact conserves bounded energy and a scattered tyre can topple another pile with one penalty',()=>{
+ const r=harness();r(`startWithTrack(presetTrack(1),'race');var run=track.trackProps,p=run.props[0];run.piles=run.piles.slice(0,1);run.props=run.piles.flatMap(p=>p.units);player.angle=0;player.pos={x:p.x-5,y:p.y};player.vel={x:25,y:0};player.score=1000;var energyBefore=.5*player.mass*25*25;run.last.set(player,{...player.pos});player.pos.x+=3;run.step(.12,[player]);var energyAfter=.5*player.mass*Math.hypot(player.vel.x,player.vel.y)**2+run.props.reduce((s,p)=>s+.5*10*(p.vx*p.vx+p.vy*p.vy+p.vz*p.vz)+10*9.81*p.z,0)`);
+ assert(r('energyAfter<energyBefore*1.01'));assert.equal(r('run.hits'),1);
+ r(`run.reset();run.piles=run.piles.slice(0,2);run.props=run.piles.flatMap(p=>p.units);p=run.props[0];player.pos={x:0,y:0};player.vel={x:0,y:0};player.score=1000;run.penalize(p,player,player);p.vx=Math.cos(p.heading)*30;p.vy=Math.sin(p.heading)*30;run.release(run.piles[0]);for(let i=0;i<180;i++)run.step(1/60,[],player)`);
+ assert(r('run.piles.every(s=>!s.intact&&s.penalized)'));assert.equal(r('run.hits'),2);assert.equal(r('player.score'),800);
+});
+test('each stacked ring is rendered and replay poses replace every instance without extra draw calls',async()=>{
+ const T=await import('../vendor/three.module.min.js'),{buildTrackProps}=await import('../js/track-props-scene.js');const r=harness();r("startWithTrack(presetTrack(1),'race')");const track={trackProps:{props:r('track.trackProps.props')}},world=new T.Group(),render=buildTrackProps(track,world);
+ assert.equal(world.children.length,1);assert.equal(render.mesh.count,36);const pose=new T.Matrix4();render.mesh.getMatrixAt(4,pose);assert(Math.abs(pose.elements[13]-(track.trackProps.props[4].z+.12))<1e-6);
+ const replay=track.trackProps.props.map(p=>({...p,z:p.z+2}));render.update(replay);render.mesh.getMatrixAt(35,pose);assert(Math.abs(pose.elements[13]-(replay[35].z+.12))<1e-6);assert.equal(track.trackProps.props[35].z,.96);
+ render.mesh.geometry.dispose();render.mesh.material.dispose();
 });
 test('scene feedback preserves physical contacts, camera has no accumulating offset, and disabling restores the model',async()=>{
  global.document={createElement:canvas};global.innerWidth=800;global.innerHeight=560;global.devicePixelRatio=1;const {DriftView3D}=await import('../js/view3d.js'),{createTrack,createCar}=await import('../server/engine.js');

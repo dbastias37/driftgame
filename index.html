@@ -1,8 +1,8 @@
 <!DOCTYPE html><html lang="es"><head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Drift Racer — 1.0 pre-alpha</title>
-<meta name="application-version" content="1.0.0-prealpha.7">
+<title>DR1FT — 1.0 pre-alpha</title>
+<meta name="application-version" content="1.0.0-prealpha.8">
 <meta name="theme-color" content="#111719">
 <style>
   :root{--bg:#0b0b0b;--ink:#e6f1ff;}
@@ -220,12 +220,12 @@
   @media(max-height:500px){#carPreview{height:110px} #carPanel h2{font-size:19px} #times{top:122px} #ui{max-width:330px} #stickZone{width:120px;height:120px} #gasZone{height:135px}}
 .daytime-control{display:block;max-width:330px;margin:14px 0 8px;font-size:12px;color:#aebbbb}.daytime-control output{float:right;color:#ff7544}.daytime-control input{display:block;width:100%;margin:10px 0;accent-color:#ff7544;cursor:pointer}.daytime-ends{display:flex;justify-content:space-between;font-size:10px;color:#829597}
 </style>
-<link rel="stylesheet" href="css/experience.css?v=1.0.0-prealpha.7">
-<link rel="stylesheet" href="css/online.css?v=1.0.0-prealpha.7">
-<link rel="stylesheet" href="css/raw-menu.css?v=1.0.0-prealpha.7">
-<link rel="stylesheet" href="css/career.css?v=1.0.0-prealpha.7">
-<link rel="stylesheet" href="css/display-font.css?v=1.0.0-prealpha.7">
-<link rel="stylesheet" href="css/psx.css?v=1.0.0-prealpha.7">
+<link rel="stylesheet" href="css/experience.css?v=1.0.0-prealpha.8">
+<link rel="stylesheet" href="css/online.css?v=1.0.0-prealpha.8">
+<link rel="stylesheet" href="css/raw-menu.css?v=1.0.0-prealpha.8">
+<link rel="stylesheet" href="css/career.css?v=1.0.0-prealpha.8">
+<link rel="stylesheet" href="css/display-font.css?v=1.0.0-prealpha.8">
+<link rel="stylesheet" href="css/psx.css?v=1.0.0-prealpha.8">
 </head>
 <body>
   <div id="ui">
@@ -234,7 +234,7 @@
     <div id="challengeBadge" class="stat">Objetivo: <b id="challengeGoal">—</b> pts • Nivel <b id="challengeLevel">—</b></div>
     <div class="row stat">
       <div class="pill">Vidas: <span id="lives">3</span></div>
-      <div class="pill">Drift x<span id="multi">1</span></div>
+      <div class="pill">Derrape x<span id="multi">1</span></div>
       <div class="pill lap-pill">Vuelta: <span id="lap">1/5</span></div>
     </div>
   </div>
@@ -251,8 +251,8 @@
     <h3>Tiempos</h3>
     <div>Total: <b id="raceNow">0:00.000</b></div>
     <div>Vuelta: <b id="lapNow">0:00.000</b></div>
-    <div>Mejor TT: <b id="bestTT">—</b></div>
-    <div>Última TT: <b id="lastTT">—</b></div>
+    <div>Mejor vuelta: <b id="bestTT">—</b></div>
+    <div>Última vuelta: <b id="lastTT">—</b></div>
     <ul id="lapList"></ul>
 
   </div>
@@ -272,7 +272,7 @@
 
   <div id="startPanel" class="hidden">
     <div id="startCard">
-      <div class="row" style="justify-content:space-between"><h1>Drift Racer</h1><button id="btnBoardBack">Volver al menú</button></div>
+      <div class="row" style="justify-content:space-between"><h1>DR1FT</h1><button id="btnBoardBack">Volver al menú</button></div>
       <p>Dibuja tu circuito (loop cerrado). No podrás comenzar hasta que sea válido. El trazo se suaviza y se escala al juego.</p>
       <div id="boardWrap">
         <canvas id="board"></canvas>
@@ -303,7 +303,7 @@
 
   <div id="cWarn"></div>
   <div id="countHint"></div>
-  <aside id="trainingHud" class="hidden" aria-label="Entrenamiento"><b>MERCADO OCHO</b><span id="trainingStats">0 vueltas · 0 conos</span><small id="trainingHint">Drift libre · Evita conos y neumáticos</small></aside>
+  <aside id="trainingHud" class="hidden" aria-label="Entrenamiento"><b>MERCADO OCHO</b><span id="trainingStats">0 vueltas · 0 conos</span><small id="trainingHint">Derrape libre · Evita conos y neumáticos</small></aside>
   <div id="tests">Tests: <span id="testsResult">—</span></div>
 
   <canvas id="scene3d" aria-label="Circuito tridimensional"></canvas>
@@ -331,13 +331,13 @@
   </div>
 
   <section id="titleScreen" aria-label="Pantalla de inicio">
-    <div class="title-top"><span>DR / 1.0</span><span>PRE-ALPHA</span></div>
-    <div class="title-brand"><h1>DRIFT<br><em>RACER</em></h1><span>PRE-ALPHA</span></div>
+    <div class="title-top"><span>DR1FT / 1.0</span><span>PRE-ALPHA</span></div>
+    <div class="title-brand"><h1 aria-label="DR1FT">DR<em>1</em>FT</h1><span>PRE-ALPHA</span></div>
     <div class="title-bottom"><div><button id="btnPlayNow">JUGAR AHORA <span>↗</span></button><small>ENTER / SELECCIONAR</small></div><div class="demo-caption"><span id="titleDemoInfo">PREPARANDO EXHIBICIÓN…</span><button id="btnDemoPause" class="text-button">Ⅱ EXHIBICIÓN</button></div></div>
   </section>
   <div id="mainMenu" class="hidden">
     <div class="raw-home">
-      <header class="raw-home-header"><b>DRIFT <em>RACER</em></b><span>1.0 / PRE-ALPHA</span></header>
+      <header class="raw-home-header"><b aria-label="DR1FT">DR<em>1</em>FT</b><span>1.0 / PRE-ALPHA</span></header>
       <nav class="raw-mode-list" aria-label="Modos de juego">
         <button id="btnQuickRace"><i>01</i><span>CARRERA RÁPIDA</span><b>↗</b></button>
         <button id="btnModeDownhill"><i>02</i><span>CERRO ABAJO</span><b>↘</b></button>
@@ -348,7 +348,7 @@
         <button id="btnModeCreative"><i>07</i><span>CREA TU CIRCUITO</span><b>↗</b></button>
       </nav>
       <footer class="raw-home-footer"><button id="btnCredits" class="text-button">CRÉDITOS</button><button id="btnSettings" class="text-button">AJUSTES</button><button id="btnMenuHelp" class="text-button">CONTROLES</button><button id="btnImport" class="text-button">IMPORTAR</button><button id="btnBackTitle" class="text-button">← INICIO</button></footer>
-      <div id="homeWallet" class="home-wallet"></div><div class="raw-demo-label"><span>EXHIBICIÓN / DRIFT ELITE</span><b id="homeDemoInfo"></b></div>
+      <div id="homeWallet" class="home-wallet"></div><div class="raw-demo-label"><span>EXHIBICIÓN / DERRAPE DE ÉLITE</span><b id="homeDemoInfo"></b></div>
     </div>
   </div>
 
@@ -389,7 +389,7 @@
 
   <div id="settingsMenu" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
     <section class="card settings-card">
-      <header class="settings-header"><div><p class="eyebrow">DRIFT / OPCIONES</p><h2 id="settingsTitle">Configuración</h2></div><button id="btnSettingsBack">← Volver</button></header>
+      <header class="settings-header"><div><p class="eyebrow">DR1FT / OPCIONES</p><h2 id="settingsTitle">Configuración</h2></div><button id="btnSettingsBack">← Volver</button></header>
       <div class="settings-layout"><div class="settings-controls">
         <nav class="settings-tabs" role="tablist" aria-label="Opciones"><button data-settings-tab="drive" role="tab" aria-selected="true">Carrera</button><button data-settings-tab="retro" role="tab" aria-selected="false">PSX</button><button data-settings-tab="weather" role="tab" aria-selected="false">Clima</button><button data-settings-tab="controls" role="tab" aria-selected="false">Cámara</button><button data-settings-tab="gamepad" role="tab" aria-selected="false">Mando</button></nav>
         <section data-settings-pane="drive" role="tabpanel">
@@ -421,7 +421,7 @@
           <label class="setting retro-range"><span>Vibración de cámara <output id="cameraVibrationLabel">35%</output></span><input id="cameraVibration" type="range" min="0" max="200" step="5" value="35" aria-label="Intensidad de vibración de cámara"></label>
           <p class="setting-hint">Aumenta suavemente con la velocidad. 0% desactiva cada efecto. Movimiento reducido desactiva ambos.</p>
           <label class="setting">Controles táctiles<select id="touchSetting"><option value="auto">Automáticos</option><option value="on">Activados</option><option value="off">Desactivados</option></select></label>
-          <label class="setting">Impulso visual Drift<select id="impulseSetting"><option value="on">Activado</option><option value="off">Desactivado</option></select></label>
+          <label class="setting">Impulso visual de derrape<select id="impulseSetting"><option value="on">Activado</option><option value="off">Desactivado</option></select></label>
           <label class="setting">Vectores de velocidad PSX<select id="speedLinesSetting"><option value="car">Desde el auto</option><option value="center">Desde el centro</option><option value="off">Desactivadas</option></select></label>
           <label class="setting retro-range"><span>Intensidad <output id="speedLinesIntensityLabel">100%</output></span><input id="speedLinesIntensity" type="range" min="0" max="300" step="25" value="100" aria-label="Intensidad de líneas de velocidad"></label>
         </section>
@@ -445,7 +445,7 @@
   </div>
   <div id="importMenu" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="importTitle"><div class="card settings-card"><p class="eyebrow">DE PILOTO A PILOTO</p><h2 id="importTitle">Importar circuito</h2><label for="importCode">Código de pista TRK / TRK2</label><textarea id="importCode" placeholder="Pegar código de pista…" rows="4"></textarea><p id="importMessage" role="status"></p><div class="row"><button id="btnImportBack">Volver</button><button id="btnLoadCode">Cargar circuito</button></div></div></div>
 
-<div id="creditsMenu" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="creditsTitle"><section class="credits-shell"><p class="eyebrow">DRIFT RACER / 1.0 PRE-ALPHA</p><h2 id="creditsTitle">CRÉDITOS</h2><p class="creator-credit">Juego creado por <strong>Diego Bastias A.</strong><br>a través de <strong>ChatGPT 6 Astra.</strong></p><p>Gracias a los artistas 3D que comparten su trabajo y hacen posible estos vehículos.</p><div id="modelCredits"></div><p class="credits-tech">Escenarios, circuitos y autos procedurales: Drift Racer.<br>Tipografía Drift Display: derivada de Anton (The Anton Project Authors) · <a href="assets/fonts/Anton-OFL.txt" target="_blank" rel="noopener">SIL OFL</a>. Símbolos DejaVu · <a href="assets/fonts/LICENSE.txt" target="_blank" rel="noopener">Licencia</a>.<br>Three.js y herramientas GLTF: three.js authors · <a href="vendor/THREE-LICENSE.txt" target="_blank" rel="noopener">MIT</a>.<br>Clipper: Angus Johnson · JavaScript: Timo · <a href="vendor/CLIPPER-LICENSE.txt" target="_blank" rel="noopener">Boost 1.0</a>.</p><button id="btnCreditsBack">← VOLVER</button></section></div>
+<div id="creditsMenu" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="creditsTitle"><section class="credits-shell"><p class="eyebrow">DR1FT / 1.0 PRE-ALPHA</p><h2 id="creditsTitle">CRÉDITOS</h2><p class="creator-credit">Juego creado por <strong>Diego Bastias A.</strong><br>a través de <strong>ChatGPT 6 Astra.</strong></p><p>Gracias a los artistas 3D que comparten su trabajo y hacen posible estos vehículos.</p><div id="modelCredits"></div><p class="credits-tech">Escenarios, circuitos y autos procedurales: DR1FT.<br>Tipografía Drift Display: derivada de Anton (The Anton Project Authors) · <a href="assets/fonts/Anton-OFL.txt" target="_blank" rel="noopener">SIL OFL</a>. Símbolos DejaVu · <a href="assets/fonts/LICENSE.txt" target="_blank" rel="noopener">Licencia</a>.<br>Three.js y herramientas GLTF: three.js authors · <a href="vendor/THREE-LICENSE.txt" target="_blank" rel="noopener">MIT</a>.<br>Clipper: Angus Johnson · JavaScript: Timo · <a href="vendor/CLIPPER-LICENSE.txt" target="_blank" rel="noopener">Boost 1.0</a>.</p><button id="btnCreditsBack">← VOLVER</button></section></div>
 <div id="rendererError" class="modal hidden" role="alertdialog" aria-labelledby="rendererErrorTitle"><div class="card"><h2 id="rendererErrorTitle">No se pudo iniciar el entorno 3D</h2><p>La carrera está detenida. Recarga el juego para volver a intentarlo.</p><button id="btnRetryRenderer">RECARGAR</button></div></div>
   <div id="crtOverlay" aria-hidden="true"></div>
   <div id="racePosition" class="hidden" aria-label="Posición en carrera"></div>
@@ -471,7 +471,7 @@
     <div class="touch-wrap" id="gasZone">
       <button id="btnGas">GAS</button>
       <button id="btnBrake" class="pedal">FRENO</button>
-      <button id="btnHand" class="pedal">DRIFT</button>
+      <button id="btnHand" class="pedal">DERRAPE</button>
       <div id="touchGears"><button id="btnGearDown" aria-label="Bajar marcha">−</button><button id="btnGearUp" aria-label="Subir marcha">+</button></div>
     </div>
   </div>
@@ -504,24 +504,24 @@
 
   <audio id="radio" preload="none" crossorigin="anonymous"></audio>
 
-<script src="js/career.js?v=1.0.0-prealpha.7"></script>
-<script src="js/replay.js?v=1.0.0-prealpha.7"></script>
-<script src="js/drift-effects.js?v=1.0.0-prealpha.7"></script>
-<script src="js/attract-demo.js?v=1.0.0-prealpha.7"></script>
-<script src="js/circuit-layouts.js?v=1.0.0-prealpha.7"></script>
-<script src="js/vehicle-fit.js?v=1.0.0-prealpha.7"></script>
-<script src="js/road-contact.js?v=1.0.0-prealpha.7"></script>
-<script src="js/downhill.js?v=1.0.0-prealpha.7"></script>
-<script src="js/yugo-physics.js?v=1.0.0-prealpha.7"></script>
-<script src="js/gamepad.js?v=1.0.0-prealpha.7"></script>
-<script src="js/instruments.js?v=1.0.0-prealpha.7"></script>
-<script src="js/game-options.js?v=1.0.0-prealpha.7"></script>
-<script src="js/training.js?v=1.0.0-prealpha.7"></script>
-<script src="js/track-props.js?v=1.0.0-prealpha.7"></script>
-<script src="js/ai-race.js?v=1.0.0-prealpha.7"></script>
-<script src="js/vehicle-dynamics.js?v=1.0.0-prealpha.7"></script>
-<script src="js/tire-smoke.js?v=1.0.0-prealpha.7"></script>
-<script src="js/online-rules.js?v=1.0.0-prealpha.7"></script>
+<script src="js/career.js?v=1.0.0-prealpha.8"></script>
+<script src="js/replay.js?v=1.0.0-prealpha.8"></script>
+<script src="js/drift-effects.js?v=1.0.0-prealpha.8"></script>
+<script src="js/attract-demo.js?v=1.0.0-prealpha.8"></script>
+<script src="js/circuit-layouts.js?v=1.0.0-prealpha.8"></script>
+<script src="js/vehicle-fit.js?v=1.0.0-prealpha.8"></script>
+<script src="js/road-contact.js?v=1.0.0-prealpha.8"></script>
+<script src="js/downhill.js?v=1.0.0-prealpha.8"></script>
+<script src="js/yugo-physics.js?v=1.0.0-prealpha.8"></script>
+<script src="js/gamepad.js?v=1.0.0-prealpha.8"></script>
+<script src="js/instruments.js?v=1.0.0-prealpha.8"></script>
+<script src="js/game-options.js?v=1.0.0-prealpha.8"></script>
+<script src="js/training.js?v=1.0.0-prealpha.8"></script>
+<script src="js/track-props.js?v=1.0.0-prealpha.8"></script>
+<script src="js/ai-race.js?v=1.0.0-prealpha.8"></script>
+<script src="js/vehicle-dynamics.js?v=1.0.0-prealpha.8"></script>
+<script src="js/tire-smoke.js?v=1.0.0-prealpha.8"></script>
+<script src="js/online-rules.js?v=1.0.0-prealpha.8"></script>
 <script>
 "use strict";
 
@@ -615,8 +615,8 @@ const elScore=$('#score'), elSpeed=$('#speed'), elLives=$('#lives'), elMulti=$('
       elTests=$('#testsResult'), overlay=$('#overlay'), overlayTitle=$('#overlayTitle'), overlayMsg=$('#overlayMsg'),
       raceNow=$('#raceNow'), lapNow=$('#lapNow'), lapList=$('#lapList'), btnHardReset=$('#btnHardReset');
 const startPanel=document.getElementById('startPanel');
-const PH2=['¡Buen drift!','¡Limpio!','Nice Slide!','Good Drift!','¡Suave!','Clean lines!'];
-const PH3=['¡Increíble!','¡Brutal!','Insane Drift!','¡Dominio total!','Legendary!','¡Bestia!'];
+const PH2=['¡Buen derrape!','¡Limpio!','¡Bien trazado!','¡Buen control!','¡Suave!','¡Trazada limpia!'];
+const PH3=['¡Increíble!','¡Brutal!','¡Derrape extremo!','¡Dominio total!','¡Legendario!','¡Imparable!'];
 
 const pauseMenu = document.getElementById('pauseMenu');
 const btnResume  = document.getElementById('btnResume');
@@ -1238,7 +1238,7 @@ function startWithTrack(tr, m='race',conditions=null){
   if(lapList) lapList.innerHTML='';
   camera.s=camera.targetS=(view.width<700||view.height<500)?Math.max(10,Math.min(18,view.height/30)):22;
   camera.tx=-player.pos.x*camera.s+view.width*.5;camera.ty=-player.pos.y*camera.s+view.height*.6;
-  currentTrackId = (track.downhill?'DOWNHILL.v2.'+track.routeLevel:encodeTrack(track.points))+':physics-v3'+(track.trackProps?.props.length?':tyres-v1':'')+DriftOptions.recordKey(raceConditions);
+  currentTrackId = (track.downhill?'DOWNHILL.v2.'+track.routeLevel:encodeTrack(track.points))+':physics-v3'+(track.trackProps?.props.length?':tyres-v2':'')+DriftOptions.recordKey(raceConditions);
   if(mode==='tt'&&player.upgradeSignature?.replace(/0/g,''))currentTrackId+=':tuned:'+chosen.sprite+':'+player.upgradeSignature;
   replayUI?.reset();
   unlockControls();syncTouchHUD(); // Nueva sesión, mismos autos y datos guardados.
@@ -1392,7 +1392,7 @@ function drawComboOverlay(){
     ctx.fillStyle='#ff5050';
     ctx.font=compact?'bold 22px DriftDisplay, Impact, sans-serif':'bold 64px DriftDisplay, Impact, sans-serif';
     ctx.textAlign='center';
-    ctx.fillText('COMBO BREAK!',view.width/2,compact?view.height*.33:view.height*.24);
+    ctx.fillText('¡RACHA PERDIDA!',view.width/2,compact?view.height*.33:view.height*.24);
     ctx.restore();
     player.comboBreak-=dt;
     return;
@@ -1411,10 +1411,10 @@ function drawComboOverlay(){
   ctx.shadowBlur=0;
   ctx.font='bold 26px DriftDisplay, Impact, sans-serif';
   ctx.fillStyle='rgba(255,255,255,.95)';
-  ctx.fillText(player.comboState===5?'PIANO PERFECTO':player.comboPhrase||(player.comboState===2?'Good Drift!':'Insane Drift!'),0,34);
+  ctx.fillText(player.comboState===5?'PIANO PERFECTO':player.comboPhrase||(player.comboState===2?'¡Buen derrape!':'¡Derrape extremo!'),0,34);
   ctx.font='bold 36px DriftDisplay, Impact, sans-serif';
   ctx.fillStyle='#fff';
-  ctx.fillText('+'+Math.floor(player.comboPoints).toLocaleString(),0,74);
+  ctx.fillText('+'+Math.floor(player.comboPoints).toLocaleString('es-CL'),0,74);
   ctx.restore();
 }
 
@@ -1425,7 +1425,7 @@ function drawWarnings(){
   if(hint) hint.style.display='none';
 
   if(state==='countdown'&&hint){hint.style.display='block';hint.textContent=startElapsed<DriftRace.INTRO.roll?'POSICIONANDO AUTOS':startElapsed<DriftRace.INTRO.roll+DriftRace.INTRO.settle?'PREPARA LA SALIDA':'MANTÉN EL ACELERADOR';}
-  else if(hint&&track?.trackProps?.notice>0){hint.style.display='block';hint.textContent='NEUMÁTICO GOLPEADO · −100 PTS';}
+  else if(hint&&track?.trackProps?.notice>0){hint.style.display='block';hint.textContent='PILA GOLPEADA · −100 PTS';}
   if(mode==='training')return;
   if(mode==='downhill'){
     if(warn&&player.descent?.motion==='falling'){warn.style.display='block';warn.textContent=`Caída · Recuperación en ${Math.max(.1,4.5-player.descent.fallTime).toFixed(1)} s · R: volver ahora`;}
@@ -1489,7 +1489,7 @@ function onLap(){
     ghost = new GhostCar(bestNow||ttData, chosen.sprite);
     lap++; lapTime=0; raceTime=0; startTTRecording(); return;
   }
-  if(lapList) lapList.insertAdjacentHTML('beforeend',`<li>Lap ${lap}: ${formatTime(lapTime)}</li>`);
+  if(lapList) lapList.insertAdjacentHTML('beforeend',`<li>Vuelta ${lap}: ${formatTime(lapTime)}</li>`);
   if(lap>=TOTAL_LAPS){finished();return;}
   lap++;lapTime=0;
 }
@@ -1500,7 +1500,7 @@ function updateHUD(dt){
   uiAccum = 0;
   if(player){
     if(offlineRace)$('#racePosition').textContent=offlineRace.place()+' / '+(offlineRivals.length+1);
-    if(elScore) elScore.textContent = player.score.toFixed(0);
+    if(elScore) elScore.textContent = Math.floor(player.score).toLocaleString('es-CL');
     if(elSpeed) elSpeed.textContent = (player.worldSpeed()*3.6).toFixed(0);
     if(elLives) elLives.textContent = player.lives;
     if(elMulti) elMulti.textContent = player.mult.toFixed(0);
@@ -1667,7 +1667,7 @@ const CAR_DATA = [
   {name:'Mazda RX-7 FD · RedSuns', sprite:'yellow',         color:'#ffd93b', stripes:0, desc:'Rotativo de tracción trasera y respuesta rápida. Dosifica el acelerador para sostener el sobreviraje y enlazar curvas.',                   stats:{acc:.90,trq:.82,vmax:1.00,mass:.92}, tune:{engine:1.25,lat:1.05,hand:.90,drag:.95,mass:.92}},
   {name:'Chevrolet Nova SS', sprite:'gray',    color:'#16171a', stripes:0, desc:'V8 de tracción trasera. Más masa, inercia y recorrido de suspensión: prepara la frenada y acompaña el contravolante.',                 stats:{acc:.60,trq:.55,vmax:.70,mass:.95}, tune:{engine:.95,lat:1.00,hand:1.00,drag:1.05,mass:1.28}},
 ];
-CAR_DATA.push({name:'Yugo Koral 55',sprite:'yugo',color:'#ce362b',stripes:0,desc:'Ligero, corto y de reacciones ágiles. 55 CV · 790 kg · punta de juego ≈160 km/h en llano. Tracción delantera y freno de mano para iniciar el drift.',stats:{acc:.42,trq:.35,vmax:145/198,mass:790/1380},tune:{engine:1,lat:1,hand:1,drag:1,mass:1},specs:{power:'55 CV',torque:'77,4 Nm',speed:'≈160 km/h (juego)',mass:'790 kg'}});
+CAR_DATA.push({name:'Yugo Koral 55',sprite:'yugo',color:'#ce362b',stripes:0,desc:'Ligero, corto y de reacciones ágiles. 55 CV · 790 kg · punta de juego ≈160 km/h en llano. Tracción delantera y freno de mano para iniciar el derrape.',stats:{acc:.42,trq:.35,vmax:145/198,mass:790/1380},tune:{engine:1,lat:1,hand:1,drag:1,mass:1},specs:{power:'55 CV',torque:'77,4 Nm',speed:'≈160 km/h (juego)',mass:'790 kg'}});
 CAR_DATA.push({name:'Toyota AE86 · Fujiwara',sprite:'fujiwara',color:'#e8e8da',stripes:0,desc:'El clásico panda de Fujiwara. Ligero, progresivo y ágil para enlazar las curvas del descenso.',stats:{acc:.76,trq:.62,vmax:.84,mass:.76},tune:{engine:1.08,lat:1.02,hand:.88,drag:1,mass:.82}});
 let carIdx=0, chosen=CAR_DATA[0];
 
@@ -1708,7 +1708,7 @@ function openCarPanel(){
   $('#garageTrackName').textContent=preparedTrack.layout?.name||'Circuito personalizado';
   $('#btnChooseStart').textContent=mode==='online'?'CONFIRMAR AUTO ✓':'A LA PISTA ↗';
   $('#btnCarBack').textContent=mode==='online'?'← Volver a la sala':'← Volver a la pista';
-  $('#sessionBrief').textContent=mode==='training'?'Entrenamiento libre · Ocho y zona abierta · −100 por cono o neumático · Sin límite de tiempo · R: volver al trazado':mode==='online'?'Online beta · Hasta 3 pilotos · Confirma tu auto y marca listo en la sala':mode==='downhill'?`Sprint · ${preparedTrack.goal.toLocaleString('es-CL')} pts antes de la meta · 3 vidas · R: último punto seguro`:mode==='challenge'?`Campaña ${activeChallengeLevel} · Una vuelta · Tres objetivos acumulables · 3 vidas`:mode==='tt'?'Contrarreloj · Vueltas libres · Fantasma de tu récord':`5 vueltas · ${renderPrefs.rivals?renderPrefs.rivals+' rivales · Colisiones '+(renderPrefs.collisions?'sí':'no'):'Sin rivales'}`;
+  $('#sessionBrief').textContent=mode==='training'?'Entrenamiento libre · Ocho y zona abierta · −100 por cono o pila · Sin límite de tiempo · R: volver al trazado':mode==='online'?'Online beta · Hasta 3 pilotos · Confirma tu auto y marca listo en la sala':mode==='downhill'?`Sprint · ${preparedTrack.goal.toLocaleString('es-CL')} pts antes de la meta · 3 vidas · R: último punto seguro`:mode==='challenge'?`Campaña ${activeChallengeLevel} · Una vuelta · Tres objetivos acumulables · 3 vidas`:mode==='tt'?'Contrarreloj · Vueltas libres · Fantasma de tu récord':`5 vueltas · ${renderPrefs.rivals?renderPrefs.rivals+' rivales · Colisiones '+(renderPrefs.collisions?'sí':'no'):'Sin rivales'}`;
   updatePanel();
 }
 addEventListener('resize',()=>{if(carPanel && !carPanel.classList.contains('hidden'))drawCarPreview();});
@@ -1786,7 +1786,7 @@ if(!pendingTrackFactory){
 
 // Inicialización final
 setTimeout(() => {
-  console.log('Drift Racer initialized successfully');
+  console.log('DR1FT initialized successfully');
 }, 100);
 
 /* =====================  RADIODRIFT  ===================== */
@@ -1985,10 +1985,10 @@ function checkChallengeProgress(){
 }
 
 </script>
-<script src="js/experience.js?v=1.0.0-prealpha.7"></script>
-<script src="js/gamepad-ui.js?v=1.0.0-prealpha.7"></script>
-<script src="js/career-ui.js?v=1.0.0-prealpha.7"></script>
-<script src="js/replay-ui.js?v=1.0.0-prealpha.7"></script>
-<script src="js/online-config.js?v=1.0.0-prealpha.7"></script>
-<script src="js/online-client.js?v=1.0.0-prealpha.7"></script>
+<script src="js/experience.js?v=1.0.0-prealpha.8"></script>
+<script src="js/gamepad-ui.js?v=1.0.0-prealpha.8"></script>
+<script src="js/career-ui.js?v=1.0.0-prealpha.8"></script>
+<script src="js/replay-ui.js?v=1.0.0-prealpha.8"></script>
+<script src="js/online-config.js?v=1.0.0-prealpha.8"></script>
+<script src="js/online-client.js?v=1.0.0-prealpha.8"></script>
 </body></html>

@@ -48,7 +48,7 @@ globalThis.DriftCareer=(()=>{
   function save(p,storage=globalThis.localStorage){try{storage.setItem(KEY,JSON.stringify(clean(p)));return true;}catch{return false;}}
   function stars(p){return Object.values(p.missions).reduce((n,a)=>n+a.filter(Boolean).length,0);}
   function tierStars(tier){return [0,0,6,18][tier]??99;}
-  function objectives(level){const l=clamp(level,1,20);return [{id:'score',target:Math.round(11000+1800*l+60*l*l),label:'Alcanza'},{id:'clean',target:1,label:'Completa una vuelta sin salir de la carretera, chocar ni recuperar'},{id:'longest',target:1800+450*l,label:'Enlaza un drift de'}];}
+  function objectives(level){const l=clamp(level,1,20);return [{id:'score',target:Math.round(11000+1800*l+60*l*l),label:'Alcanza'},{id:'clean',target:1,label:'Completa una vuelta sin salir de la carretera, chocar ni recuperar'},{id:'longest',target:1800+450*l,label:'Enlaza un derrape de'}];}
   function part(skin,id){const base=catalog.find(x=>x.id===id);return base?{...base,name:profiles[skin]?.[id]||base.name}:null;}
   function price(skin,id,tier){const x=part(skin,id);return x?Math.round(x.cost*(profiles[skin]?.price||1)*(1+(tier-1)*.85)/50)*50:Infinity;}
   function purchase(skin,id,storage=globalThis.localStorage){
