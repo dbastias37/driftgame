@@ -4,7 +4,7 @@
 globalThis.DriftRoadContact ||= (()=>{
   'use strict';
   const curb=Object.freeze({start:.16,width:.70,height:.14,bands:6});
-  const terrainCache=new WeakMap(),CELL=32;
+  const terrainCache=new WeakMap(),surfaceCache=new WeakMap(),CELL=32;
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   function profile(offset){
     const t=(offset-curb.start)/curb.width;
@@ -46,6 +46,40 @@ globalThis.DriftRoadContact ||= (()=>{
     const front=skin==='fujiwara'?1.275775:skin==='yugo'?1.06:skin==='yellow'?1.343514:1.27,rear=skin==='fujiwara'?-1.122379:skin==='yugo'?-1.09:skin==='yellow'?-1.137491:-1.3,side=skin==='fujiwara'?.729235:skin==='yugo'?.654:skin==='yellow'?.768966:.98;
     return [{x:rear,z:-side},{x:rear,z:side},{x:front,z:-side},{x:front,z:side}];
   }
+  // Exact segment distance, not the nearest vertex: one wheel may be on the
+  // shoulder while the other three are still on asphalt. Cache only nearby
+  // segments; imported kilometre-long edges must not allocate giant grids.
+  function flatSurface(track,x,y){
+    let cache=surfaceCache.get(track);
+    if(!cache||cache.half!==track.roadHalf||cache.points!==track.points){
+      const grid=new Map(),long=[],pad=track.roadHalf+4;
+      track.points.forEach((p,i)=>{
+        const q=track.points[(i+1)%track.points.length],dx=q.x-p.x,dy=q.y-p.y,l2=dx*dx+dy*dy;
+        if(l2<1e-12)return;const segment={x:p.x,y:p.y,dx,dy,l2};
+        const x0=Math.floor((Math.min(p.x,q.x)-pad)/CELL),x1=Math.floor((Math.max(p.x,q.x)+pad)/CELL),y0=Math.floor((Math.min(p.y,q.y)-pad)/CELL),y1=Math.floor((Math.max(p.y,q.y)+pad)/CELL);
+        if((x1-x0+1)*(y1-y0+1)>256){long.push(segment);return;}
+        for(let a=x0;a<=x1;a++)for(let b=y0;b<=y1;b++){const key=a+','+b;if(!grid.has(key))grid.set(key,[]);grid.get(key).push(segment);}
+      });
+      cache={grid,long,half:track.roadHalf,points:track.points};surfaceCache.set(track,cache);
+    }
+    let best=Infinity;
+    for(const list of [cache.grid.get(Math.floor(x/CELL)+','+Math.floor(y/CELL))||[],cache.long])for(const p of list){
+      const t=clamp(((x-p.x)*p.dx+(y-p.y)*p.dy)/p.l2,0,1);
+      best=Math.min(best,(x-p.x-t*p.dx)**2+(y-p.y-t*p.dy)**2);
+    }
+    return Math.sqrt(best);
+  }
+  function surface(track,x,y,wetness=0){
+    if(!track?.points?.length)return {kind:'asphalt',height:0,wetness,gx:0,gy:0};
+    if(track.training)return {kind:'asphalt',height:0,wetness,gx:0,gy:0};
+    const q=(track.downhill||track.elevated)?track.sampleNearby(x,y):null;
+    const distance=q?.distance??((track.downhill||track.elevated)?Infinity:flatSurface(track,x,y));
+    const edge=distance-track.roadHalf,outer=track.downhill?1.3:track.elevated?track.cutHalf-track.roadHalf:4;
+    const feature=q&&track.featureAt?.(q.s),sheltered=feature?.kind==='tunnel';
+    const kind=edge<=curb.start?'asphalt':edge<=curb.start+curb.width?'curb':edge<=outer?(feature?'concrete':'gravel'):'grass';
+    const grade=q?(track.downhill?-q.grade:q.grade):0,bank=q?.bank?Math.tan(q.bank):0,c=Math.cos(q?.tang||0),s=Math.sin(q?.tang||0);
+    return {kind,distance,height:q?track.surfaceHeight(x,y):(track.downhill||track.elevated)?track.terrainHeight(x,y):profile(edge),wetness:sheltered?0:clamp(wetness,0,1),gx:grade*c-bank*s,gy:grade*s+bank*c};
+  }
   function curbWheels(track,pose,skin){
     if(!track?.points?.length||pose.descent?.motion==='falling')return 0;
     const c=Math.cos(pose.angle),s=Math.sin(pose.angle),ground=terrain(track);let count=0;
@@ -67,6 +101,7 @@ globalThis.DriftRoadContact ||= (()=>{
   }
   function reset(track,car,skin){
     const pose=contacts(track,car,skin);
+    globalThis.DriftWheelParticles?.reset(car);
     globalThis.DriftDynamics?.reset(car);
     car.ride={...pose,groundHeight:pose.height,vy:0,vr:0,vp:0,lastX:car.pos.x,lastY:car.pos.y,lastAngle:car.angle,skin};
     return car.ride;
@@ -111,5 +146,5 @@ globalThis.DriftRoadContact ||= (()=>{
     };
     car.spawnTrails=function(f,r,dt,int){const previous=this.tireTrails.at(-1);spawn.call(this,f,r,dt,int);const t=this.tireTrails.at(-1);if(t&&t!==previous)for(const [side,n]of[[-1,1],[1,2]]){const d=align(f,r,side);t['x'+n]+=d.x;t['y'+n]+=d.y;}};
   }
-  return Object.freeze({curb,profile,terrain,wheelOffsets,curbWheels,contacts,reset,update,alignWheelEffects});
+  return Object.freeze({curb,profile,terrain,surface,wheelOffsets,curbWheels,contacts,reset,update,alignWheelEffects});
 })();

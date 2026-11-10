@@ -1,8 +1,8 @@
 import * as T from '../vendor/three.module.min.js';
 import {SoftwareRenderer} from './software-renderer.js?v=1.0.0-prealpha.12';
-import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles,groundGeometry} from './track-surface.js?v=1.0.0-prealpha.16';
-import {buildTouring} from './touring-scene.js?v=1.0.0-prealpha.16';
-import {buildMountain} from './mountain-scene.js?v=1.0.0-prealpha.16';
+import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles,groundGeometry} from './track-surface.js?v=1.0.0-prealpha.17';
+import {buildTouring} from './touring-scene.js?v=1.0.0-prealpha.17';
+import {buildMountain} from './mountain-scene.js?v=1.0.0-prealpha.17';
 import {loadRX7,createRX7} from './rx7-model.js?v=1.0.0-prealpha.12';
 import {loadYugo,createYugo} from './yugo-model.js?v=1.0.0-prealpha.12';
 import {loadFujiwara,createFujiwara} from './fujiwara-model.js?v=1.0.0-prealpha.12';
@@ -11,7 +11,8 @@ import {Atmosphere,buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.16'
 import {CinematicDirector} from './cinematic-camera.js?v=1.0.0-prealpha.16';
 import {loadNova,loadSkyline,createReplacement,updateVehicleLights} from './replacement-model.js?v=1.0.0-prealpha.12';
 import {applyVehiclePaint,disposePaint} from './vehicle-paint.js?v=1.0.0-prealpha.12';
-import {cloudTexture,TireSmokeRenderer} from './smoke-renderer.js?v=1.0.0-prealpha.16';
+import {cloudTexture,TireSmokeRenderer} from './smoke-renderer.js?v=1.0.0-prealpha.17';
+import {WheelParticleRenderer} from './wheel-particles-renderer.js?v=1.0.0-prealpha.17';
 import {RetroRenderer} from './retro-renderer.js?v=1.0.0-prealpha.12';
 import {WeatherEffects} from './weather.js?v=1.0.0-prealpha.16';
 import {buildTraining} from './training-scene.js?v=1.0.0-prealpha.16';
@@ -98,6 +99,7 @@ export class DriftView3D{
     this.camera=new T.PerspectiveCamera(58,1,.5,1200);this.world=new T.Group();this.scene.add(this.world);
     this.car=createCar('blue');this.scene.add(this.car.root);this.ghostCar=createCar('blue',true);this.scene.add(this.ghostCar.root);
     this.smokeTexture=cloudTexture();this.smokeRenderer=new TireSmokeRenderer(this.smokeTexture);this.smoke=this.smokeRenderer.mesh;this.smokeGeo=this.smokeRenderer.geometry;this.smokePos=this.smokeRenderer.positions;this.smokeMat=this.smokeRenderer.material;this.scene.add(this.smoke);
+    this.wheelParticles=new WheelParticleRenderer(this.smokeTexture);this.scene.add(this.wheelParticles.mesh,this.wheelParticles.clouds.mesh);
     this.trailGeo=new T.BufferGeometry();this.trailPos=new Float32Array(3000*2*6*3);this.trailGeo.setAttribute('position',new T.BufferAttribute(this.trailPos,3).setUsage(T.DynamicDrawUsage));
     this.trails=new T.Mesh(this.trailGeo,new T.MeshBasicMaterial({color:0x131b20,transparent:true,opacity:.42,depthWrite:false,side:T.DoubleSide}));this.trails.frustumCulled=false;this.trails.renderOrder=-40;this.scene.add(this.trails);
     this.rivalModels=new Map();this.rivalLabels=[];
@@ -316,6 +318,7 @@ export class DriftView3D{
       if(projected.z>-1&&projected.z<1&&Math.abs(projected.x)<1&&Math.abs(projected.y)<1)this.rivalLabels.push({name:car.name,x:(projected.x+1)*w/2,y:(1-projected.y)*h/2});
     }
     this.smokeRenderer.update([player,...rivals].flatMap(c=>c.smoke||[]),this.camera,track,this.low,player.cosmetics);
+    this.wheelParticles.update([player,...rivals],this.camera,track,this.low);
     this.trainingScene?.update();
     this.trackPropsScene?.update(props);
     this.weatherEffects.update({track,world:this.world,camera:this.camera,time:weatherTime,weather,night:this.atmosphere.state?.night||0,low:this.low});

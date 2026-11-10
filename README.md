@@ -1,3 +1,9 @@
+## 1.0.0-prealpha.17 — Gravilla y agua en las ruedas
+
+Piedras con rebote y polvo al pisar la franja de gravilla; gotas y bruma fina sobre asfalto mojado. Cada rueda responde a su superficie, velocidad, derrape y frenado. Incluye pendientes, rivales y repeticiones, con partículas reutilizadas y límites de cantidad y distancia.
+
+Para probar: **Ajustes → Clima → Lluvia** y comenzar una carrera; en despejado, pisar la franja exterior al piano. Los túneles detienen la emisión de agua. [Diseño, límites y verificación](docs/wheel-particles.md).
+
 ## 1.0.0-prealpha.16 — Circuitos 2.0
 
 Cinco circuitos originales de 6,4 a 8,4 km con ascensos, descensos, curvas amplias y peraltes progresivos. Cada ruta incluye túneles y un viaducto con estructura modelada. Carrera permite elegir 4 o 5 vueltas; también están disponibles en contrarreloj. Acceso: **Jugar → Carrera rápida → primeras cinco tarjetas «2.0»**.

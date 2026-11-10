@@ -14,8 +14,10 @@ globalThis.DriftTireSmoke=(()=>{
     const emitWheels=car.handling?.drive===1&&!car.handbrake&&car.driveSlip>.1?wheels.slice(2):wheels.slice(0,2);
     for(let i=0;i<count;i++)for(const wheel of emitWheels){
       const t=(i+.5)/Math.max(1,count),x=(continuous?old.x+(now.x-old.x)*t:now.x)+f.x*wheel.x+r.x*wheel.z,y=(continuous?old.y+(now.y-old.y)*t:now.y)+f.y*wheel.x+r.y*wheel.z;
-      const rnd=()=>Math.random()-.5,ground=track?.points?.length?DriftRoadContact.terrain(track).height(x,y):0;
-      particles.push({x:x+rnd()*.08,y:y+rnd()*.08,height:ground+.16,vx:car.vel.x*.08+r.x*(vlat*.10+rnd()*.5)-f.x*.2,vy:car.vel.y*.08+r.y*(vlat*.10+rnd()*.5)-f.y*.2,lift:.34+Math.random()*.26,r:.19+Math.random()*.13,grow:(.62+Math.random()*.35)*Math.cbrt(volume),density:.3+intensity*.2,a:0,life:0,ttl:2.1+Math.random()*.9,rotation:Math.random()*6.28,spin:rnd()*.55,color:car.cosmetics?.smokeColor||'#dde8e8'});
+      const surface=DriftRoadContact.surface(track,x,y,globalThis.DriftWheelParticles?.wetness(car.conditions?.weather)||0);
+      if(surface.kind==='gravel'||surface.kind==='grass')continue;
+      const rnd=()=>Math.random()-.5,ground=surface.height;
+      particles.push({x:x+rnd()*.08,y:y+rnd()*.08,height:ground+.16,vx:car.vel.x*.08+r.x*(vlat*.10+rnd()*.5)-f.x*.2,vy:car.vel.y*.08+r.y*(vlat*.10+rnd()*.5)-f.y*.2,lift:.34+Math.random()*.26,r:.19+Math.random()*.13,grow:(.62+Math.random()*.35)*Math.cbrt(volume),density:(.3+intensity*.2)*(1-surface.wetness*.85),a:0,life:0,ttl:2.1+Math.random()*.9,rotation:Math.random()*6.28,spin:rnd()*.55,color:car.cosmetics?.smokeColor||'#dde8e8'});
     }
     car._smokeEmitter={x:now.x,y:now.y};
     const drag=Math.exp(-dt*1.25);let write=0;
