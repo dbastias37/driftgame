@@ -219,6 +219,11 @@
   @media(max-width:480px){.menu-grid{grid-template-columns:1fr}.challenge-list{grid-template-columns:repeat(2,minmax(0,1fr))}.challenge-item button{width:100%;padding:9px 4px;font-size:12px}}
   @media(max-height:500px){#carPreview{height:110px} #carPanel h2{font-size:19px} #times{top:122px} #ui{max-width:330px} #stickZone{width:120px;height:120px} #gasZone{height:135px}}
 .daytime-control{display:block;max-width:330px;margin:14px 0 8px;font-size:12px;color:#aebbbb}.daytime-control output{float:right;color:#ff7544}.daytime-control input{display:block;width:100%;margin:10px 0;accent-color:#ff7544;cursor:pointer}.daytime-ends{display:flex;justify-content:space-between;font-size:10px;color:#829597}
+/* Above the renderer, CRT, HUD, soundtrack and every modal. */
+#screenFade{position:fixed;inset:0;z-index:2147483647;background:#000;opacity:0;pointer-events:none;transition:opacity 220ms linear;}
+#screenFade.active{pointer-events:auto;touch-action:none;}
+#screenFade.black{opacity:1;}
+
 </style>
 <link rel="stylesheet" href="css/experience.css?v=1.0.0-prealpha.11">
 <link rel="stylesheet" href="css/online.css?v=1.0.0-prealpha.11">
