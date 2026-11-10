@@ -47,3 +47,29 @@ test('cinematic montage cuts between all three shot types; corner cameras stay f
  director.reset();const anchor={pos:{...p.pos}},a=director.update({track,player:p,time:7,mode:'trackside',anchor});p.pos.x+=1;const b=director.update({track,player:p,time:8,mode:'trackside',anchor});assert.deepEqual(a.position,b.position);assert.equal(b.cut,false);
  director.reset();let max=0;for(let t=0;t<45;t+=.1){const shot=director.update({track,player:p,time:t,mode:'drone'});assert.equal(shot.cut,false);max=Math.max(max,Math.hypot(shot.position.x-p.pos.x,shot.position.z-p.pos.y));assert.ok(shot.position.y>=17);}assert.ok(max<50);assert.equal(director.update({track,player:p,time:7,mode:'cinematic',reduced:true}).kind,'isometric');
 });
+
+test('title montage uses each mounted sports camera with real body transforms and stable reduced motion',async()=>{
+ const T=await import('../vendor/three.module.min.js'),{CinematicDirector,DEMO_SHOTS,DEMO_SHOT_SECONDS}=await import('../js/cinematic-camera.js'),{onboardShot}=await import('../js/driving-cameras.js'),{createTrack,createCar}=await import('../server/engine.js');
+ const track=createTrack(1),player=createCar(track,'blue',true,0),director=new CinematicDirector(),root=new T.Group(),body=new T.Group();root.add(body);root.position.set(player.pos.x,0,player.pos.y);root.rotation.y=-player.angle;body.position.y=.08;body.rotation.set(.025,0,-.018);const model={root,body},kinds=new Set();
+ for(let i=0;i<DEMO_SHOTS.length;i++){
+  const time=i*DEMO_SHOT_SECONDS,view=director.update({track,player,model,time,mode:'demo'});kinds.add(view.kind);assert.equal(view.kind,DEMO_SHOTS[i]);assert.equal(view.cut,i>0);assert(view.label.length>0);
+  if(view.mounted){const expected=onboardShot(view.kind,model,player.bodyDimensions);assert(view.position.distanceTo(expected.position)<1e-10);assert(view.target.distanceTo(expected.target)<1e-10);assert.equal(view.hideBody,['hood','bumper'].includes(view.kind));}
+  const still=director.update({track,player,model,time,mode:'demo'});assert.deepEqual(still.position,view.position);assert.deepEqual(still.target,view.target);assert.equal(still.cut,false);
+ }
+ assert.deepEqual([...kinds].sort(),['bumper','drone','fender','fenderRight','hood','isometric','rear','trackside'].sort());
+ director.reset();for(let i=0;i<DEMO_SHOTS.length;i++){const view=director.update({track,player,model,time:i*DEMO_SHOT_SECONDS,mode:'demo',reduced:true});assert.equal(view.kind,'isometric');assert.equal(view.mounted,false);assert.equal(view.cut,false);}
+ const fallback=director.update({track,player,time:DEMO_SHOT_SECONDS,mode:'demo'});assert.equal(fallback.kind,'drone');assert(Number.isFinite(fallback.position.x));
+});
+
+test('exhibition renderer cuts to the wheel rig without clipping and restores the body for wide shots',async()=>{
+ const context={createImageData:(w,h)=>({data:new Uint8ClampedArray(w*h*4)}),putImageData(){},fillRect(){},fillText(){},createRadialGradient:()=>({addColorStop(){}}),getImageData:(x,y,w,h)=>({data:new Uint8ClampedArray(w*h*4).fill(130)})};
+ const makeCanvas=()=>({width:256,height:144,style:{},getContext:kind=>kind==='2d'?context:null,addEventListener(){},removeEventListener(){}});global.document={createElement:makeCanvas};global.innerWidth=640;global.innerHeight=360;global.devicePixelRatio=1;
+ const {DriftView3D}=await import('../js/view3d.js'),{onboardShot}=await import('../js/driving-cameras.js'),{createTrack,createCar}=await import('../server/engine.js');
+ const error=console.error;console.error=()=>{};let view;try{view=new DriftView3D(makeCanvas(),{loadVehicle:null,loadYugoVehicle:null,loadFujiwaraVehicle:null,loadNovaVehicle:null,loadSkylineVehicle:null});}finally{console.error=error;}
+ try{
+  const track=createTrack(1),player=createCar(track,'blue',true,0),args={track,player,camera:'demo',inMenu:true,dt:.016};
+  view.render({...args,time:7});assert.equal(view.camera.near,.06);assert.equal(view.car.root.visible,true);assert.equal(view.cinematicLabel,'Tapabarro izquierdo');assert(view.camera.position.distanceTo(onboardShot('fender',view.car,player.bodyDimensions).position)<1e-8);
+  view.render({...args,time:28});assert.equal(view.camera.near,.06);assert.equal(view.car.root.visible,false);assert.equal(view.cinematicLabel,'Capó');
+  view.render({...args,time:35});assert.equal(view.camera.near,.3);assert.equal(view.car.root.visible,true);assert.equal(view.cinematicLabel,'Dron · seguimiento');
+ }finally{view.dispose();}
+});

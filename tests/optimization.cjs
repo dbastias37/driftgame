@@ -9,6 +9,10 @@ test('mountain terrain has no faces inside the actual shoulder footprint; chunks
   const track=DriftDownhill.createTrack(Track,level),world=new T.Group();buildMountain(track,world,false);world.updateMatrixWorld(true);
   assert.ok(world.userData.chunks.length<1300);const terrain=[];world.traverse(o=>{if(o.name==='mountain-terrain'){terrain.push(o);assert.equal(o.material.flatShading,true);assert.ok(o.geometry.index);assert.ok(o.geometry.attributes.position.count<o.geometry.index.count*.5);assert.equal(o.geometry.attributes.normal,undefined);}});
   const ray=new T.Raycaster();for(let s=10;s<track.length-10;s+=13){const p=track.atDistance(s),n=track.normalAt(p.i);for(const offset of[-track.roadHalf,0,track.roadHalf]){ray.set(new T.Vector3(p.x+n.x*offset,1000,p.y+n.y*offset),new T.Vector3(0,-1,0));assert.equal(ray.intersectObjects(terrain).length,0,`Terrain pierces route ${level} at ${s}`);}}
+  // Painted and unpainted dash segments each contain only one road surface;
+  // snapped depth interpolation cannot alternate between paint and asphalt.
+  const road=[];world.traverse(o=>{if(o.name==='mountain-road')road.push(o);});
+  for(let s=20.137;s<track.finishS;s+=37.3){const p=track.atDistance(s),n=track.normalAt(p.i);ray.set(new T.Vector3(p.x+n.x*.029,1000,p.y+n.y*.029),new T.Vector3(0,-1,0));assert.equal(ray.intersectObjects(road).length,1,`Overlapping/missing center paint on route ${level} at ${s}`);}
   const camera=new T.PerspectiveCamera(58,1,.3,520);camera.position.set(track.points[0].x,track.points[0].h+6,track.points[0].y);
   updateWorldVisibility(world,camera,290);const visible=world.userData.visibleChunks;assert.ok(visible<world.userData.chunks.length*.65);
   for(const o of world.userData.chunks)if(!o.visible){const sphere=(o.isInstancedMesh?o.boundingSphere:o.geometry.boundingSphere).clone().applyMatrix4(o.matrixWorld);assert.ok(camera.position.distanceTo(sphere.center)-sphere.radius>=302);}

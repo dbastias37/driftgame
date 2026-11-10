@@ -1,6 +1,10 @@
 // Camera directions depend only on the recorded pose/time and the road.
 // Drone arcs are bounded; trackside cameras keep their world position per shot.
+import {onboardCameras,onboardShot} from './driving-cameras.js?v=1.0.0-prealpha.8';
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+export const DEMO_SHOT_SECONDS=7;
+export const DEMO_SHOTS=Object.freeze(['drone','fender','trackside','rear','hood','drone','fenderRight','bumper','isometric']);
+const labels={drone:'Dron · seguimiento',trackside:'Curva · cámara fija',isometric:'Vista aérea',fender:'Tapabarro izquierdo',fenderRight:'Tapabarro derecho',hood:'Capó',bumper:'Parachoques',rear:'Mirada trasera'};
 // Use a continuous road chord, not the nearest vertex tangent. The latter
 // jumps at every segment boundary and becomes visible as drone yaw vibration.
 const paths=new WeakMap();
@@ -15,14 +19,20 @@ function roadHeading(track,p,sample){
 export class CinematicDirector{
   reset(){this.key=null;this.fixed=null;}
   constructor(){this.reset();}
-  update({track,player,time=0,mode='drone',anchor=player,reduced=false}){
-    const shot=Math.floor(time/7),sequence=['drone','trackside','isometric','drone','trackside','drone'];
-    let kind=reduced?'isometric':mode==='cinematic'?sequence[shot%sequence.length]:mode;
+  update({track,player,time=0,mode='drone',anchor=player,reduced=false,model=null,dimensions=player.bodyDimensions}){
+    const shot=Math.max(0,Math.floor(time/DEMO_SHOT_SECONDS)),sequence=mode==='demo'?DEMO_SHOTS:['drone','trackside','isometric','drone','trackside','drone'];
+    let kind=reduced?'isometric':['cinematic','demo'].includes(mode)?sequence[shot%sequence.length]:mode;
+    // A mounted shot must use the real body transform, so its wheel/body framing
+    // follows the loaded model and suspension instead of an invented camera rig.
+    if(onboardCameras.has(kind)&&!model)kind='drone';
     let key=kind==='trackside'?kind+':'+shot:kind;
     const p=player.pos,speed=player.worldSpeed(),q=track.sample(p.x,p.y),yaw=roadHeading(track,p,q);
     const h=player.descent?.motion==='falling'?player.descent.y:(player.ride?.height||0),f={x:Math.cos(yaw),z:Math.sin(yaw)},n={x:-f.z,z:f.x};
     let position,target={x:p.x,y:h+.7,z:p.y},fov=48;
-    if(kind==='trackside'){
+    const mounted=onboardCameras.has(kind);
+    if(mounted){
+      const view=onboardShot(kind,model,dimensions);position=view.position;target=view.target;fov=view.fov;
+    }else if(kind==='trackside'){
       if(this.fixed?.key!==key){
         const start=track.sample(anchor.pos.x,anchor.pos.y).i,limit=Math.min(track.points.length-1,Math.ceil(75/3));let best=start,bend=0,turn=0;
         for(let j=4;j<=limit;j+=2){const idx=track.open?Math.min(track.points.length-2,start+j):(start+j)%track.points.length,a=track.tangentAt(idx-3),b=track.tangentAt(idx+3),v=Math.atan2(Math.sin(b-a),Math.cos(b-a));if(Math.abs(v)>bend){bend=Math.abs(v);best=idx;turn=v;}}
@@ -40,8 +50,8 @@ export class CinematicDirector{
       position={x:p.x-f.x*back*Math.cos(arc)+n.x*side,y:h+21+Math.sin(time*.15)*4+Math.min(5,speed*.1),z:p.y-f.z*back*Math.cos(arc)+n.z*side};
       target={x:p.x+f.x*(6+speed*.12),y:h+1,z:p.y+f.z*(6+speed*.12)};fov=49;
     }
-    if(track.downhill)position.y=Math.max(position.y,track.terrainHeight(position.x,position.z)+3);
+    if(track.downhill)position.y=Math.max(position.y,track.terrainHeight(position.x,position.z)+(mounted?.18:3));
     const cut=this.key!==null&&key!==this.key;this.key=key;
-    return {position,target,fov,kind,key,cut};
+    return {position,target,fov,kind,key,cut,mounted,hideBody:kind==='hood'||kind==='bumper',label:labels[kind]||''};
   }
 }

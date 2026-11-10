@@ -14,7 +14,7 @@ globalThis.DriftReplay=(()=>{
     capture(time,player,rivals=[],props=[]){
       if(!this.meta||!Number.isFinite(time)||time-this.lastTime<1/HZ-1e-6)return false;
       const slot=this.head;this.times[slot]=time;
-      props.slice(0,12).forEach((p,id)=>{const a=this.propChannels[id]??=new Float32Array(this.capacity*7);a.set([p.x,p.y,p.z,p.ground,p.tiltX,p.tiltY,p.heading||0],slot*7);});
+      props.slice(0,36).forEach((p,id)=>{const a=this.propChannels[id]??=new Float32Array(this.capacity*7);a.set([p.x,p.y,p.z,p.ground,p.tiltX,p.tiltY,p.heading||0],slot*7);});
       for(const [id,car,skin] of [['self',player,this.meta.skin],...rivals.slice(0,2).map(c=>[c.id,c,c.skin])]){
         let channel=this.channels.get(id);
         if(!channel){channel={id,skin,name:car.name||'',color:car.color,cosmetics:car.cosmetics?{...car.cosmetics}:null,dimensions:car.bodyDimensions?{...car.bodyDimensions}:null,data:new Float32Array(this.capacity*STRIDE),last:null,travel:0,first:time};this.channels.set(id,channel);}

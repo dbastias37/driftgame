@@ -30,3 +30,9 @@ test('intensity changes the vector effect and persists; spring acceleration stay
  for(const x of measures)assert.ok(x.delta<1.8/x.hz,JSON.stringify(x));
 
 });
+
+test('exhibition pause freezes the montage shot and anchor across the extended camera cycle',async()=>{
+ const {DEMO_SHOT_SECONDS,DEMO_SHOTS}=await import('../js/cinematic-camera.js'),r=harness();assert.equal(r('DriftAttract.SHOT_SECONDS'),DEMO_SHOT_SECONDS);
+ r('attractDemo.time=58;attractDemo.paused=true;var held=attractDemo.frame(0)');const held=r('held');r('for(let i=0;i<180;i++)attractDemo.frame(1/60)');const frozen=r('attractDemo.frame(0)');assert.equal(frozen.time,held.time);assert.equal(frozen.shotIndex,held.shotIndex);assert.deepEqual(frozen.anchor,held.anchor);
+ r(`attractDemo.paused=false;attractDemo.time=${DEMO_SHOT_SECONDS*DEMO_SHOTS.length-.1};var advanced=attractDemo.frame(.2)`);assert.equal(r('advanced.shotIndex'),DEMO_SHOTS.length);assert.equal(r('advanced.rivals.length'),2);
+});

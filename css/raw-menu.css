@@ -17,3 +17,8 @@
 .settings-card{width:min(680px,calc(100vw - 32px))}.modal{overflow-x:hidden}
 
 @media(max-width:650px) and (min-height:501px){.track-preview-caption{position:relative}.track-preview-caption .spin-button{top:12px;right:16px}}
+
+/* DR1FT: single-line wordmark, shared with the PlayStation-style interface. */
+.title-brand h1{white-space:nowrap;font-size:clamp(88px,13vw,190px);letter-spacing:-.035em;line-height:.95}.title-brand h1 em{display:inline-block;transform:skew(-5deg);margin:0 .015em}
+@media(max-width:650px){.title-brand h1{font-size:clamp(80px,22vw,136px)}}
+@media(max-height:500px){.title-brand h1{font-size:clamp(70px,12vw,110px)}}

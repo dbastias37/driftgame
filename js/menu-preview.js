@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
-import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.7';
-import {updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.7';
+import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.8';
+import {updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.8';
 
 const material=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.82,...extra});
 function box(parent,m,x,y,z,w,h,d){const mesh=new T.Mesh(new T.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);parent.add(mesh);return mesh;}
@@ -31,7 +31,7 @@ function garageScene(){
   box(scene,metal,-8,1.65,-6.8,3.1,3.3,.18);for(let y=.25;y<3.2;y+=.22)box(scene,skirt,-8,y,-6.68,2.95,.025,.04);
   box(scene,dark,7,.55,-5.8,3,1.1,.95);box(scene,metal,7,1.13,-5.8,3.2,.12,1.05);
   for(const x of [6,7,8]){box(scene,orange,x,.63,-5.3,.88,.65,.035);box(scene,metal,x,.78,-5.26,.42,.025,.025);}
-  const label=document.createElement('canvas');label.width=512;label.height=128;const text=label.getContext('2d');text.fillStyle='#dce0d5';text.fillRect(0,0,512,128);text.fillStyle='#28383b';text.font='bold 48px DriftDisplay';text.textAlign='center';text.fillText('DR / GARAGE',256,76);
+  const label=document.createElement('canvas');label.width=512;label.height=128;const text=label.getContext('2d');text.fillStyle='#dce0d5';text.fillRect(0,0,512,128);text.fillStyle='#28383b';text.font='bold 48px DriftDisplay';text.textAlign='center';text.fillText('DR1FT / GARAJE',256,76);
   const sign=new T.Mesh(new T.PlaneGeometry(3.2,.8),new T.MeshBasicMaterial({map:new T.CanvasTexture(label)}));sign.position.set(.1,2.9,-6.86);scene.add(sign);
   const platform=new T.Group();scene.add(platform);
   const base=new T.Mesh(new T.CylinderGeometry(3.65,3.75,.28,80),dark);base.position.y=.14;platform.add(base);

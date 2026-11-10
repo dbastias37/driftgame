@@ -1,7 +1,7 @@
 /* Preloaded exhibition replay: three authored racing lines, sampled once.
  * No live Car, score, saved preference or online connection is touched. */
 globalThis.DriftAttract=(()=>{
-  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),wrap=(v,n)=>(v%n+n)%n;
+  const SHOT_SECONDS=7,clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),wrap=(v,n)=>(v%n+n)%n;
   const angle=(a,b)=>Math.atan2(Math.sin(b-a),Math.cos(b-a));
   const cubic=(a,b,c,d,t)=>.5*((2*b)+(-a+c)*t+(2*a-5*b+4*c-d)*t*t+(-a+3*b-3*c+d)*t*t*t);
   class Demo{
@@ -36,8 +36,9 @@ globalThis.DriftAttract=(()=>{
       const t=wrap(this.time,this.duration),result=this.recording.sample(t),laps=Math.floor(this.time/this.duration);
       // Keep wheel rotation continuous when the exhibition loops.
       if(laps){const end=this.recording.sample(this.duration);[result.player,...result.rivals].forEach((car,k)=>{car.wheelTravel+=laps*[end.player,...end.rivals][k].wheelTravel;});}
-      const shotStart=Math.floor(this.time/7)*7;
+      const shotStart=Math.floor(this.time/SHOT_SECONDS)*SHOT_SECONDS;
       result.anchor=this.recording.sample(wrap(shotStart,this.duration)).player;
+      result.shotIndex=Math.floor(this.time/SHOT_SECONDS);
       result.time=this.time;result.day=this.day;result.track=this.track;
       if(Math.abs(this.time-this.effectTime)>.075){
         this.effectTime=this.time;this.effects=[0,1,2].map(()=>({trails:[],smoke:[]}));
@@ -54,5 +55,5 @@ globalThis.DriftAttract=(()=>{
       return result;
     }
   }
-  return {Demo};
+  return {Demo,SHOT_SECONDS};
 })();

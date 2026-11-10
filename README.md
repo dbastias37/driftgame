@@ -1,10 +1,18 @@
-# Drift Racer 1.0 pre-alpha
+# DR1FT 1.0 pre-alpha
 
-Juego de drift 3D para navegador. Cinco autos, campaña de veinte etapas y sesenta objetivos, taller por vehículo, veinte descensos, carreras online de hasta tres jugadores, editor y contrarreloj con fantasma local. Versión técnica: `1.0.0-prealpha.7`.
+Juego de drift 3D para navegador. Cinco autos, campaña de veinte etapas y sesenta objetivos, taller por vehículo, veinte descensos, carreras online de hasta tres jugadores, editor y contrarreloj con fantasma local. Versión técnica: `1.0.0-prealpha.8`.
 
 El garaje incluye el **Nissan Skyline R34 azul** y el **Chevrolet Nova SS negro**, convertidos de los modelos entregados, con texturas originales y ruedas independientes. Reemplazan las antiguas casillas azul y gris; se mantienen las mejoras asociadas a esas casillas. Los cinco autos tienen pintura editable y la física revisada descrita abajo. Faros, luces de freno, suspensión, humo y huellas siguen el mismo estado de la carrera.
 
 [Jugar en Render](https://driftgame.onrender.com)
+
+## DR1FT: presentación, pista y pilas (prealpha.8)
+
+El juego se llama **DR1FT** en portada, menús, créditos y letreros. La exhibición incorpora capó, ambos tapabarros, parachoques y mirada trasera junto a dron, curva fija y vista aérea. Los mensajes de puntuación, multiplicadores y rachas están en español.
+
+Se elimina el suelo superpuesto bajo las pistas y se integra la pintura de los descensos como regiones adyacentes, conservando los efectos PSX. En las curvas hay grupos de tres pilas de **3, 4 y 5 neumáticos**: reaccionan con su masa conjunta y se separan en unidades al recibir un golpe. Cada pila descuenta 100 puntos una sola vez. Las repeticiones registran hasta 36 neumáticos; los récords nuevos usan `:tyres-v2`. El progreso, pintura y mejoras guardados se conservan.
+
+[Detalles de la actualización](docs/dr1ft-release.md).
 
 ## Vibración y objetos de pista (prealpha.7)
 
@@ -44,7 +52,7 @@ La vista de mapas se desplaza, gira y acerca; la pintura puede cambiarse repetid
 - Velocidad física de serie **+10%** frente a la versión anterior, medida en llano para los cinco autos. No se acelera el reloj de carrera. Los récords nuevos usan el sufijo `:physics-v2`; los registros anteriores permanecen guardados.
 - Humo emitido en los contactos de neumáticos, con nubes suaves que crecen, ascienden y se disipan. Una malla acotada agrupa las partículas para WebGL y render compatible; también se muestra en rivales online.
 
-Validación actual: **176 pruebas de núcleo aprobadas**, 40 carreras de rivales con obstáculos y revisión visual en render compatible. Las versiones anteriores también verificaron la compilación de shaders.
+Validación actual: **183 pruebas de núcleo aprobadas**, 40 carreras de rivales con obstáculos y revisión visual en render compatible. Las versiones anteriores también verificaron la compilación de shaders.
 
 Modelo, fuentes, mediciones y límites: [dinámica de vehículos](docs/vehicle-dynamics.md).
 

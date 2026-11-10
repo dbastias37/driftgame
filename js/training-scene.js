@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
-import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.7';
-import {buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.7';
+import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.8';
+import {buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.8';
 
 const mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.88,...extra});
 function box(g,m,x,y,z,w,h,d){const o=new T.Mesh(new T.BoxGeometry(w,h,d),m);o.position.set(x,y,z);g.add(o);return o;}
@@ -16,7 +16,9 @@ export function buildTraining(track,world){
   // A real hole under the lot avoids depth interference between snapped coplanar surfaces.
   const grass=mat(0x56654e);
   for(const [x,z,w,d] of [[-612,0,976,2200],[612,0,976,2200],[0,-596,248,1008],[0,610,248,978]]){const ground=new T.Mesh(new T.PlaneGeometry(w,d),grass);ground.rotation.x=-Math.PI/2;ground.position.set(x,-.14,z);ground.renderOrder=-100;world.add(ground);}
-  box(world,asphalt,0,-.07,111,248,.14,20);
+  // The entrance apron starts exactly where the lot ends (z=104). It used to
+  // overlap the lot by three metres at only 2 mm separation, causing flicker.
+  box(world,asphalt,0,-.068,112.5,248,.14,17);
   for(const s of track.solids.slice(1,8))box(world,concrete,s.x,.18,s.y,s.w,.36,s.d);
   // Painted stalls occupy the apron, without physical dividers across the racing line.
   const paint=(x,z,w,d,m=white)=>{const o=box(world,m,x,.07,z,w,.012,d);o.renderOrder=-70;};
