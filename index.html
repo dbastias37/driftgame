@@ -432,6 +432,7 @@
           <label class="setting retro-range"><span>Intensidad <output id="speedLinesIntensityLabel">100%</output></span><input id="speedLinesIntensity" type="range" min="0" max="300" step="25" value="100" aria-label="Intensidad de líneas de velocidad"></label>
         </section>
         <section data-settings-pane="music" role="tabpanel" class="hidden">
+          <label class="setting retro-range"><span>Motor / escape <output id="engineVolumeValue">60%</output></span><input id="engineVolume" type="range" min="0" max="100" value="60" aria-label="Volumen de motor y escape"></label><p class="setting-hint">Audio procedural por vehículo ligado a revoluciones, marcha, aceleración y frenado. 0% silencia el motor.</p>
           <label class="setting retro-range"><span>Sonidos de menú <output id="menuVolumeValue">40%</output></span><input id="menuVolume" type="range" min="0" max="100" value="40" aria-label="Volumen de sonidos de menú"></label><div class="music-actions"><button data-menu-sound="move">Mover</button><button data-menu-sound="confirm">Confirmar</button><button data-menu-sound="back">Volver</button><button data-menu-sound="start">Salida</button></div><p class="eyebrow">BANDA SONORA / DR1FT</p><p id="musicCurrent">Todavía no hay canciones cargadas.</p><p id="musicStatus" class="setting-hint" role="status"></p>
           <div class="music-actions"><button data-music-action="prev" aria-label="Canción anterior" disabled>‹</button><button data-music-action="toggle" aria-label="Reproducir música (M)" disabled>▶</button><button data-music-action="next" aria-label="Siguiente canción (N)" disabled>›</button></div>
           <label class="setting retro-range"><span>Volumen <output id="musicVolumeValue">35%</output></span><input id="musicVolume" type="range" min="0" max="100" value="35" aria-label="Volumen de música"></label>
@@ -528,6 +529,7 @@
 <script src="js/track-props.js?v=1.0.0-prealpha.12"></script>
 <script src="js/ai-race.js?v=1.0.0-prealpha.12"></script>
 <script src="js/vehicle-dynamics.js?v=1.0.0-prealpha.12"></script>
+<script src="js/engine-audio.js?v=1.0.0-prealpha.13"></script>
 <script src="js/tire-smoke.js?v=1.0.0-prealpha.12"></script>
 <script src="js/online-rules.js?v=1.0.0-prealpha.12"></script>
 <script>
@@ -1586,6 +1588,7 @@ function loop(ms){
       while(simAccumulator>=SIM_DT){simulate(SIM_DT);simAccumulator-=SIM_DT;}
     }else{simAccumulator=0;}
     online?.frame(dt);
+    globalThis.DriftEngineAudio?.update({car:player,skin:player?.skin||chosen?.sprite,active:state==='running'||(mode==='online'&&!!online?.racing),paused:document.hidden||globalThis.DriftMenuUX?.busy,dt});
     if(state==='running'||(mode==='online'&&online?.racing&&raceTime>0))replayUI?.capture(dt);
     const replayFrame=replayUI?.frame(dt),opening=(state==='countdown'||state==='paused'&&pausedState==='countdown')&&['race','training'].includes(mode)?DriftRace.presentation([player,...offlineRivals],startElapsed):null,shown=replayFrame?.player||opening?.[0]||player;
     // Legacy camera is retained for development; no 2D world is rendered.
@@ -1644,6 +1647,18 @@ function loop(ms){
 
   requestAnimationFrame(loop);
 }
+
+/* Unlock Web Audio on real player interaction (browser autoplay policy). */
+(function(){
+  const audio=globalThis.DriftEngineAudio;if(!audio)return;
+  const control=document.getElementById('engineVolume'),readout=document.getElementById('engineVolumeValue');
+  const percent=Math.round(audio.getVolume()*100);
+  if(control)control.value=String(percent);if(readout)readout.textContent=percent+'%';
+  control?.addEventListener('input',e=>audio.setVolume(Number(e.target.value)/100));
+  const unlock=()=>audio.unlock();
+  document.addEventListener('pointerdown',unlock,{passive:true});
+  document.addEventListener('keydown',unlock);
+})();
 
 /* Animation starts after the presentation controls have loaded. */
 
