@@ -1,6 +1,6 @@
 // Camera directions depend only on the recorded pose/time and the road.
 // Drone arcs are bounded; trackside cameras keep their world position per shot.
-import {onboardCameras,onboardShot} from './driving-cameras.js?v=1.0.0-prealpha.8';
+import {onboardCameras,onboardShot} from './driving-cameras.js?v=1.0.0-prealpha.9';
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export const DEMO_SHOT_SECONDS=7;
 export const DEMO_SHOTS=Object.freeze(['drone','fender','trackside','rear','hood','drone','fenderRight','bumper','isometric']);

@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
-import {buildMountainTerrain} from './mountain-terrain.js?v=1.0.0-prealpha.8';
-import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.8';
+import {buildMountainTerrain} from './mountain-terrain.js?v=1.0.0-prealpha.9';
+import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.9';
 const mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.88,...extra});
 function mesh(parent,geo,material,x=0,y=0,z=0){const o=new T.Mesh(geo,material);o.position.set(x,y,z);parent.add(o);return o;}
 function box(p,m,x,y,z,w,h,d){return mesh(p,new T.BoxGeometry(w,h,d),m,x,y,z);}
@@ -15,7 +15,14 @@ function band(track,parent,material,a,b,height=()=>.025,filter=()=>true){
     const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(pos,3));geo.setAttribute('uv',new T.Float32BufferAttribute(uv,2));geo.setIndex(indices);geo.computeVertexNormals();mesh(parent,geo,material).name='mountain-road';
   }
 }
-function label(text){const c=document.createElement('canvas');c.width=512;c.height=96;const g=c.getContext('2d');g.fillStyle='#17242b';g.fillRect(0,0,512,96);g.fillStyle='#f0f0e7';g.textAlign='center';g.font='bold 48px DriftDisplay';g.fillText(text,256,64);const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;return new T.MeshBasicMaterial({map:t,side:T.DoubleSide});}
+// Direction cues are plain geometry, with no lettering or font texture.
+function chevronGeometry(){
+  const shapes=[];
+  for(const x of [-.9,0,.9]){
+    const shape=new T.Shape();shape.moveTo(x-.27,.46);shape.lineTo(x+.20,0);shape.lineTo(x-.27,-.46);shape.lineTo(x-.42,-.30);shape.lineTo(x-.11,0);shape.lineTo(x-.42,.30);shape.closePath();shapes.push(shape);
+  }
+  return new T.ShapeGeometry(shapes);
+}
 export function buildMountain(track,world,low=false){
   const grass=mat(0x526253),rock=mat(0x728a84),dark=mat(0x283b43),white=mat(0xdde0d3),orange=mat(0xc85837),metal=mat(0x8a9694,{metalness:.45}),asphalt=mat(0xaeb7ba,{map:noise()}),sand=mat(0x7a8074);
   const b=track.bounds,tile=64,step=8;
@@ -69,15 +76,15 @@ export function buildMountain(track,world,low=false){
     }
     if(i%30===0){const x=p.x+n.x*(half+10),z=p.y+n.y*(half+10),stone=mesh(world,new T.DodecahedronGeometry(3.3,0),rock,x,track.terrainHeight(x,z)+1,z);stone.scale.set(1.1,1.7,.8);}
   }
-  for(const [s,text] of [[0,'CERRO ABAJO'],[track.finishS,'META / 100%']]){
+  for(const s of [0,track.finishS]){
     const p=track.atDistance(s),a=track.tangentAt(p.i),gate=new T.Group();gate.position.set(p.x,p.h,p.y);gate.rotation.y=-a;world.add(gate);
     for(const side of [-1,1])box(gate,dark,0,3.7,side*(half+2),.4,7.4,.4);
-    box(gate,dark,0,7.4,0,.6,.8,(half+2)*2);const sign=mesh(gate,new T.PlaneGeometry(half*1.6,1.5),label(text),-.32,7.3,0);sign.rotation.y=-Math.PI/2;
+    box(gate,dark,0,7.4,0,.6,.8,(half+2)*2);
     for(let j=-Math.floor(half);j<half;j++)for(let row=0;row<2;row++)box(gate,(j+row)%2?white:dark,row*.6,.065,j+.5,.6,.03,1);
   }
-  // Kilometer / hairpin markers are scenery, not invisible collision walls.
-  const chevron=label('› › ›');
-  for(let s=180;s<track.finishS;s+=220){const p=track.atDistance(s),n=track.normalAt(p.i),x=p.x+n.x*(half+2.3),z=p.y+n.y*(half+2.3);box(world,dark,x,p.h+1,z,.12,2,.12);const sign=mesh(world,new T.PlaneGeometry(2.7,1.2),chevron,x,p.h+2,z);sign.rotation.y=-track.tangentAt(p.i)-Math.PI/2;}
+  // Graphic hairpin markers are scenery, not invisible collision walls.
+  const chevron=chevronGeometry(),chevronWhite=new T.MeshBasicMaterial({color:0xf0f0e7,side:T.DoubleSide});
+  for(let s=180;s<track.finishS;s+=220){const p=track.atDistance(s),n=track.normalAt(p.i),x=p.x+n.x*(half+2.3),z=p.y+n.y*(half+2.3);box(world,dark,x,p.h+1,z,.12,2,.12);const sign=mesh(world,chevron,chevronWhite,x,p.h+2,z);sign.rotation.y=-track.tangentAt(p.i)-Math.PI/2;}
   batchWorld(world);
   return world;
 }
