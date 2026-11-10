@@ -175,7 +175,8 @@ function updateTrackPreviewDetails(){
   if(t.training){$('#circuitPreviewDetails').textContent='Estacionamiento abierto · Recorrido en ocho · Zona libre';$('#circuitPreviewGoal').textContent='Derrapa para sumar. Evita conos y pilas: −100 por obstáculo. Sin límite de tiempo ni vidas.';}
   if(!t.training&&t.trackProps?.props.length)$('#circuitPreviewGoal').textContent+=($('#circuitPreviewGoal').textContent?' · ':'')+'Pilas de neumáticos en curvas: −100 por pila';
   if(t.downhill)$('#circuitPreviewDetails').textContent=`${(t.finishS/1000).toFixed(2)} km · ↓ ${Math.round(t.drop)} m · Pendiente ${Math.round(t.drop/t.length*100)}% media`;
-  if(challenge)$('#challengePreviewGoal').textContent=`Una vuelta · ${DriftCareer.load().missions[level].filter(Boolean).length}/3 objetivos · Se conservan entre intentos${locked?' · Completa la etapa anterior':''}`;
+  if(challenge){$('#challengePreviewMissions').innerHTML=campaignMissionHTML(level);}
+  if(challenge)$('#challengePreviewGoal').textContent=`Una vuelta · ${DriftCareer.load().missions[level].filter(Boolean).length}/3 objetivos · Se conservan entre intentos${locked?' · Completa la etapa anterior para desbloquear':''}`;
   document.querySelectorAll('[data-circuit],.btnPickChallenge,[data-downhill-pick]').forEach(b=>{
     const selected=Number(b.dataset.circuit||b.dataset.lvl||b.dataset.downhillPick)===level;
     b.setAttribute('aria-pressed',String(selected));b.closest?.('.challenge-item')?.classList.toggle('selected',selected);
@@ -290,4 +291,4 @@ import('./view3d.js?v=1.0.0-prealpha.12').then(async({DriftView3D})=>{
   sceneView=new DriftView3D($('#scene3d'),{quality:renderPrefs.quality,onFailure:fail3D,onVehicleFailure:()=>toast('No se pudo cargar un modelo de auto. Recarga para volver a intentarlo.')});
   if(sceneView.software)toast('3D compatible activo · Calidad ligera');
 }).catch(fail3D);
-import('./menu-preview.js?v=1.0.0-prealpha.12').then(async module=>{await document.fonts?.load('32px DriftDisplay');MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});
+import('./menu-preview.js?v=1.0.0-prealpha.14').then(async module=>{await document.fonts?.load('32px DriftDisplay');MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});

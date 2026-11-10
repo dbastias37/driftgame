@@ -49,7 +49,7 @@ export class MenuPreview3D extends DriftView3D{
   panBy(dx,dy){const scale=(this.previewRadius||100)*this.previewZoom*2/Math.max(100,this.canvas.clientHeight);this.previewPan.x+=(-Math.sin(this.droneAngle)*dx+Math.cos(this.droneAngle)*dy)*scale;this.previewPan.z+=(Math.cos(this.droneAngle)*dx+Math.sin(this.droneAngle)*dy)*scale;}
   orbitBy(dx,dy=0){this.droneAngle+=dx;this.previewPitch=Math.max(.2,Math.min(1.5,this.previewPitch+dy));}
   zoomPreviewBy(factor){this.previewZoom=Math.max(.3,Math.min(3,this.previewZoom*factor));}
-  resetPreview(){this.previewPan.set(0,0,0);this.previewZoom=1;this.previewPitch=.98;this.previewRevision=null;}
+  resetPreview(){this.previewPan.set(0,0,0);this.previewZoom=this.previewMode==='garage'?1:.82;this.previewPitch=.98;this.previewRevision=null;}
   renderPreview({kind,track,skin='blue',dt=0,spinning=true,timeOfDay=0,cosmetics={},weather='clear',retro,player,time=0,camera='chase',vibration={},motion='full',speedLines={}}){
     this.setTimeOfDay(timeOfDay,weather);this.setRetro(retro);
     if(kind==='settings'&&player){this.previewMode=kind;this.scene.add(this.car.root);this.smoke.visible=this.trails.visible=true;super.render({track,player:{...player,worldSpeed:()=>player.worldSpeed(),skin,cosmetics,ride:null,bodyDimensions:null},skin,dt,time,timeOfDay,weather,retro,camera,vibration,motion,speedLines});return;}

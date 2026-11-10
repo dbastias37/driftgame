@@ -232,6 +232,7 @@
 <link rel="stylesheet" href="css/display-font.css?v=1.0.0-prealpha.12">
 <link rel="stylesheet" href="css/psx.css?v=1.0.0-prealpha.12">
 <link rel="stylesheet" href="css/music.css?v=1.0.0-prealpha.12">
+<link rel="stylesheet" href="css/track-selection.css?v=1">
 </head>
 <body>
   <div id="ui">
@@ -468,8 +469,8 @@
   <div id="viewBadge">3D / SEGUIMIENTO</div>
   <div id="challengeMenu" class="hidden preparation">
     <div class="preparation-shell track-shell">
-      <header class="preparation-header"><div><p class="eyebrow">01 / RECONOCIMIENTO</p><h2>Tu camino al límite</h2></div><span class="preparation-step"><b>PISTA</b> AUTO CARRERA</span></header>
-      <div class="track-workspace"><div class="challenge-list track-picker"></div><div class="track-showcase"><div id="challengeStage" class="preview-stage"><span class="preview-status">Preparando vista aérea 3D…</span></div><div class="track-preview-caption"><div><h3 id="challengePreviewName">—</h3><p id="challengePreviewDetails">—</p><p id="challengePreviewGoal">—</p></div><button class="text-button" data-preview-reset>Centrar</button><button class="text-button spin-button" data-preview-spin>Ⅱ Pausar giro</button></div></div></div>
+      <header class="preparation-header"><div><p class="eyebrow">01 / RECONOCIMIENTO</p><h2>Elige tu próxima etapa</h2></div><span class="preparation-step"><b>PISTA</b> AUTO CARRERA</span></header>
+      <div class="track-workspace"><div class="challenge-list track-picker"></div><div class="track-showcase"><div id="challengeStage" class="preview-stage"><span class="preview-status">Preparando vista aérea 3D…</span></div><div class="track-preview-caption"><div><h3 id="challengePreviewName">—</h3><p id="challengePreviewDetails">—</p><p id="challengePreviewGoal">—</p><section class="selected-missions" aria-label="Objetivos de la etapa"><h4>Objetivos de esta etapa</h4><ol id="challengePreviewMissions" class="campaign-objectives"></ol></section></div><button class="text-button" data-preview-reset>Centrar</button><button class="text-button spin-button" data-preview-spin>Ⅱ Pausar giro</button></div></div></div>
       <footer class="preparation-footer"><button id="btnBackMain" class="gray">← Menú principal</button><button id="btnChallengeContinue">ELEGIR AUTO ↗</button></footer>
     </div>
   </div>
@@ -1856,7 +1857,7 @@ function buildChallengeMenu(){
       <div class="challenge-item ${locked?'locked':''}">
         <span class="circuit-num">${String(i).padStart(2,'0')}</span><canvas class="track-thumb" data-track="${i}" aria-label="Circuito ${i}: ${circuit.name}"></canvas><div><b>${circuit.name}</b></div>
         <div class="tag">${circuit.stage} · ${(circuit.length/1000).toFixed(2)} km</div>
-        <ol class="campaign-objectives">${campaignMissionHTML(i)}</ol>
+        <div class="stage-status">${locked?'Bloqueada · Completa la anterior':DriftCareer.load().missions[i].filter(Boolean).length+'/3 objetivos completados'}</div>
         <button class="btnPickChallenge" data-lvl="${i}" aria-label="Ver etapa ${i}: ${circuit.name}" style="margin-top:8px">${locked?'Ver · Bloqueado':'Ver circuito'}</button>
       </div>`;
   }
@@ -1874,7 +1875,7 @@ function checkChallengeProgress(){
 }
 
 </script>
-<script src="js/experience.js?v=1.0.0-prealpha.12-reverse1"></script>
+<script src="js/experience.js?v=1.0.0-prealpha.14"></script>
 <script src="js/gamepad-ui.js?v=1.0.0-prealpha.12-reverse1"></script>
 <script src="js/career-ui.js?v=1.0.0-prealpha.12"></script>
 <script src="js/replay-ui.js?v=1.0.0-prealpha.12"></script>
