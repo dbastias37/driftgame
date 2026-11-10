@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import './vehicle-fit.js?v=1.0.0-prealpha.6';
+import './vehicle-fit.js?v=1.0.0-prealpha.7';
 
 const files={gray:'chevrolet-nova-ss.glb',blue:'nissan-skyline-r34.glb'},pending=new Map();
 export async function parseReplacement(buffer,skin){
