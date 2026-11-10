@@ -285,9 +285,9 @@ $('#btnRecover').addEventListener('click',loseLifeAndRespawn);
 
 
 
-import('./view3d.js?v=1.0.0-prealpha.10').then(async({DriftView3D})=>{
+import('./view3d.js?v=1.0.0-prealpha.11').then(async({DriftView3D})=>{
   await document.fonts?.load('32px DriftDisplay');
   sceneView=new DriftView3D($('#scene3d'),{quality:renderPrefs.quality,onFailure:fail3D,onVehicleFailure:()=>toast('No se pudo cargar un modelo de auto. Recarga para volver a intentarlo.')});
   if(sceneView.software)toast('3D compatible activo · Calidad ligera');
 }).catch(fail3D);
-import('./menu-preview.js?v=1.0.0-prealpha.10').then(async module=>{await document.fonts?.load('32px DriftDisplay');MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});
+import('./menu-preview.js?v=1.0.0-prealpha.11').then(async module=>{await document.fonts?.load('32px DriftDisplay');MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});

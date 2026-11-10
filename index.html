@@ -2,7 +2,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>DR1FT — 1.0 pre-alpha</title>
-<meta name="application-version" content="1.0.0-prealpha.10">
+<meta name="application-version" content="1.0.0-prealpha.11">
 <meta name="theme-color" content="#111719">
 <style>
   :root{--bg:#0b0b0b;--ink:#e6f1ff;}
@@ -220,13 +220,13 @@
   @media(max-height:500px){#carPreview{height:110px} #carPanel h2{font-size:19px} #times{top:122px} #ui{max-width:330px} #stickZone{width:120px;height:120px} #gasZone{height:135px}}
 .daytime-control{display:block;max-width:330px;margin:14px 0 8px;font-size:12px;color:#aebbbb}.daytime-control output{float:right;color:#ff7544}.daytime-control input{display:block;width:100%;margin:10px 0;accent-color:#ff7544;cursor:pointer}.daytime-ends{display:flex;justify-content:space-between;font-size:10px;color:#829597}
 </style>
-<link rel="stylesheet" href="css/experience.css?v=1.0.0-prealpha.10">
-<link rel="stylesheet" href="css/online.css?v=1.0.0-prealpha.10">
-<link rel="stylesheet" href="css/raw-menu.css?v=1.0.0-prealpha.10">
-<link rel="stylesheet" href="css/career.css?v=1.0.0-prealpha.10">
-<link rel="stylesheet" href="css/display-font.css?v=1.0.0-prealpha.10">
-<link rel="stylesheet" href="css/psx.css?v=1.0.0-prealpha.10">
-<link rel="stylesheet" href="css/music.css?v=1.0.0-prealpha.10">
+<link rel="stylesheet" href="css/experience.css?v=1.0.0-prealpha.11">
+<link rel="stylesheet" href="css/online.css?v=1.0.0-prealpha.11">
+<link rel="stylesheet" href="css/raw-menu.css?v=1.0.0-prealpha.11">
+<link rel="stylesheet" href="css/career.css?v=1.0.0-prealpha.11">
+<link rel="stylesheet" href="css/display-font.css?v=1.0.0-prealpha.11">
+<link rel="stylesheet" href="css/psx.css?v=1.0.0-prealpha.11">
+<link rel="stylesheet" href="css/music.css?v=1.0.0-prealpha.11">
 </head>
 <body>
   <div id="ui">
@@ -427,7 +427,7 @@
           <label class="setting retro-range"><span>Intensidad <output id="speedLinesIntensityLabel">100%</output></span><input id="speedLinesIntensity" type="range" min="0" max="300" step="25" value="100" aria-label="Intensidad de líneas de velocidad"></label>
         </section>
         <section data-settings-pane="music" role="tabpanel" class="hidden">
-          <p class="eyebrow">BANDA SONORA / DR1FT</p><p id="musicCurrent">Todavía no hay canciones cargadas.</p><p id="musicStatus" class="setting-hint" role="status"></p>
+          <label class="setting retro-range"><span>Sonidos de menú <output id="menuVolumeValue">40%</output></span><input id="menuVolume" type="range" min="0" max="100" value="40" aria-label="Volumen de sonidos de menú"></label><div class="music-actions"><button data-menu-sound="move">Mover</button><button data-menu-sound="confirm">Confirmar</button><button data-menu-sound="back">Volver</button><button data-menu-sound="start">Salida</button></div><p class="eyebrow">BANDA SONORA / DR1FT</p><p id="musicCurrent">Todavía no hay canciones cargadas.</p><p id="musicStatus" class="setting-hint" role="status"></p>
           <div class="music-actions"><button data-music-action="prev" aria-label="Canción anterior" disabled>‹</button><button data-music-action="toggle" aria-label="Reproducir música (M)" disabled>▶</button><button data-music-action="next" aria-label="Siguiente canción (N)" disabled>›</button></div>
           <label class="setting retro-range"><span>Volumen <output id="musicVolumeValue">35%</output></span><input id="musicVolume" type="range" min="0" max="100" value="35" aria-label="Volumen de música"></label>
           <button id="musicDemo" data-music-action="demo" disabled>Probar sin audio</button><p class="setting-hint">M: pausar / reanudar · N: siguiente canción. La prueba no produce sonido y cambia de título cada 12 segundos.</p>
@@ -435,11 +435,11 @@
         <section data-settings-pane="gamepad" role="tabpanel" class="hidden">
           <p class="setting-hint" id="padStatus" role="status">Conecta un mando USB y pulsa un botón para detectarlo.</p><p id="padName">PS4 / USB genérico</p>
           <label class="setting">Dispositivo<select id="padDevice" disabled><option>Sin mando</option></select></label>
-          <p class="setting-hint">R2: acelerar · L2: frenar · Cruz: drift · Triángulo: cámara · Cuadrado: reaparecer · Options: pausa · R1/L1: marchas.</p>
+          <p class="setting-hint">Menús: análogo / cruceta para mover · X (cruz) para confirmar · círculo para volver. R2: acelerar · L2: frenar · Cruz: drift · Triángulo: cámara · Cuadrado: reaparecer · Options: pausa · R1/L1: marchas.</p>
           <div id="padCalibration" class="hidden">
             <label class="setting">Usar mando<input id="padEnabled" type="checkbox" checked role="switch"></label>
             <div id="padButtons" class="pad-buttons" aria-label="Prueba de botones"></div><div id="padAxes" class="pad-axes" aria-label="Prueba de ejes"></div><output id="padOutput"></output>
-            <p class="setting-note">Aquí los botones solo se prueban: el auto permanece detenido.</p>
+            <label class="setting">Probar botones sin navegar<input id="padTestMode" type="checkbox"></label><p class="setting-note">El auto permanece detenido. Desmarca la prueba con el ratón o con Enter para volver a navegar.</p>
             <label class="setting">Dirección<select id="padAxis"></select></label><label class="setting">Invertir dirección<input id="padInvert" type="checkbox" role="switch"></label>
             <label class="setting retro-range"><span>Zona muerta <output id="padDeadzoneValue">12%</output></span><input id="padDeadzone" type="range" min="0" max="40" value="12" aria-label="Zona muerta del mando"></label>
             <label class="setting retro-range"><span>Sensibilidad <output id="padSensitivityValue">1.00×</output></span><input id="padSensitivity" type="range" min="50" max="200" value="100" step="5" aria-label="Sensibilidad del mando"></label>
@@ -506,24 +506,24 @@
   </aside>
   <aside id="musicNotice" aria-label="Canción actual" role="status" aria-live="polite" aria-atomic="true" aria-hidden="true"><div class="music-emblem">D1<small id="musicNoticeNumber">01</small></div><div class="music-meta"><small id="musicNoticeState">SONANDO AHORA</small><strong id="musicNoticeTitle"></strong><span id="musicNoticeArtist"></span></div><div class="music-stripe">MÚSICA</div></aside>
 
-<script src="js/career.js?v=1.0.0-prealpha.10"></script>
-<script src="js/replay.js?v=1.0.0-prealpha.10"></script>
-<script src="js/drift-effects.js?v=1.0.0-prealpha.10"></script>
-<script src="js/attract-demo.js?v=1.0.0-prealpha.10"></script>
-<script src="js/circuit-layouts.js?v=1.0.0-prealpha.10"></script>
-<script src="js/vehicle-fit.js?v=1.0.0-prealpha.10"></script>
-<script src="js/road-contact.js?v=1.0.0-prealpha.10"></script>
-<script src="js/downhill.js?v=1.0.0-prealpha.10"></script>
-<script src="js/yugo-physics.js?v=1.0.0-prealpha.10"></script>
-<script src="js/gamepad.js?v=1.0.0-prealpha.10"></script>
-<script src="js/instruments.js?v=1.0.0-prealpha.10"></script>
-<script src="js/game-options.js?v=1.0.0-prealpha.10"></script>
-<script src="js/training.js?v=1.0.0-prealpha.10"></script>
-<script src="js/track-props.js?v=1.0.0-prealpha.10"></script>
-<script src="js/ai-race.js?v=1.0.0-prealpha.10"></script>
-<script src="js/vehicle-dynamics.js?v=1.0.0-prealpha.10"></script>
-<script src="js/tire-smoke.js?v=1.0.0-prealpha.10"></script>
-<script src="js/online-rules.js?v=1.0.0-prealpha.10"></script>
+<script src="js/career.js?v=1.0.0-prealpha.11"></script>
+<script src="js/replay.js?v=1.0.0-prealpha.11"></script>
+<script src="js/drift-effects.js?v=1.0.0-prealpha.11"></script>
+<script src="js/attract-demo.js?v=1.0.0-prealpha.11"></script>
+<script src="js/circuit-layouts.js?v=1.0.0-prealpha.11"></script>
+<script src="js/vehicle-fit.js?v=1.0.0-prealpha.11"></script>
+<script src="js/road-contact.js?v=1.0.0-prealpha.11"></script>
+<script src="js/downhill.js?v=1.0.0-prealpha.11"></script>
+<script src="js/yugo-physics.js?v=1.0.0-prealpha.11"></script>
+<script src="js/gamepad.js?v=1.0.0-prealpha.11"></script>
+<script src="js/instruments.js?v=1.0.0-prealpha.11"></script>
+<script src="js/game-options.js?v=1.0.0-prealpha.11"></script>
+<script src="js/training.js?v=1.0.0-prealpha.11"></script>
+<script src="js/track-props.js?v=1.0.0-prealpha.11"></script>
+<script src="js/ai-race.js?v=1.0.0-prealpha.11"></script>
+<script src="js/vehicle-dynamics.js?v=1.0.0-prealpha.11"></script>
+<script src="js/tire-smoke.js?v=1.0.0-prealpha.11"></script>
+<script src="js/online-rules.js?v=1.0.0-prealpha.11"></script>
 <script>
 "use strict";
 
@@ -1575,7 +1575,7 @@ function loop(ms){
   try{
     const now=ms/1000;perfNow=now;dt=clamp(now-lastTS,0,.25);lastTS=now;
     if(typeof pollController==='function')pollController(now);
-    if(['running','countdown'].includes(state)||(mode==='online'&&online?.racing)){
+    if((['running','countdown'].includes(state)&&!globalThis.DriftMenuUX?.busy)||(mode==='online'&&online?.racing)){
       simAccumulator+=dt;
       while(simAccumulator>=SIM_DT){simulate(SIM_DT);simAccumulator-=SIM_DT;}
     }else{simAccumulator=0;}
@@ -1851,11 +1851,13 @@ function checkChallengeProgress(){
 }
 
 </script>
-<script src="js/experience.js?v=1.0.0-prealpha.10"></script>
-<script src="js/gamepad-ui.js?v=1.0.0-prealpha.10"></script>
-<script src="js/career-ui.js?v=1.0.0-prealpha.10"></script>
-<script src="js/replay-ui.js?v=1.0.0-prealpha.10"></script>
-<script src="js/online-config.js?v=1.0.0-prealpha.10"></script>
-<script src="js/online-client.js?v=1.0.0-prealpha.10"></script>
-<script type="module" src="js/music-ui.js?v=1.0.0-prealpha.10"></script>
+<script src="js/experience.js?v=1.0.0-prealpha.11"></script>
+<script src="js/gamepad-ui.js?v=1.0.0-prealpha.11"></script>
+<script src="js/career-ui.js?v=1.0.0-prealpha.11"></script>
+<script src="js/replay-ui.js?v=1.0.0-prealpha.11"></script>
+<script src="js/online-config.js?v=1.0.0-prealpha.11"></script>
+<script src="js/online-client.js?v=1.0.0-prealpha.11"></script>
+<script src="js/menu-feedback.js?v=1.0.0-prealpha.11"></script>
+<script src="js/menu-ux.js?v=1.0.0-prealpha.11"></script>
+<script type="module" src="js/music-ui.js?v=1.0.0-prealpha.11"></script>
 </body></html>

@@ -1,4 +1,4 @@
-import {MusicPlayer,normalizeTracks} from './music-player.js?v=1.0.0-prealpha.10';
+import {MusicPlayer,normalizeTracks} from './music-player.js?v=1.0.0-prealpha.11';
 const $=id=>document.getElementById(id),notice=$('musicNotice');let hideTimer,ready=false;
 let volume=.35;try{const raw=localStorage.getItem('dr1ft:music-volume');if(raw!==null&&Number.isFinite(Number(raw)))volume=Number(raw);}catch{}
 function showNotice(s){

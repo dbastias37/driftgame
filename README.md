@@ -1,3 +1,11 @@
+## 1.0.0-prealpha.11 — Menús, mando y transiciones
+
+- Cuatro sonidos sintetizados originales: mover, confirmar, volver y salir a carrera. Volumen independiente y prueba en Ajustes → Música.
+- Flechas o análogo izquierdo/cruceta recorren los controles visibles; Enter/X confirma y Escape/círculo vuelve. Izquierda/derecha ajusta selectores y deslizadores. Confirmar y volver se pueden reasignar en Mando.
+- Repetición direccional tras 400 ms y luego cada 140 ms; confirmación solo una vez por pulsación. La prueba aislada de botones se activa explícitamente.
+- Fundido global a negro por encima de escena, HUD, CRT y reproductor. Bloquea dobles activaciones y conserva el foco al regresar. La simulación local espera mientras cambia la pantalla; online sigue sincronizado.
+- Validación: 194 pruebas de núcleo, incluidos mandos sintéticos, repetición, remapeo, zona muerta y las cuatro señales de audio. Recorrido de teclado verificado en navegador; falta prueba física de USB por el usuario.
+
 # DR1FT 1.0 pre-alpha
 
 Juego de drift 3D para navegador. Cinco autos, campaña de veinte etapas y sesenta objetivos, taller por vehículo, veinte descensos, carreras online de hasta tres jugadores, editor y contrarreloj con fantasma local. Versión técnica: `1.0.0-prealpha.10`.
