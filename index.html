@@ -2,7 +2,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>DR1FT — 1.0 pre-alpha</title>
-<meta name="application-version" content="1.0.0-prealpha.9">
+<meta name="application-version" content="1.0.0-prealpha.10">
 <meta name="theme-color" content="#111719">
 <style>
   :root{--bg:#0b0b0b;--ink:#e6f1ff;}
@@ -220,12 +220,13 @@
   @media(max-height:500px){#carPreview{height:110px} #carPanel h2{font-size:19px} #times{top:122px} #ui{max-width:330px} #stickZone{width:120px;height:120px} #gasZone{height:135px}}
 .daytime-control{display:block;max-width:330px;margin:14px 0 8px;font-size:12px;color:#aebbbb}.daytime-control output{float:right;color:#ff7544}.daytime-control input{display:block;width:100%;margin:10px 0;accent-color:#ff7544;cursor:pointer}.daytime-ends{display:flex;justify-content:space-between;font-size:10px;color:#829597}
 </style>
-<link rel="stylesheet" href="css/experience.css?v=1.0.0-prealpha.9">
-<link rel="stylesheet" href="css/online.css?v=1.0.0-prealpha.9">
-<link rel="stylesheet" href="css/raw-menu.css?v=1.0.0-prealpha.9">
-<link rel="stylesheet" href="css/career.css?v=1.0.0-prealpha.9">
-<link rel="stylesheet" href="css/display-font.css?v=1.0.0-prealpha.9">
-<link rel="stylesheet" href="css/psx.css?v=1.0.0-prealpha.9">
+<link rel="stylesheet" href="css/experience.css?v=1.0.0-prealpha.10">
+<link rel="stylesheet" href="css/online.css?v=1.0.0-prealpha.10">
+<link rel="stylesheet" href="css/raw-menu.css?v=1.0.0-prealpha.10">
+<link rel="stylesheet" href="css/career.css?v=1.0.0-prealpha.10">
+<link rel="stylesheet" href="css/display-font.css?v=1.0.0-prealpha.10">
+<link rel="stylesheet" href="css/psx.css?v=1.0.0-prealpha.10">
+<link rel="stylesheet" href="css/music.css?v=1.0.0-prealpha.10">
 </head>
 <body>
   <div id="ui">
@@ -391,7 +392,7 @@
     <section class="card settings-card">
       <header class="settings-header"><div><p class="eyebrow">DR1FT / OPCIONES</p><h2 id="settingsTitle">Configuración</h2></div><button id="btnSettingsBack">← Volver</button></header>
       <div class="settings-layout"><div class="settings-controls">
-        <nav class="settings-tabs" role="tablist" aria-label="Opciones"><button data-settings-tab="drive" role="tab" aria-selected="true">Carrera</button><button data-settings-tab="retro" role="tab" aria-selected="false">PSX</button><button data-settings-tab="weather" role="tab" aria-selected="false">Clima</button><button data-settings-tab="controls" role="tab" aria-selected="false">Cámara</button><button data-settings-tab="gamepad" role="tab" aria-selected="false">Mando</button></nav>
+        <nav class="settings-tabs" role="tablist" aria-label="Opciones"><button data-settings-tab="drive" role="tab" aria-selected="true">Carrera</button><button data-settings-tab="retro" role="tab" aria-selected="false">PSX</button><button data-settings-tab="weather" role="tab" aria-selected="false">Clima</button><button data-settings-tab="controls" role="tab" aria-selected="false">Cámara</button><button data-settings-tab="gamepad" role="tab" aria-selected="false">Mando</button><button data-settings-tab="music" role="tab" aria-selected="false">Música</button></nav>
         <section data-settings-pane="drive" role="tabpanel">
           <label class="setting">Manejo<select id="difficultySetting"><option value="assisted">Asistido</option><option value="standard">Estándar</option><option value="expert">Experto</option></select></label><p id="difficultyHint" class="setting-hint"></p>
           <label class="setting">Autos rivales<select id="rivalsSetting"><option value="0">Sin rivales</option><option value="1">1 rival</option><option value="2">2 rivales</option><option value="3">3 rivales</option></select></label>
@@ -424,6 +425,12 @@
           <label class="setting">Impulso visual de derrape<select id="impulseSetting"><option value="on">Activado</option><option value="off">Desactivado</option></select></label>
           <label class="setting">Vectores de velocidad PSX<select id="speedLinesSetting"><option value="car">Desde el auto</option><option value="center">Desde el centro</option><option value="off">Desactivadas</option></select></label>
           <label class="setting retro-range"><span>Intensidad <output id="speedLinesIntensityLabel">100%</output></span><input id="speedLinesIntensity" type="range" min="0" max="300" step="25" value="100" aria-label="Intensidad de líneas de velocidad"></label>
+        </section>
+        <section data-settings-pane="music" role="tabpanel" class="hidden">
+          <p class="eyebrow">BANDA SONORA / DR1FT</p><p id="musicCurrent">Todavía no hay canciones cargadas.</p><p id="musicStatus" class="setting-hint" role="status"></p>
+          <div class="music-actions"><button data-music-action="prev" aria-label="Canción anterior" disabled>‹</button><button data-music-action="toggle" aria-label="Reproducir música (M)" disabled>▶</button><button data-music-action="next" aria-label="Siguiente canción (N)" disabled>›</button></div>
+          <label class="setting retro-range"><span>Volumen <output id="musicVolumeValue">35%</output></span><input id="musicVolume" type="range" min="0" max="100" value="35" aria-label="Volumen de música"></label>
+          <button id="musicDemo" data-music-action="demo" disabled>Probar sin audio</button><p class="setting-hint">M: pausar / reanudar · N: siguiente canción. La prueba no produce sonido y cambia de título cada 12 segundos.</p>
         </section>
         <section data-settings-pane="gamepad" role="tabpanel" class="hidden">
           <p class="setting-hint" id="padStatus" role="status">Conecta un mando USB y pulsa un botón para detectarlo.</p><p id="padName">PS4 / USB genérico</p>
@@ -494,34 +501,29 @@
   </div>
 
   <section id="replayControls" class="hidden" aria-label="Controles de repetición"><div class="replay-heading"><span id="replayLabel">REPETICIÓN</span><button id="replayExit" class="gray">Volver · Esc</button></div><input id="replaySeek" type="range" min="0" max="1" value="0" step="0.05" aria-label="Posición de la repetición"><div class="replay-toolbar"><button id="replayPlay">Ⅱ Pausar</button><output id="replayTime">0:00 / 0:00</output><label>Cámara<select id="replayCamera"><option value="cinematic">Montaje</option><option value="drone">Dron</option><option value="isometric">Isométrica</option><option value="trackside">Curva</option></select></label><label>Velocidad<select id="replaySpeed"><option value="0.5">0,5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label></div></section>
-  <!-- ===== Radio Bar ===== -->
-  <div id="radioBar">
-    <button id="radioPrev" class="rb sm" title="Anterior">‹</button>
-    <button id="radioPlay" class="rb" aria-label="Play/Pausa">▶</button>
-    <div class="rb text"><b>radiodrift</b> <span id="radioNow">Radio apagada · Pulsa ▶</span></div>
-    <button id="radioNext" class="rb sm" title="Siguiente">›</button>
-  </div>
+  <aside id="musicDock" aria-label="Reproductor de música">
+    <button data-music-action="prev" aria-label="Canción anterior" disabled>‹</button><button data-music-action="toggle" aria-label="Reproducir música (M)" disabled>▶</button><button data-music-action="next" aria-label="Siguiente canción (N)" disabled>›</button><button id="musicDockTitle" data-music-action="info" aria-label="Mostrar canción actual" disabled>SIN MP3</button><button id="musicDockDemo" data-music-action="demo" disabled>PROBAR</button>
+  </aside>
+  <aside id="musicNotice" aria-label="Canción actual" role="status" aria-live="polite" aria-atomic="true" aria-hidden="true"><div class="music-emblem">D1<small id="musicNoticeNumber">01</small></div><div class="music-meta"><small id="musicNoticeState">SONANDO AHORA</small><strong id="musicNoticeTitle"></strong><span id="musicNoticeArtist"></span></div><div class="music-stripe">MÚSICA</div></aside>
 
-  <audio id="radio" preload="none" crossorigin="anonymous"></audio>
-
-<script src="js/career.js?v=1.0.0-prealpha.9"></script>
-<script src="js/replay.js?v=1.0.0-prealpha.9"></script>
-<script src="js/drift-effects.js?v=1.0.0-prealpha.9"></script>
-<script src="js/attract-demo.js?v=1.0.0-prealpha.9"></script>
-<script src="js/circuit-layouts.js?v=1.0.0-prealpha.9"></script>
-<script src="js/vehicle-fit.js?v=1.0.0-prealpha.9"></script>
-<script src="js/road-contact.js?v=1.0.0-prealpha.9"></script>
-<script src="js/downhill.js?v=1.0.0-prealpha.9"></script>
-<script src="js/yugo-physics.js?v=1.0.0-prealpha.9"></script>
-<script src="js/gamepad.js?v=1.0.0-prealpha.9"></script>
-<script src="js/instruments.js?v=1.0.0-prealpha.9"></script>
-<script src="js/game-options.js?v=1.0.0-prealpha.9"></script>
-<script src="js/training.js?v=1.0.0-prealpha.9"></script>
-<script src="js/track-props.js?v=1.0.0-prealpha.9"></script>
-<script src="js/ai-race.js?v=1.0.0-prealpha.9"></script>
-<script src="js/vehicle-dynamics.js?v=1.0.0-prealpha.9"></script>
-<script src="js/tire-smoke.js?v=1.0.0-prealpha.9"></script>
-<script src="js/online-rules.js?v=1.0.0-prealpha.9"></script>
+<script src="js/career.js?v=1.0.0-prealpha.10"></script>
+<script src="js/replay.js?v=1.0.0-prealpha.10"></script>
+<script src="js/drift-effects.js?v=1.0.0-prealpha.10"></script>
+<script src="js/attract-demo.js?v=1.0.0-prealpha.10"></script>
+<script src="js/circuit-layouts.js?v=1.0.0-prealpha.10"></script>
+<script src="js/vehicle-fit.js?v=1.0.0-prealpha.10"></script>
+<script src="js/road-contact.js?v=1.0.0-prealpha.10"></script>
+<script src="js/downhill.js?v=1.0.0-prealpha.10"></script>
+<script src="js/yugo-physics.js?v=1.0.0-prealpha.10"></script>
+<script src="js/gamepad.js?v=1.0.0-prealpha.10"></script>
+<script src="js/instruments.js?v=1.0.0-prealpha.10"></script>
+<script src="js/game-options.js?v=1.0.0-prealpha.10"></script>
+<script src="js/training.js?v=1.0.0-prealpha.10"></script>
+<script src="js/track-props.js?v=1.0.0-prealpha.10"></script>
+<script src="js/ai-race.js?v=1.0.0-prealpha.10"></script>
+<script src="js/vehicle-dynamics.js?v=1.0.0-prealpha.10"></script>
+<script src="js/tire-smoke.js?v=1.0.0-prealpha.10"></script>
+<script src="js/online-rules.js?v=1.0.0-prealpha.10"></script>
 <script>
 "use strict";
 
@@ -1789,142 +1791,6 @@ setTimeout(() => {
   console.log('DR1FT initialized successfully');
 }, 100);
 
-/* =====================  RADIODRIFT  ===================== */
-(function initRadiodrift(){
-  if (window.__radiodriftInit) return; window.__radiodriftInit = true;
-
-  function ensureRadioNodes(){
-    let bar = document.getElementById('radioBar');
-    if(!bar){
-      bar = document.createElement('div');
-      bar.id = 'radioBar';
-      bar.innerHTML = `
-        <button id="radioPrev" class="rb sm" title="Anterior">‹</button>
-        <button id="radioPlay" class="rb" aria-label="Play/Pausa">▶</button>
-        <div class="rb text"><b>radiodrift</b> <span id="radioNow">Radio apagada · Pulsa ▶</span></div>
-        <button id="radioNext" class="rb sm" title="Siguiente">›</button>
-      `;
-      document.body.appendChild(bar);
-    }
-    let audio = document.getElementById('radio');
-    if(!audio){
-      audio = document.createElement('audio');
-      audio.id = 'radio';
-      audio.preload = 'none';
-      audio.crossOrigin = 'anonymous';
-      document.body.appendChild(audio);
-    }
-  }
-  ensureRadioNodes();
-
-  const RADIO_STATIONS = [
-    { label: 'Record Hardbass (RU)', fallback: ['https://radiorecord.hostingradio.ru/hbass96.aacp'] },
-    { label: 'Record Pirate Station DnB (RU)', fallback: ['https://radiorecord.hostingradio.ru/ps96.aacp','https://radiorecord.hostingradio.ru/piratefm96.aacp'] },
-    { label: 'Nightride FM (Synth/Drift)', fallback: ['https://stream.nightride.fm/nightride.m4a','https://stream.nightride.fm/nightride.mp3'] },
-    { label: 'Record Trancehouse', fallback: ['https://radiorecord.hostingradio.ru/trancehouse96.aacp'] },
-    { label: 'Record Dubstep', fallback: ['https://radiorecord.hostingradio.ru/dub96.aacp'] },
-    { label: 'Record Techno', fallback: ['https://radiorecord.hostingradio.ru/techouse96.aacp'] },
-    { label: 'Record Bass House', fallback: ['https://radiorecord.hostingradio.ru/basshouse96.aacp'] },
-    { label: 'Record Future House', fallback: ['https://radiorecord.hostingradio.ru/fut96.aacp'] },
-    { label: 'Record Big Beats', fallback: ['https://radiorecord.hostingradio.ru/bigbeat96.aacp'] },
-    { label: 'Nectarine Demoscene', fallback: ['https://necta.scenestream.net:8000/stream.mp3'] },
-    { label: 'ByteFM Electronic', fallback: ['https://bytefm.cast.addradio.de/bytefm/simulcast/high/stream.mp3'] }
-  ];
-
-  const rAudio = document.getElementById('radio');
-  const rBar   = document.getElementById('radioBar');
-  const rPlay  = document.getElementById('radioPlay');
-  const rPrev  = document.getElementById('radioPrev');
-  const rNext  = document.getElementById('radioNext');
-  const rNow   = document.getElementById('radioNow');
-
-  let rIndex = 0;
-  let rResolved = new Array(RADIO_STATIONS.length).fill(null);
-  let rHintTimer = 0;
-
-  function radioFlash(txt){
-    if(rNow) rNow.textContent = txt;
-    if(rBar){
-      rBar.classList.remove('flash');
-      void rBar.offsetWidth;
-      rBar.classList.add('flash');
-    }
-    clearTimeout(rHintTimer);
-    rHintTimer = setTimeout(()=> rBar?.classList.remove('flash'), 4000);
-  }
-
-  async function tryIcecastTitle(streamUrl, label){
-    try{
-      const u = new URL(streamUrl);
-      const base = `${u.protocol}//${u.hostname}${u.port?':'+u.port:''}`;
-      const statusUrl = `${base}/status-json.xsl`;
-      const res = await fetch(statusUrl, {mode:'cors'});
-      if(!res.ok) return;
-      const js = await res.json();
-      const mounts = js.icestats?.source ? (Array.isArray(js.icestats.source)?js.icestats.source:[js.icestats.source]) : [];
-      const m = mounts[0];
-      const title = m?.title || (m?.artist && m?.title ? `${m.artist} — ${m.title}` : null);
-      if(title) radioFlash(`${label} — ${title}`);
-    }catch(_){ }
-  }
-
-  async function radioLoad(i=rIndex){
-    if(!rAudio) return;
-    rIndex = (i + RADIO_STATIONS.length) % RADIO_STATIONS.length;
-    const st = RADIO_STATIONS[rIndex];
-    if(rNow) rNow.textContent = `Cargando ${st.label}…`;
-    const list = rResolved[rIndex] ? [rResolved[rIndex]] : st.fallback;
-    for(const src of list){
-      try{ rAudio.pause(); }catch(_){ }
-      rAudio.src = src;
-      if(isFinite(rAudio.volume)) rAudio.volume = 0.35;
-      try{
-        await rAudio.play();
-        if(rPlay) rPlay.textContent = 'Ⅱ';
-        radioFlash(`${st.label}`);
-        tryIcecastTitle(src, st.label);
-        rResolved[rIndex] = src;
-        return;
-      }catch(_){ }
-    }
-    rResolved[rIndex] = null;
-    if(rPlay) rPlay.textContent = '▶';
-    radioFlash(`No se pudo reproducir ${st.label}`);
-  }
-
-  rPlay?.addEventListener('click', async ()=>{
-    if(!rAudio) return;
-    if(rAudio.paused){
-      if(!rAudio.getAttribute('src')){await radioLoad(rIndex);return;}
-      try{ await rAudio.play(); if(rPlay) rPlay.textContent='Ⅱ'; }catch(_){radioFlash('Emisora no disponible');}
-    }else{
-      rAudio.pause(); if(rPlay) rPlay.textContent='▶';
-    }
-  });
-  rPrev?.addEventListener('click', ()=> radioLoad(rIndex-1));
-  rNext?.addEventListener('click', ()=> radioLoad(rIndex+1));
-
-  let radioArmed = false;
-  function armRadioOnGesture(){
-    if(radioArmed) return; radioArmed = true;
-    const resume = async ()=>{
-      if(rAudio && rAudio.paused){
-        try{ await rAudio.play(); if(rPlay) rPlay.textContent='Ⅱ'; }catch(_){ }
-      }
-      window.removeEventListener('pointerdown', resume);
-      window.removeEventListener('keydown', resume);
-      document.removeEventListener('touchstart', resume, {passive:true});
-    };
-    window.addEventListener('pointerdown', resume);
-    window.addEventListener('keydown', resume);
-    document.addEventListener('touchstart', resume, {passive:true});
-  }
-
-  if(rNow)rNow.textContent='Radio apagada · Pulsa ▶';
-
-})();
-
-
 // ===== Sistema de Challenges (20 pistas con meta de puntos) =====
 const CHALLENGE_COUNT = 20;
 const CHALLENGE_BASE = 65000;
@@ -1985,10 +1851,11 @@ function checkChallengeProgress(){
 }
 
 </script>
-<script src="js/experience.js?v=1.0.0-prealpha.9"></script>
-<script src="js/gamepad-ui.js?v=1.0.0-prealpha.9"></script>
-<script src="js/career-ui.js?v=1.0.0-prealpha.9"></script>
-<script src="js/replay-ui.js?v=1.0.0-prealpha.9"></script>
-<script src="js/online-config.js?v=1.0.0-prealpha.9"></script>
-<script src="js/online-client.js?v=1.0.0-prealpha.9"></script>
+<script src="js/experience.js?v=1.0.0-prealpha.10"></script>
+<script src="js/gamepad-ui.js?v=1.0.0-prealpha.10"></script>
+<script src="js/career-ui.js?v=1.0.0-prealpha.10"></script>
+<script src="js/replay-ui.js?v=1.0.0-prealpha.10"></script>
+<script src="js/online-config.js?v=1.0.0-prealpha.10"></script>
+<script src="js/online-client.js?v=1.0.0-prealpha.10"></script>
+<script type="module" src="js/music-ui.js?v=1.0.0-prealpha.10"></script>
 </body></html>

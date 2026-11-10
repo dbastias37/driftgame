@@ -1,10 +1,14 @@
 # DR1FT 1.0 pre-alpha
 
-Juego de drift 3D para navegador. Cinco autos, campaña de veinte etapas y sesenta objetivos, taller por vehículo, veinte descensos, carreras online de hasta tres jugadores, editor y contrarreloj con fantasma local. Versión técnica: `1.0.0-prealpha.9`.
+Juego de drift 3D para navegador. Cinco autos, campaña de veinte etapas y sesenta objetivos, taller por vehículo, veinte descensos, carreras online de hasta tres jugadores, editor y contrarreloj con fantasma local. Versión técnica: `1.0.0-prealpha.10`.
 
 El garaje incluye el **Nissan Skyline R34 azul** y el **Chevrolet Nova SS negro**, convertidos de los modelos entregados, con texturas originales y ruedas independientes. Reemplazan las antiguas casillas azul y gris; se mantienen las mejoras asociadas a esas casillas. Los cinco autos tienen pintura editable y la física revisada descrita abajo. Faros, luces de freno, suspensión, humo y huellas siguen el mismo estado de la carrera.
 
 [Jugar en Render](https://driftgame.onrender.com)
+
+## Banda sonora MP3 (prealpha.10)
+
+Reproductor local con aviso de título y artista en estética DR1FT. M pausa/reanuda y N cambia de canción; hay botones en pantalla y volumen en Ajustes → Música. **Probar sin audio** simula tres pistas sin cargar ni reproducir sonido. Los archivos se colocan en `music/` y se registran con `npm run music:scan`. [Instrucciones y nombres de archivos](music/README.md).
 
 ## Escenarios sin rótulos (prealpha.9)
 
@@ -56,7 +60,7 @@ La vista de mapas se desplaza, gira y acerca; la pintura puede cambiarse repetid
 - Velocidad física de serie **+10%** frente a la versión anterior, medida en llano para los cinco autos. No se acelera el reloj de carrera. Los récords nuevos usan el sufijo `:physics-v2`; los registros anteriores permanecen guardados.
 - Humo emitido en los contactos de neumáticos, con nubes suaves que crecen, ascienden y se disipan. Una malla acotada agrupa las partículas para WebGL y render compatible; también se muestra en rivales online.
 
-Validación actual: **183 pruebas de núcleo aprobadas**, 40 carreras de rivales con obstáculos y revisión visual en render compatible. Las versiones anteriores también verificaron la compilación de shaders.
+Validación actual: **189 pruebas de núcleo aprobadas**, 40 carreras de rivales con obstáculos y revisión visual en render compatible. Las versiones anteriores también verificaron la compilación de shaders.
 
 Modelo, fuentes, mediciones y límites: [dinámica de vehículos](docs/vehicle-dynamics.md).
 
