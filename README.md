@@ -1,10 +1,18 @@
 # Drift Racer 1.0 pre-alpha
 
-Juego de drift 3D para navegador. Cinco autos, campaña de veinte etapas y sesenta objetivos, taller por vehículo, veinte descensos, carreras online de hasta tres jugadores, editor y contrarreloj con fantasma local. Versión técnica: `1.0.0-prealpha.5`.
+Juego de drift 3D para navegador. Cinco autos, campaña de veinte etapas y sesenta objetivos, taller por vehículo, veinte descensos, carreras online de hasta tres jugadores, editor y contrarreloj con fantasma local. Versión técnica: `1.0.0-prealpha.6`.
 
 El garaje incluye el **Nissan Skyline R34 azul** y el **Chevrolet Nova SS negro**, convertidos de los modelos entregados, con texturas originales y ruedas independientes. Reemplazan las antiguas casillas azul y gris; se mantienen las mejoras asociadas a esas casillas. Los cinco autos tienen pintura editable y la física revisada descrita abajo. Faros, luces de freno, suspensión, humo y huellas siguen el mismo estado de la carrera.
 
 [Jugar en Render](https://driftgame.onrender.com)
+
+## Mercado Ocho, tipografía y salida (prealpha.6)
+
+**Menú → Entrenamiento** abre un estacionamiento con recorrido en ocho, zona libre, supermercado, faroles, arbustos y barreras automáticas. Los conos marcan los bordes, reciben impulso del auto y de otros conos, se deslizan, vuelcan y pueden salir despedidos. Cada cono derribado descuenta **100 puntos una sola vez**. La práctica no tiene límite de tiempo ni vidas; R vuelve al trazado y Reiniciar repone los conos.
+
+La interfaz usa **Drift Display Heavy**, una sans condensada gruesa derivada de Anton con contornos escalonados de mayor resolución. Menús, pausa, HUD, tablero y letreros comparten esta fuente y el tratamiento PSX/CRT. Descripciones largas conservan una sans de lectura. Los autos parten detrás de la línea: cuatro segundos de posicionamiento, dos de espera/transición a seguimiento 3D y tres de cuenta. Durante la cuenta se puede acelerar y subir RPM sin mover el auto; la salida se libera en «¡YA!». La lluvia avanza también durante la presentación y se congela al pausar. La carrocería tiene más recorrido de suspensión y amortiguación estable.
+
+[Detalles y validación](docs/training-psx-start.md).
 
 ## Rivales, impactos y mando USB (prealpha.5)
 
@@ -28,7 +36,7 @@ La vista de mapas se desplaza, gira y acerca; la pintura puede cambiarse repetid
 - Velocidad física de serie **+10%** frente a la versión anterior, medida en llano para los cinco autos. No se acelera el reloj de carrera. Los récords nuevos usan el sufijo `:physics-v2`; los registros anteriores permanecen guardados.
 - Humo emitido en los contactos de neumáticos, con nubes suaves que crecen, ascienden y se disipan. Una malla acotada agrupa las partículas para WebGL y render compatible; también se muestra en rivales online.
 
-Validación actual: **155 pruebas de núcleo aprobadas**, compilación de shaders y revisión visual en render compatible.
+Validación actual: **167 pruebas de núcleo aprobadas**, compilación de shaders y revisión visual en render compatible.
 
 Modelo, fuentes, mediciones y límites: [dinámica de vehículos](docs/vehicle-dynamics.md).
 
@@ -46,6 +54,7 @@ Abrir `http://localhost:8000`. No necesita compilación ni instalar dependencias
 - **Cerro abajo:** elegir descenso → reconocimiento 3D → garaje → sprint de 0 a 100%. Hay que alcanzar el objetivo de drift y cruzar la meta; el resultado se decide al terminar.
 - **Campaña:** reconocimiento → garaje/taller → una vuelta con tres objetivos acumulables entre intentos → siguiente etapa al completar los tres. Se pueden explorar las etapas bloqueadas.
 - **Contrarreloj:** elegir y previsualizar uno de los veinte circuitos → garaje → vueltas libres con el fantasma del récord.
+- **Entrenamiento:** Mercado Ocho → garaje → drift libre, vueltas en ocho y penalización por conos.
 - **Creativo:** dibujar circuito cerrado → vista aérea 3D → garaje → carrera. Los códigos `TRK` y `TRK2` siguen siendo compatibles.
 - **Configuración:** cámara, calidad, barra día/atardecer/noche, movimiento reducido y controles táctiles automáticos/forzados.
 

@@ -13,8 +13,12 @@ export function onboardShot(mode,model,dimensions={}){
 export function startShot(cars,time){
   const car=cars[0],p=car.pos,a=car.angle,f=new T.Vector3(Math.cos(a),0,Math.sin(a)),side=new T.Vector3(-f.z,0,f.x),center=new T.Vector3(p.x,(car.ride?.height||0)+.7,p.y);
   let position=center.clone(),target=center.clone();
-  if(time<.9)position.addScaledVector(f,6.5-time*2).addScaledVector(side,-5).add(new T.Vector3(0,.6,0));
-  else if(time<1.8)position.addScaledVector(f,-5).addScaledVector(side,3).add(new T.Vector3(0,1.3,0));
-  else{const rows=Math.ceil(cars.length/2);position.addScaledVector(f,-11-(rows-1)*7).addScaledVector(side,-2*(1-Math.min(1,(time-1.8)/2))).add(new T.Vector3(0,5.3+(rows-1)*2,0));target.addScaledVector(f,-(rows-1)*3);}
-  return {position,target,fov:time<1.8?52:58};
+  if(time<2.2)position.addScaledVector(f,8-time*.65).addScaledVector(side,-5.5).add(new T.Vector3(0,.8,0));
+  else if(time<4.2)position.addScaledVector(f,-6).addScaledVector(side,4.5).add(new T.Vector3(0,1.8,0));
+  else{
+    const rows=Math.ceil(cars.length/2),u=Math.min(1,Math.max(0,(time-4.2)/1.8)),ease=u*u*(3-2*u);
+    position.addScaledVector(f,-(13+(rows-1)*6)*(1-ease)-12.5*ease).addScaledVector(side,-3*(1-ease));position.y+=(6.5+(rows-1)*2)*(1-ease)+5.8*ease;
+    target.addScaledVector(f,-(rows-1)*3*(1-ease)+7*ease);target.y-=.1*ease;
+  }
+  return {position,target,fov:time<4.2?52:58};
 }

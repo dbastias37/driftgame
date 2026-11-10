@@ -8,8 +8,8 @@ test('settings sanitize old saves, persist every control and keep current race c
  const saved=r(`JSON.parse(localStorage.getItem(PREF_KEY))`);assert.equal(saved.rivals,3);assert.equal(saved.collisions,true);assert.equal(saved.retro.resolution,240);r(`restartRaceSameTrack()`);assert.deepEqual(r('player.conditions'),{weather:'fog',difficulty:'assisted'});assert(r(`currentTrackId.endsWith(':assisted:fog')`));
 });
 test('cinematic grid presentation is read-only, locks controls and hands off after 3, 2, 1',()=>{
- const r=harness();r(`renderPrefs.rivals=3;startWithTrack(presetTrack(1),'race');keys.add('w');`);const before=r(`DriftNet.capture(player)`);const views=r(`[0,1.2,2.4].map(t=>DriftRace.presentation([player,...offlineRivals],t).map(c=>c.pos))`);assert.notDeepEqual(views[0],views[1]);assert.deepEqual(views[2],r(`[player,...offlineRivals].map(c=>c.pos)`));assert.deepEqual(r('DriftNet.capture(player)'),before);
- r('for(let i=0;i<143;i++)simulate(SIM_DT)');assert.equal(r('countdown'),3);assert.equal(r('raceTime'),0);assert.deepEqual(r('DriftNet.capture(player)'),before);
+ const r=harness();r(`renderPrefs.rivals=3;startWithTrack(presetTrack(1),'race');keys.add('w');`);const before=r(`DriftNet.capture(player)`);const views=r(`[0,2,4].map(t=>DriftRace.presentation([player,...offlineRivals],t).map(c=>c.pos))`);assert.notDeepEqual(views[0],views[1]);assert.deepEqual(views[2],r(`[player,...offlineRivals].map(c=>c.pos)`));assert.deepEqual(r('DriftNet.capture(player)'),before);
+ r('for(let i=0;i<359;i++)simulate(SIM_DT)');assert.equal(r('countdown'),3);assert.equal(r('raceTime'),0);assert.deepEqual(r('DriftNet.capture(player)'),before);
  r('for(let i=0;i<61;i++)simulate(SIM_DT)');assert.equal(r('countdown'),2);r('for(let i=0;i<60;i++)simulate(SIM_DT)');assert.equal(r('countdown'),1);r('for(let i=0;i<61;i++)simulate(SIM_DT)');assert.equal(r('state'),'running');assert(r('raceTime<.04'));
 });
 test('three physical opponents complete dry and wet laps on short, medium and long circuits',async()=>{

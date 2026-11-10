@@ -141,7 +141,8 @@ online=(()=>{
   function simulate(step){
     if(!raceActive||!player)return;
     const remain=room.startAt-now();raceTime=Math.max(0,(now()-room.startAt)/1000);lapTime=raceTime;
-    if(remain>0){countdown=Math.ceil(remain/1000);return;}
+    if(remain>0){startElapsed+=step;countdown=Math.ceil(remain/1000);DriftRace.rev(player,state==='paused'?0:input().accel,step);return;}
+    player.launchHold=false;
     if(state==='countdown'){state='running';syncTouchHUD();}if(state==='paused')pausedState='running';
     if(finished){controlsLocked=true;return;}
     if(!socket||socket.readyState!==1||waiting||Date.now()-lastSnapshot>1500){notice='Esperando conexión…';return;}
@@ -189,5 +190,5 @@ online=(()=>{
   for(const id of ['onlineTrack','onlineLaps','onlineDay','onlineDifficulty','onlineWeather'])$id(id).addEventListener('change',()=>send({type:'settings',level:Number($id('onlineTrack').value),laps:Number($id('onlineLaps').value),day:Number($id('onlineDay').value),difficulty:$id('onlineDifficulty').value,weather:$id('onlineWeather').value}));
   $id('onlineCopy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(room.code);status('Código copiado. Compártelo con tus amigos.');}catch{status('Código de sala: '+room.code);}});
   addEventListener('beforeunload',()=>socket?.close());
-  return {open,showLobby,confirmCar,leave,recover,simulate,frame,shift:d=>gear=d,rivals:()=>visibleRivals,draw2D(g,cam){for(const car of visibleRivals){car.draw(g,cam);g.save();g.font='11px DriftPixel, monospace';g.textAlign='center';g.fillStyle='#e5ffff';g.fillText(car.name,car.pos.x*cam.s+cam.tx,car.pos.y*cam.s+cam.ty-35);g.restore();}},get inRoom(){return !!room;},get racing(){return raceActive;}};
+  return {open,showLobby,confirmCar,leave,recover,simulate,frame,shift:d=>gear=d,rivals:()=>visibleRivals,draw2D(g,cam){for(const car of visibleRivals){car.draw(g,cam);g.save();g.font='11px DriftDisplay, Impact, sans-serif';g.textAlign='center';g.fillStyle='#e5ffff';g.fillText(car.name,car.pos.x*cam.s+cam.tx,car.pos.y*cam.s+cam.ty-35);g.restore();}},get inRoom(){return !!room;},get racing(){return raceActive;}};
 })();

@@ -1,5 +1,5 @@
 import * as T from '../vendor/three.module.min.js';
-import './game-options.js?v=1.0.0-prealpha.5';
+import './game-options.js?v=1.0.0-prealpha.6';
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const smooth=n=>n*n*(3-2*n);
 const palettes=[{at:0,sky:0x708f9e,horizon:0x9fb4b6,sun:0xffe4c6,ground:0x56634a,ambient:2.3,direct:3.1},
@@ -29,7 +29,8 @@ export function buildStreetLights(track,world){
   const lamps=[],group=new T.Group();group.name='street-lighting';world.add(group);
   const map=radial(),poolMat=glowMaterial(map,0xffd593,0),haloMat=glowMaterial(map,0xffdfad,0),metal=new T.MeshStandardMaterial({color:0x283b43,roughness:.85}),bulb=new T.MeshBasicMaterial({color:0xffe5b5});
   const positions=[];
-  if(track.downhill){for(let s=45;s<track.length-20;s+=105){const p=track.atDistance(s);positions.push({...p,n:track.normalAt(p.i),side:Math.floor(s/105)%2?1:-1});}}
+  if(track.lampSites){for(const p of track.lampSites)positions.push({...p,h:0,n:{x:0,y:0},side:1});}
+  else if(track.downhill){for(let s=45;s<track.length-20;s+=105){const p=track.atDistance(s);positions.push({...p,n:track.normalAt(p.i),side:Math.floor(s/105)%2?1:-1});}}
   else{let distance=0,next=45;for(let i=1;i<track.points.length;i++){distance+=Math.hypot(track.points[i].x-track.points[i-1].x,track.points[i].y-track.points[i-1].y);if(distance>=next){positions.push({...track.points[i],h:0,n:track.normalAt(i),side:positions.length%2?1:-1});next+=105;}}}
   const poleGeo=new T.BoxGeometry(.17,8,.17),armGeo=new T.BoxGeometry(2,.15,.15),bulbGeo=new T.BoxGeometry(.9,.12,.4);
   for(const p of positions){

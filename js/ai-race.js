@@ -1,7 +1,7 @@
 /* Offline opponents use the same fixed-step vehicle forces as the player. */
 globalThis.DriftRace=(()=>{
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),wrap=a=>Math.atan2(Math.sin(a),Math.cos(a));
-  function grid(car,track,slot){const p=track.point(0),a=track.tangentAt(0),back=Math.floor(slot/2)*9;car.pos.x=p.x-Math.cos(a)*back-Math.sin(a)*(slot%2?3:-3);car.pos.y=p.y-Math.sin(a)*back+Math.cos(a)*(slot%2?3:-3);car.angle=a;}
+  function grid(car,track,slot){const p=track.point(0),a=track.tangentAt(0),back=4+Math.floor(slot/2)*9;car.pos.x=p.x-Math.cos(a)*back-Math.sin(a)*(slot%2?3:-3);car.pos.y=p.y-Math.sin(a)*back+Math.cos(a)*(slot%2?3:-3);car.angle=a;}
   const plans=new WeakMap();
   // Curvature and braking envelopes are built once per circuit, not per frame.
   function speedPlan(track,car){
@@ -52,7 +52,9 @@ globalThis.DriftRace=(()=>{
     const correction=Math.max(0,depth-.012)*.8/(ia+ib);a.pos.x-=normal.x*correction*ia;a.pos.y-=normal.y*correction*ia;b.pos.x+=normal.x*correction*ib;b.pos.y+=normal.y*correction*ib;
     return true;
   }
-  function presentation(cars,elapsed){const progress=clamp(elapsed/2.4,0,1),remaining=4*(1-progress)**2;return cars.map(car=>({...car,pos:{x:car.pos.x-Math.cos(car.angle)*remaining,y:car.pos.y-Math.sin(car.angle)*remaining},wheelTravel:4-remaining,worldSpeed(){return 0;}}));}
+  const INTRO=Object.freeze({roll:4,settle:2,count:3});
+  function rev(car,pressure,dt){car.launchHold=true;car.launchThrottle=(car.launchThrottle||0)+clamp((Number(pressure)||0)-(car.launchThrottle||0),-dt*2.5,dt*1.8);}
+  function presentation(cars,elapsed){const progress=clamp(elapsed/INTRO.roll,0,1),remaining=8*(1-progress)**2;return cars.map(car=>({...car,pos:{x:car.pos.x-Math.cos(car.angle)*remaining,y:car.pos.y-Math.sin(car.angle)*remaining},wheelTravel:8-remaining,worldSpeed(){return 0;}}));}
   class Race{
     constructor(track,player,cars,{collisions=false,laps=5}={}){this.track=track;this.player=player;this.cars=cars;this.collisions=collisions;this.laps=laps;this.clock=0;this.total=track.points.length;this.entries=new Map();[player,...cars].forEach((car,slot)=>{grid(car,track,slot);this.entries.set(car,{index:track.nearestIndex(car.pos.x,car.pos.y),distance:-Math.floor(slot/2)*1.5,gate:1,lap:0,finished:0});});}
     step(dt){
@@ -71,5 +73,5 @@ globalThis.DriftRace=(()=>{
     place(){return this.standings().findIndex(e=>e.car===this.player)+1;}
     presentation(elapsed){return presentation([this.player,...this.cars],elapsed);}
   }
-  return {Race,grid,drive,collide,inertia,presentation};
+  return {Race,grid,drive,collide,inertia,presentation,INTRO,rev};
 })();
