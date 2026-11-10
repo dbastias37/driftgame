@@ -72,10 +72,11 @@ function toggleHelp(force){
 }
 const instrumentCluster=new DriftInstruments.Cluster($('#instrumentCanvas'));
 document.fonts?.ready.then(()=>{instrumentCluster.face=null;});
+function setDriveReadout(id,value){const node=$('#'+id),text=String(value);if(node.textContent!==text)node.textContent=text;}
 function updateDriveHUD(dt=1/60){
   if(!player)return;if(mode==='downhill')updateDescentHUD();const t=instrumentCluster.draw(player,dt);
-  $('#driveSpeed').textContent=String(Math.round(t.speed)).padStart(3,'0');$('#driveGear').textContent=(player.vel.x*Math.cos(player.angle)+player.vel.y*Math.sin(player.angle)<-.15)?'R':player.gear;
-  $('#driveRpm').textContent=String(Math.round(t.rpm/10)*10);$('#driveTx').textContent=player.auto?'AUTO':'MANUAL';
+  setDriveReadout('driveSpeed',String(Math.round(t.speed)).padStart(3,'0'));setDriveReadout('driveGear',(player.vel.x*Math.cos(player.angle)+player.vel.y*Math.sin(player.angle)<-.15)?'R':player.gear);
+  setDriveReadout('driveRpm',Math.round(t.rpm/10)*10);setDriveReadout('driveTx',player.auto?'AUTO':'MANUAL');
   $('#driveHud').classList.toggle('redline',t.rpm>t.redline*.94);
 }
 function drawTrackThumbnails(root){
@@ -286,9 +287,9 @@ $('#btnRecover').addEventListener('click',loseLifeAndRespawn);
 
 
 
-import('./view3d.js?v=1.0.0-prealpha.12').then(async({DriftView3D})=>{
+import('./view3d.js?v=1.0.0-prealpha.15').then(async({DriftView3D})=>{
   await document.fonts?.load('32px DriftDisplay');
   sceneView=new DriftView3D($('#scene3d'),{quality:renderPrefs.quality,onFailure:fail3D,onVehicleFailure:()=>toast('No se pudo cargar un modelo de auto. Recarga para volver a intentarlo.')});
   if(sceneView.software)toast('3D compatible activo · Calidad ligera');
 }).catch(fail3D);
-import('./menu-preview.js?v=1.0.0-prealpha.14').then(async module=>{await document.fonts?.load('32px DriftDisplay');MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});
+import('./menu-preview.js?v=1.0.0-prealpha.15').then(async module=>{await document.fonts?.load('32px DriftDisplay');MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});

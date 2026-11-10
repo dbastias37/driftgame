@@ -6,7 +6,7 @@ import {loadRX7,createRX7} from './rx7-model.js?v=1.0.0-prealpha.12';
 import {loadYugo,createYugo} from './yugo-model.js?v=1.0.0-prealpha.12';
 import {loadFujiwara,createFujiwara} from './fujiwara-model.js?v=1.0.0-prealpha.12';
 import {batchWorld,updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.12';
-import {Atmosphere,buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.12';
+import {Atmosphere,buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.15';
 import {CinematicDirector} from './cinematic-camera.js?v=1.0.0-prealpha.12';
 import {loadNova,loadSkyline,createReplacement,updateVehicleLights} from './replacement-model.js?v=1.0.0-prealpha.12';
 import {applyVehiclePaint,disposePaint} from './vehicle-paint.js?v=1.0.0-prealpha.12';
@@ -221,7 +221,7 @@ export class DriftView3D{
     const trails=player.tireTrails||[],start=Math.max(1,trails.length-(this.low?1200:3000));let v=0;
     const range=this.drawFar||400;
     for(let i=start;i<trails.length;i++){
-      const a=trails[i-1],b=trails[i];if(Math.hypot(b.x1-a.x1,b.y1-a.y1)>3||Math.hypot(b.x1-player.pos.x,b.y1-player.pos.y)>range)continue;
+      const a=trails[i-1],b=trails[i];if((b.x1-a.x1)**2+(b.y1-a.y1)**2>9||(b.x1-player.pos.x)**2+(b.y1-player.pos.y)**2>range*range)continue;
       let data=this.trailCache.get(b);
       if(!data){
         data=new Float32Array(36);let j=0;
@@ -232,7 +232,10 @@ export class DriftView3D{
       }
       this.trailPos.set(data,v);v+=data.length;
     }
-    this.trailGeo.setDrawRange(0,v/3);this.trailGeo.attributes.position.needsUpdate=true;
+    this.trailGeo.setDrawRange(0,v/3);
+    // Upload only drawn vertices, not the entire capacity of the skid buffer.
+    const attr=this.trailGeo.attributes.position;attr.clearUpdateRanges();
+    if(v){attr.addUpdateRange(0,v);attr.needsUpdate=true;}
   }
 
   render({track,player,ghost,rivals=[],skin='blue',dt=0,inMenu=false,time=0,camera='chase',motion='full',timeOfDay=0,anchor,impulse=0,frameDt=dt,weather='clear',retro,startIntro=null,weatherTime=time,vibration={vehicle:0,camera:0},speedLines={},props=null}){

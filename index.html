@@ -523,6 +523,7 @@
 <script src="js/road-contact.js?v=1.0.0-prealpha.12"></script>
 <script src="js/downhill.js?v=1.0.0-prealpha.12"></script>
 <script src="js/yugo-physics.js?v=1.0.0-prealpha.12"></script>
+<script src="js/frame-presentation.js?v=1"></script>
 <script src="js/gamepad.js?v=1.0.0-prealpha.12-reverse1"></script>
 <script src="js/instruments.js?v=1.0.0-prealpha.12"></script>
 <script src="js/game-options.js?v=1.0.0-prealpha.12"></script>
@@ -1180,6 +1181,7 @@ let track=null, player=null, state='menu', mode='race', countdown=3, countdownTi
     ghost=null, ghostSamples=[], ghostAcc=0, currentTrackId='', prevState='menu', nextGate=1;
 let raceConditions={difficulty:'standard',weather:'clear'},offlineRace=null,offlineRivals=[],startElapsed=0;
 const SIM_DT=1/60;let simAccumulator=0;
+const presentationPoses=new DriftPresentation.Poses();
 
 /* NUEVO: bloqueo de controles al terminar + freno mantenido */
 let controlsLocked = false;
@@ -1235,7 +1237,7 @@ function startWithTrack(tr, m='race',conditions=null){
   if(track.downhill)DriftDownhill.reset(track,player,chosen.sprite);else DriftRoadContact.reset(track,player,chosen.sprite);
   document.body.classList.toggle('downhill',!!track.downhill);$('#descentHud').classList.toggle('hidden',!track.downhill);
   state='countdown'; countdown=3; countdownTimer=0;
-  prevState='countdown';lastTS=performance.now()/1000;simAccumulator=0;wrongTimer=0;nextGate=1;
+  prevState='countdown';lastTS=performance.now()/1000;simAccumulator=0;presentationPoses.reset();wrongTimer=0;nextGate=1;
   challengeCompletedThisRun=false;clearInputs();
   pauseMenu.classList.add('hidden');document.body.classList.add('in-game');document.getElementById('gameActions').classList.add('show');
   document.getElementById('challengeBadge').classList.toggle('show',mode==='challenge');
@@ -1588,12 +1590,12 @@ function loop(ms){
     if(typeof pollController==='function')pollController(now);
     if((['running','countdown'].includes(state)&&!globalThis.DriftMenuUX?.busy)||(mode==='online'&&online?.racing)){
       simAccumulator+=dt;
-      while(simAccumulator>=SIM_DT){simulate(SIM_DT);simAccumulator-=SIM_DT;}
-    }else{simAccumulator=0;}
+      while(simAccumulator>=SIM_DT){presentationPoses.before(player);for(const rival of offlineRivals)presentationPoses.before(rival);simulate(SIM_DT);simAccumulator-=SIM_DT;}
+    }else{simAccumulator=0;presentationPoses.reset();}
     online?.frame(dt);
     globalThis.DriftEngineAudio?.update({car:player,skin:player?.skin||chosen?.sprite,active:state==='running'||(mode==='online'&&!!online?.racing),paused:document.hidden||globalThis.DriftMenuUX?.busy,dt});
     if(state==='running'||(mode==='online'&&online?.racing&&raceTime>0))replayUI?.capture(dt);
-    const replayFrame=replayUI?.frame(dt),opening=(state==='countdown'||state==='paused'&&pausedState==='countdown')&&['race','training'].includes(mode)?DriftRace.presentation([player,...offlineRivals],startElapsed):null,shown=replayFrame?.player||opening?.[0]||player;
+    const replayFrame=replayUI?.frame(dt),opening=(state==='countdown'||state==='paused'&&pausedState==='countdown')&&['race','training'].includes(mode)?DriftRace.presentation([player,...offlineRivals],startElapsed):null,shown=replayFrame?.player||opening?.[0]||(['running','countdown'].includes(state)?presentationPoses.sample(player,simAccumulator/SIM_DT):player);
     // Legacy camera is retained for development; no 2D world is rendered.
     if(LEGACY_2D_ENABLED)camera.update(shown||{pos:{x:0,y:0}});
 
@@ -1613,7 +1615,7 @@ function loop(ms){
       const shouldRender=inSession?(active||changed):(changed||(demoVisible&&!attractDemo.paused&&!document.hidden&&now-lastSceneFrame>=1/(sceneView.software?18:60)));
       if(shouldRender){
         const presentationDt=inSession?(active?dt:0):Math.min(.1,now-lastSceneFrame);lastScenePresentation=revision;lastSceneFrame=now;
-        try{sceneView.render({track:inSession?track:attractTrack,player:inSession?shown:demoFrame.player,ghost:inSession&&!replayFrame?ghost:null,rivals:!inSession?demoFrame.rivals:replayFrame?.rivals||(mode==='online'?online?.rivals():opening?.slice(1)||offlineRivals),skin:!inSession?demoFrame.player.skin:replayFrame?.skin||chosen.sprite,dt:replayFrame?replayFrame.dt:presentationDt,inMenu:!inSession,time:replayFrame?.time??(inSession?raceTime:demoFrame.time),camera:!inSession?'demo':replayFrame?.camera||renderPrefs.camera,anchor:!inSession?demoFrame.anchor:replayFrame?.anchor,motion:renderPrefs.motion,timeOfDay:!inSession?demoFrame.day:replayFrame?.timeOfDay??renderPrefs.timeOfDay,impulse:driftEffect.boost,vibration:{vehicle:renderPrefs.vehicleVibration,camera:renderPrefs.cameraVibration},speedLines:{mode:renderPrefs.speedLines,intensity:renderPrefs.speedLinesIntensity,amount:driftEffect.lines,time:driftEffect.time},props:replayFrame?.props||null,frameDt:presentationDt,retro:renderPrefs.retro,weather:inSession?replayFrame?.weather||raceConditions.weather:renderPrefs.weather,weatherTime:replayFrame?.time??(inSession?startElapsed+raceTime:demoFrame.time),startIntro:(state==='countdown'||state==='paused'&&pausedState==='countdown')&&['race','training'].includes(mode)&&startElapsed<DriftRace.INTRO.roll+DriftRace.INTRO.settle?startElapsed:null});}
+        try{sceneView.render({track:inSession?track:attractTrack,player:inSession?shown:demoFrame.player,ghost:inSession&&!replayFrame?ghost:null,rivals:!inSession?demoFrame.rivals:replayFrame?.rivals||(mode==='online'?online?.rivals():opening?.slice(1)||offlineRivals.map(car=>presentationPoses.sample(car,simAccumulator/SIM_DT))),skin:!inSession?demoFrame.player.skin:replayFrame?.skin||chosen.sprite,dt:replayFrame?replayFrame.dt:presentationDt,inMenu:!inSession,time:replayFrame?.time??(inSession?raceTime:demoFrame.time),camera:!inSession?'demo':replayFrame?.camera||renderPrefs.camera,anchor:!inSession?demoFrame.anchor:replayFrame?.anchor,motion:renderPrefs.motion,timeOfDay:!inSession?demoFrame.day:replayFrame?.timeOfDay??renderPrefs.timeOfDay,impulse:driftEffect.boost,vibration:{vehicle:renderPrefs.vehicleVibration,camera:renderPrefs.cameraVibration},speedLines:{mode:renderPrefs.speedLines,intensity:renderPrefs.speedLinesIntensity,amount:driftEffect.lines,time:driftEffect.time},props:replayFrame?.props||null,frameDt:presentationDt,retro:renderPrefs.retro,weather:inSession?replayFrame?.weather||raceConditions.weather:renderPrefs.weather,weatherTime:replayFrame?.time??(inSession?startElapsed+raceTime:demoFrame.time),startIntro:(state==='countdown'||state==='paused'&&pausedState==='countdown')&&['race','training'].includes(mode)&&startElapsed<DriftRace.INTRO.roll+DriftRace.INTRO.settle?startElapsed:null});}
         catch(error){fail3D(error);}
       }
     }else if(LEGACY_2D_ENABLED&&!preparing){
@@ -1875,7 +1877,7 @@ function checkChallengeProgress(){
 }
 
 </script>
-<script src="js/experience.js?v=1.0.0-prealpha.14"></script>
+<script src="js/experience.js?v=1.0.0-prealpha.15"></script>
 <script src="js/gamepad-ui.js?v=1.0.0-prealpha.12-reverse1"></script>
 <script src="js/career-ui.js?v=1.0.0-prealpha.12"></script>
 <script src="js/replay-ui.js?v=1.0.0-prealpha.12"></script>

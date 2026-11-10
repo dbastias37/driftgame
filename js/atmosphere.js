@@ -90,7 +90,15 @@ export class Atmosphere{
   }
   tintCar(car,garage=false){
     const strength=garage?1:1-(this.state?.night||0)*.54;
-    car.root.traverse(o=>{if(!o.isMesh)return;for(const material of Array.isArray(o.material)?o.material:[o.material])if(material.isMeshBasicMaterial&&!material.transparent){material.userData.originalColor??=material.color.clone();material.color.copy(material.userData.originalColor).multiplyScalar(strength);}});
+    // Imported bodies can contain hundreds of nodes. Revisit materials only
+    // when paint changes, and apply tint only when the actual lighting changes.
+    this.tintCache??=new WeakMap();let cached=this.tintCache.get(car);
+    if(!cached||cached.paint!==car.paintColor){
+      const materials=new Set();car.root.traverse(o=>{if(!o.isMesh)return;for(const material of Array.isArray(o.material)?o.material:[o.material])if(material.isMeshBasicMaterial&&!material.transparent)materials.add(material);});
+      cached={paint:car.paintColor,materials,strength:null};this.tintCache.set(car,cached);
+    }
+    if(cached.strength===strength)return;cached.strength=strength;
+    for(const material of cached.materials){material.userData.originalColor??=material.color.clone();material.color.copy(material.userData.originalColor).multiplyScalar(strength);}
   }
   dispose(){this.skyTexture.dispose();}
 }

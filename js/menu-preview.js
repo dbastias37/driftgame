@@ -1,5 +1,5 @@
 import * as T from '../vendor/three.module.min.js';
-import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.12';
+import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.15';
 import {updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.12';
 
 const material=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.82,...extra});
