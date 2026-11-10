@@ -2,7 +2,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>DR1FT — 1.0 pre-alpha</title>
-<meta name="application-version" content="1.0.0-prealpha.11">
+<meta name="application-version" content="1.0.0-prealpha.12">
 <meta name="theme-color" content="#111719">
 <style>
   :root{--bg:#0b0b0b;--ink:#e6f1ff;}
@@ -225,13 +225,13 @@
 #screenFade.black{opacity:1;}
 
 </style>
-<link rel="stylesheet" href="css/experience.css?v=1.0.0-prealpha.11">
-<link rel="stylesheet" href="css/online.css?v=1.0.0-prealpha.11">
-<link rel="stylesheet" href="css/raw-menu.css?v=1.0.0-prealpha.11">
-<link rel="stylesheet" href="css/career.css?v=1.0.0-prealpha.11">
-<link rel="stylesheet" href="css/display-font.css?v=1.0.0-prealpha.11">
-<link rel="stylesheet" href="css/psx.css?v=1.0.0-prealpha.11">
-<link rel="stylesheet" href="css/music.css?v=1.0.0-prealpha.11">
+<link rel="stylesheet" href="css/experience.css?v=1.0.0-prealpha.12">
+<link rel="stylesheet" href="css/online.css?v=1.0.0-prealpha.12">
+<link rel="stylesheet" href="css/raw-menu.css?v=1.0.0-prealpha.12">
+<link rel="stylesheet" href="css/career.css?v=1.0.0-prealpha.12">
+<link rel="stylesheet" href="css/display-font.css?v=1.0.0-prealpha.12">
+<link rel="stylesheet" href="css/psx.css?v=1.0.0-prealpha.12">
+<link rel="stylesheet" href="css/music.css?v=1.0.0-prealpha.12">
 </head>
 <body>
   <div id="ui">
@@ -435,7 +435,7 @@
           <label class="setting retro-range"><span>Sonidos de menú <output id="menuVolumeValue">40%</output></span><input id="menuVolume" type="range" min="0" max="100" value="40" aria-label="Volumen de sonidos de menú"></label><div class="music-actions"><button data-menu-sound="move">Mover</button><button data-menu-sound="confirm">Confirmar</button><button data-menu-sound="back">Volver</button><button data-menu-sound="start">Salida</button></div><p class="eyebrow">BANDA SONORA / DR1FT</p><p id="musicCurrent">Todavía no hay canciones cargadas.</p><p id="musicStatus" class="setting-hint" role="status"></p>
           <div class="music-actions"><button data-music-action="prev" aria-label="Canción anterior" disabled>‹</button><button data-music-action="toggle" aria-label="Reproducir música (M)" disabled>▶</button><button data-music-action="next" aria-label="Siguiente canción (N)" disabled>›</button></div>
           <label class="setting retro-range"><span>Volumen <output id="musicVolumeValue">35%</output></span><input id="musicVolume" type="range" min="0" max="100" value="35" aria-label="Volumen de música"></label>
-          <button id="musicDemo" data-music-action="demo" disabled>Probar sin audio</button><p class="setting-hint">M: pausar / reanudar · N: siguiente canción. La prueba no produce sonido y cambia de título cada 12 segundos.</p>
+          <button id="musicDemo" data-music-action="demo" disabled>Probar sin audio</button><p class="setting-hint">M: pausar / reanudar · N: siguiente canción · B: mostrar reproductor. La prueba no produce sonido y cambia de título cada 12 segundos.</p>
         </section>
         <section data-settings-pane="gamepad" role="tabpanel" class="hidden">
           <p class="setting-hint" id="padStatus" role="status">Conecta un mando USB y pulsa un botón para detectarlo.</p><p id="padName">PS4 / USB genérico</p>
@@ -506,29 +506,30 @@
   </div>
 
   <section id="replayControls" class="hidden" aria-label="Controles de repetición"><div class="replay-heading"><span id="replayLabel">REPETICIÓN</span><button id="replayExit" class="gray">Volver · Esc</button></div><input id="replaySeek" type="range" min="0" max="1" value="0" step="0.05" aria-label="Posición de la repetición"><div class="replay-toolbar"><button id="replayPlay">Ⅱ Pausar</button><output id="replayTime">0:00 / 0:00</output><label>Cámara<select id="replayCamera"><option value="cinematic">Montaje</option><option value="drone">Dron</option><option value="isometric">Isométrica</option><option value="trackside">Curva</option></select></label><label>Velocidad<select id="replaySpeed"><option value="0.5">0,5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label></div></section>
-  <aside id="musicDock" aria-label="Reproductor de música">
+  <button id="musicReveal" aria-label="Mostrar reproductor de música (B)" title="Música · B">♫</button>
+  <aside id="musicDock" inert aria-hidden="true" aria-label="Reproductor de música">
     <button data-music-action="prev" aria-label="Canción anterior" disabled>‹</button><button data-music-action="toggle" aria-label="Reproducir música (M)" disabled>▶</button><button data-music-action="next" aria-label="Siguiente canción (N)" disabled>›</button><button id="musicDockTitle" data-music-action="info" aria-label="Mostrar canción actual" disabled>SIN MP3</button><button id="musicDockDemo" data-music-action="demo" disabled>PROBAR</button>
   </aside>
   <aside id="musicNotice" aria-label="Canción actual" role="status" aria-live="polite" aria-atomic="true" aria-hidden="true"><div class="music-emblem">D1<small id="musicNoticeNumber">01</small></div><div class="music-meta"><small id="musicNoticeState">SONANDO AHORA</small><strong id="musicNoticeTitle"></strong><span id="musicNoticeArtist"></span></div><div class="music-stripe">MÚSICA</div></aside>
 
-<script src="js/career.js?v=1.0.0-prealpha.11"></script>
-<script src="js/replay.js?v=1.0.0-prealpha.11"></script>
-<script src="js/drift-effects.js?v=1.0.0-prealpha.11"></script>
-<script src="js/attract-demo.js?v=1.0.0-prealpha.11"></script>
-<script src="js/circuit-layouts.js?v=1.0.0-prealpha.11"></script>
-<script src="js/vehicle-fit.js?v=1.0.0-prealpha.11"></script>
-<script src="js/road-contact.js?v=1.0.0-prealpha.11"></script>
-<script src="js/downhill.js?v=1.0.0-prealpha.11"></script>
-<script src="js/yugo-physics.js?v=1.0.0-prealpha.11"></script>
-<script src="js/gamepad.js?v=1.0.0-prealpha.11"></script>
-<script src="js/instruments.js?v=1.0.0-prealpha.11"></script>
-<script src="js/game-options.js?v=1.0.0-prealpha.11"></script>
-<script src="js/training.js?v=1.0.0-prealpha.11"></script>
-<script src="js/track-props.js?v=1.0.0-prealpha.11"></script>
-<script src="js/ai-race.js?v=1.0.0-prealpha.11"></script>
-<script src="js/vehicle-dynamics.js?v=1.0.0-prealpha.11"></script>
-<script src="js/tire-smoke.js?v=1.0.0-prealpha.11"></script>
-<script src="js/online-rules.js?v=1.0.0-prealpha.11"></script>
+<script src="js/career.js?v=1.0.0-prealpha.12"></script>
+<script src="js/replay.js?v=1.0.0-prealpha.12"></script>
+<script src="js/drift-effects.js?v=1.0.0-prealpha.12"></script>
+<script src="js/attract-demo.js?v=1.0.0-prealpha.12"></script>
+<script src="js/circuit-layouts.js?v=1.0.0-prealpha.12"></script>
+<script src="js/vehicle-fit.js?v=1.0.0-prealpha.12"></script>
+<script src="js/road-contact.js?v=1.0.0-prealpha.12"></script>
+<script src="js/downhill.js?v=1.0.0-prealpha.12"></script>
+<script src="js/yugo-physics.js?v=1.0.0-prealpha.12"></script>
+<script src="js/gamepad.js?v=1.0.0-prealpha.12"></script>
+<script src="js/instruments.js?v=1.0.0-prealpha.12"></script>
+<script src="js/game-options.js?v=1.0.0-prealpha.12"></script>
+<script src="js/training.js?v=1.0.0-prealpha.12"></script>
+<script src="js/track-props.js?v=1.0.0-prealpha.12"></script>
+<script src="js/ai-race.js?v=1.0.0-prealpha.12"></script>
+<script src="js/vehicle-dynamics.js?v=1.0.0-prealpha.12"></script>
+<script src="js/tire-smoke.js?v=1.0.0-prealpha.12"></script>
+<script src="js/online-rules.js?v=1.0.0-prealpha.12"></script>
 <script>
 "use strict";
 
@@ -1856,13 +1857,13 @@ function checkChallengeProgress(){
 }
 
 </script>
-<script src="js/experience.js?v=1.0.0-prealpha.11"></script>
-<script src="js/gamepad-ui.js?v=1.0.0-prealpha.11"></script>
-<script src="js/career-ui.js?v=1.0.0-prealpha.11"></script>
-<script src="js/replay-ui.js?v=1.0.0-prealpha.11"></script>
-<script src="js/online-config.js?v=1.0.0-prealpha.11"></script>
-<script src="js/online-client.js?v=1.0.0-prealpha.11"></script>
-<script src="js/menu-feedback.js?v=1.0.0-prealpha.11"></script>
-<script src="js/menu-ux.js?v=1.0.0-prealpha.11"></script>
-<script type="module" src="js/music-ui.js?v=1.0.0-prealpha.11"></script>
+<script src="js/experience.js?v=1.0.0-prealpha.12"></script>
+<script src="js/gamepad-ui.js?v=1.0.0-prealpha.12"></script>
+<script src="js/career-ui.js?v=1.0.0-prealpha.12"></script>
+<script src="js/replay-ui.js?v=1.0.0-prealpha.12"></script>
+<script src="js/online-config.js?v=1.0.0-prealpha.12"></script>
+<script src="js/online-client.js?v=1.0.0-prealpha.12"></script>
+<script src="js/menu-feedback.js?v=1.0.0-prealpha.12"></script>
+<script src="js/menu-ux.js?v=1.0.0-prealpha.12"></script>
+<script type="module" src="js/music-ui.js?v=1.0.0-prealpha.12"></script>
 </body></html>

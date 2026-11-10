@@ -1,5 +1,5 @@
 import * as T from '../vendor/three.module.min.js';
-import './game-options.js?v=1.0.0-prealpha.11';
+import './game-options.js?v=1.0.0-prealpha.12';
 
 // GPU geometry effects: screen-space fixed-point rounding and affine UVs.
 // Clip-space Z/W stay intact, preserving the depth buffer and road overlays.
