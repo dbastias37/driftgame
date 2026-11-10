@@ -4,7 +4,7 @@ export function normalizeTracks(data){
   return (Array.isArray(data?.tracks)?data.tracks:[]).filter(t=>t&&typeof t.file==='string'&&/^[a-zA-Z0-9_-]+\.mp3$/i.test(t.file)).filter(t=>{if(seen.has(t.file))return false;seen.add(t.file);return true;}).map(t=>({id:t.file,file:t.file,title:String(t.title||t.file.replace(/\.mp3$/i,'')).slice(0,140),artist:String(t.artist||'Artista por definir').slice(0,140)}));
 }
 export class MusicPlayer{
-  constructor({tracks=[],audioFactory=()=>new Audio(),onChange=()=>{},volume=.35,now=()=>performance.now(),schedule=setTimeout,cancel=clearTimeout}={}){this.tracks=tracks;this.audioFactory=audioFactory;this.onChange=onChange;this.volume=Math.max(0,Math.min(1,volume));this.index=0;this.playing=false;this.demo=false;this.elapsed=0;this.audio=null;this.ticket=0;this.failed=new Set();this.message='';this.gain=1;this.now=now;this.schedule=schedule;this.cancel=cancel;this.fadeTimer=null;this.fadeResolve=null;}
+  constructor({tracks=[],audioFactory=()=>new Audio(),onChange=()=>{},volume=.35,now=()=>performance.now(),schedule=(fn,ms)=>globalThis.setTimeout(fn,ms),cancel=id=>globalThis.clearTimeout(id)}={}){this.tracks=tracks;this.audioFactory=audioFactory;this.onChange=onChange;this.volume=Math.max(0,Math.min(1,volume));this.index=0;this.playing=false;this.demo=false;this.elapsed=0;this.audio=null;this.ticket=0;this.failed=new Set();this.message='';this.gain=1;this.now=now;this.schedule=schedule;this.cancel=cancel;this.fadeTimer=null;this.fadeResolve=null;}
   get list(){return this.demo?DEMO_TRACKS:this.tracks;}
   get current(){return this.list[this.index]||null;}
   snapshot(){return {track:this.current,index:this.index,count:this.list.length,playing:this.playing,demo:this.demo,volume:this.volume,message:this.message};}
