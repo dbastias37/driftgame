@@ -25,9 +25,9 @@ test('collisions conserve linear momentum, dissipate impact energy, separate bod
  const r=harness();r(`renderPrefs.rivals=1;renderPrefs.collisions=false;startWithTrack(presetTrack(1),'race');const enemy=offlineRivals[0];enemy.pos={...player.pos};enemy.vel={x:10,y:0};state='running';offlineRace.step(SIM_DT);`);assert.equal(r('player.hitTimer||0'),0);assert.equal(r('player.worldSpeed()'),0);
 });
 test('opponents finish a race with collisions enabled and a stopped player on the grid',async()=>{
- const {createTrack,createCar}=await ready,track=createTrack(1),player=createCar(track,'gray',true,0),cars=['blue','yellow','yugo'].map((skin,i)=>createCar(track,skin,true,i+1)),race=new DriftRace.Race(track,player,cars,{laps:1,collisions:true});
+ const {createTrack,createCar}=await ready;for(const level of [1,12]){const track=createTrack(level),player=createCar(track,'gray',true,0),cars=['blue','yellow','yugo'].map((skin,i)=>createCar(track,skin,true,i+1)),race=new DriftRace.Race(track,player,cars,{laps:1,collisions:true});
  for(let frame=0;frame<180*60&&!cars.every(c=>race.entries.get(c).finished);frame++){player.update(1/60,{accel:false,brake:true,steerAxis:0,handbrake:false},track);race.step(1/60);}
- assert(cars.every(c=>race.entries.get(c).finished>25));assert.equal(race.place(),4);assert.equal(race.entries.get(player).lap,0);
+ assert(cars.every(c=>race.entries.get(c).finished>25));assert.equal(race.place(),4);assert.equal(race.entries.get(player).lap,0);assert(race.entries.get(cars[1]).finished<(level===1?50:110),'passes the stopped car instead of remaining on its bumper');}
 });
 test('weather and all three difficulties produce identical client/server forces',async()=>{
  const {createTrack,createCar,Net}=await ready,r=harness(),commands=Array.from({length:120},(_,i)=>[i+1,i<90?1:2,Math.sin(i*.04)*.5,i%31===0?1:0]);
@@ -40,5 +40,5 @@ test('rain increases stopping distance; assisted handling damps yaw; a brief dri
 });
 test('authoritative lobby applies only host weather/difficulty to every seat and rejects old protocol',async()=>{
  const {Rooms}=await import('../server/rooms.js');const rooms=new Rooms(),peer=()=>({open:true,messages:[],send(m){this.messages.push(m)}}),a=peer(),b=peer(),old=peer();rooms.handle(old,{type:'hello',version:2});assert.match(old.messages[0].message,/Actualiza/);
- for(const p of [a,b])rooms.handle(p,{type:'hello',version:3});rooms.handle(a,{type:'create',name:'Host',weather:'rain',difficulty:'expert'});const room=rooms.roomFor(a);rooms.handle(b,{type:'join',code:room.code});rooms.handle(b,{type:'settings',level:2,laps:1,day:0,weather:'clear',difficulty:'assisted'});assert.equal(room.weather,'rain');for(const p of [a,b])rooms.handle(p,{type:'ready',ready:true});rooms.handle(a,{type:'start'});assert([...room.players.values()].every(p=>p.car.conditions.weather==='rain'&&p.car.conditions.difficulty==='expert'));assert.equal(rooms.view(room).weather,'rain');
+ for(const p of [a,b])rooms.handle(p,{type:'hello',version:4});rooms.handle(a,{type:'create',name:'Host',weather:'rain',difficulty:'expert'});const room=rooms.roomFor(a);rooms.handle(b,{type:'join',code:room.code});rooms.handle(b,{type:'settings',level:2,laps:1,day:0,weather:'clear',difficulty:'assisted'});assert.equal(room.weather,'rain');for(const p of [a,b])rooms.handle(p,{type:'ready',ready:true});rooms.handle(a,{type:'start'});assert([...room.players.values()].every(p=>p.car.conditions.weather==='rain'&&p.car.conditions.difficulty==='expert'));assert.equal(rooms.view(room).weather,'rain');
 });

@@ -1,16 +1,17 @@
 /* Shared fixed-step protocol. Inputs only cross the trust boundary; positions never do. */
 globalThis.DriftNet = (() => {
-  const VERSION=3, DT=1/60, SKINS=['blue','yellow','gray','yugo','fujiwara'];
+  const VERSION=4, DT=1/60, SKINS=['blue','yellow','gray','yugo','fujiwara'];
   const FIELDS=['angle','steerAngle','steerTarget','steerVel','throttleSm','handbrake','handbrakeMix','gear','shiftTimer','omega','yawRate','redBlink','offTrack','offTimer','edgeShake','wrongWay','score','best','mult','driftTime','comboState','comboFlashTime','comboPoints','comboBreak','trailOn','trailGrace','driftBreakTimer','_lastTrailOn','invuln','braking','accelLong','accelLat','frontSlip','rearSlip','driveSlip'];
   function capture(car){return [car.pos.x,car.pos.y,car.vel.x,car.vel.y,...FIELDS.map(k=>car[k])];}
   function restore(car,s){car.pos.x=s[0];car.pos.y=s[1];car.vel.x=s[2];car.vel.y=s[3];FIELDS.forEach((k,i)=>car[k]=s[i+4]);}
-  function encode(input,seq,gear=0){return [seq,(input.accel?1:0)|(input.brake?2:0)|(input.handbrake?4:0),Math.round(Math.max(-1,Math.min(1,input.steerAxis||0))*1000)/1000,gear];}
-  function validCommand(c){return Array.isArray(c)&&c.length===4&&Number.isSafeInteger(c[0])&&c[0]>0&&c[0]<1e8&&Number.isInteger(c[1])&&c[1]>=0&&c[1]<=7&&Number.isFinite(c[2])&&Math.abs(c[2])<=1&&[-1,0,1].includes(c[3]);}
+  const pressure=v=>Math.round(Math.max(0,Math.min(1,Number(v)||0))*1000)/1000;
+  function encode(input,seq,gear=0){return [seq,(input.accel?1:0)|(input.brake?2:0)|(input.handbrake?4:0),Math.round(Math.max(-1,Math.min(1,input.steerAxis||0))*1000)/1000,gear,pressure(input.accel),pressure(input.brake)];}
+  function validCommand(c){return Array.isArray(c)&&(c.length===4||c.length===6)&&Number.isSafeInteger(c[0])&&c[0]>0&&c[0]<1e8&&Number.isInteger(c[1])&&c[1]>=0&&c[1]<=7&&Number.isFinite(c[2])&&Math.abs(c[2])<=1&&[-1,0,1].includes(c[3])&&(c.length===4||c.slice(4).every(v=>Number.isFinite(v)&&v>=0&&v<=1));}
   function step(car,c,track,effects=true){
     if(!car.auto&&c[3]){car.gear=Math.max(1,Math.min(car.gearCount,car.gear+c[3]));car.shiftTimer=car.shiftDur;}
     const trail=car.spawnTrails,smoke=car.updateSmoke;
     if(!effects){car.spawnTrails=car.updateSmoke=()=>{};}
-    const result=car.update(DT,{accel:!!(c[1]&1),brake:!!(c[1]&2),handbrake:!!(c[1]&4),steerAxis:c[2]},track);
+    const result=car.update(DT,{accel:c[4]??!!(c[1]&1),brake:c[5]??!!(c[1]&2),handbrake:!!(c[1]&4),steerAxis:c[2]},track);
     if(!effects){car.spawnTrails=trail;car.updateSmoke=smoke;}
     return result;
   }

@@ -1,10 +1,16 @@
 # Drift Racer 1.0 pre-alpha
 
-Juego de drift 3D para navegador. Cinco autos, campaña de veinte etapas y sesenta objetivos, taller por vehículo, veinte descensos, carreras online de hasta tres jugadores, editor y contrarreloj con fantasma local. Versión técnica: `1.0.0-prealpha.4.1`.
+Juego de drift 3D para navegador. Cinco autos, campaña de veinte etapas y sesenta objetivos, taller por vehículo, veinte descensos, carreras online de hasta tres jugadores, editor y contrarreloj con fantasma local. Versión técnica: `1.0.0-prealpha.5`.
 
 El garaje incluye el **Nissan Skyline R34 azul** y el **Chevrolet Nova SS negro**, convertidos de los modelos entregados, con texturas originales y ruedas independientes. Reemplazan las antiguas casillas azul y gris; se mantienen las mejoras asociadas a esas casillas. Los cinco autos tienen pintura editable y la física revisada descrita abajo. Faros, luces de freno, suspensión, humo y huellas siguen el mismo estado de la carrera.
 
 [Jugar en Render](https://driftgame.onrender.com)
+
+## Rivales, impactos y mando USB (prealpha.5)
+
+Rivales más rápidos, perfil de frenada por curva y pedales progresivos. Los impactos transmiten velocidad y giro según el punto de contacto. El nuevo tablero tiene agujas para RPM y velocidad. **Ajustes → Mando** permite probar y calibrar mandos PS4 y USB genéricos reconocidos por el navegador, con asignación de botones/ejes y guardado por dispositivo.
+
+[Controles, mediciones y validación](docs/rivals-gamepad-instruments.md).
 
 ## PSX, clima y rivales (prealpha.4)
 
@@ -22,7 +28,7 @@ La vista de mapas se desplaza, gira y acerca; la pintura puede cambiarse repetid
 - Velocidad física de serie **+10%** frente a la versión anterior, medida en llano para los cinco autos. No se acelera el reloj de carrera. Los récords nuevos usan el sufijo `:physics-v2`; los registros anteriores permanecen guardados.
 - Humo emitido en los contactos de neumáticos, con nubes suaves que crecen, ascienden y se disipan. Una malla acotada agrupa las partículas para WebGL y render compatible; también se muestra en rivales online.
 
-Validación actual: **144 pruebas de núcleo aprobadas**, compilación de shaders y revisión visual en render compatible.
+Validación actual: **155 pruebas de núcleo aprobadas**, compilación de shaders y revisión visual en render compatible.
 
 Modelo, fuentes, mediciones y límites: [dinámica de vehículos](docs/vehicle-dynamics.md).
 

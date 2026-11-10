@@ -67,12 +67,13 @@ function toggleHelp(force){
   if(show){helpPaused=['running','countdown'].includes(state);if(helpPaused)setPaused(true);$('#help').classList.remove('hidden');$('#help').classList.add('show');$('#btnHelpClose').focus();}
   else{$('#help').classList.remove('show');if(helpPaused&&state==='paused')setPaused(false);helpPaused=false;}
 }
-function updateDriveHUD(){
-  if(!player)return;if(mode==='downhill')updateDescentHUD();const speed=player.worldSpeed()*3.6;
-  $('#driveSpeed').textContent=String(Math.round(speed)).padStart(3,'0');$('#driveGear').textContent=player.gear;
-  $('#driveTx').textContent=player.auto?'AUTO':'MANUAL';
-  $('#revFill').style.width=Math.min(100,speed/(player.gearMax[player.gear-1]||198)*100)+'%';
-  $('#driveHud').classList.toggle('redline',player.redBlink);
+const instrumentCluster=new DriftInstruments.Cluster($('#instrumentCanvas'));
+document.fonts?.ready.then(()=>{instrumentCluster.face=null;});
+function updateDriveHUD(dt=1/60){
+  if(!player)return;if(mode==='downhill')updateDescentHUD();const t=instrumentCluster.draw(player,dt);
+  $('#driveSpeed').textContent=String(Math.round(t.speed)).padStart(3,'0');$('#driveGear').textContent=player.gear;
+  $('#driveRpm').textContent=String(Math.round(t.rpm/10)*10);$('#driveTx').textContent=player.auto?'AUTO':'MANUAL';
+  $('#driveHud').classList.toggle('redline',t.rpm>t.redline*.94);
 }
 function drawTrackThumbnails(root){
   root.querySelectorAll('.track-thumb').forEach(canvas=>{
@@ -273,8 +274,8 @@ $('#btnRecover').addEventListener('click',loseLifeAndRespawn);
 
 
 
-import('./view3d.js?v=1.0.0-prealpha.4.1').then(({DriftView3D})=>{
+import('./view3d.js?v=1.0.0-prealpha.5').then(({DriftView3D})=>{
   sceneView=new DriftView3D($('#scene3d'),{quality:renderPrefs.quality,onFailure:fail3D,onVehicleFailure:()=>toast('No se pudo cargar un modelo de auto. Recarga para volver a intentarlo.')});
   if(sceneView.software)toast('3D compatible activo · Calidad ligera');
 }).catch(fail3D);
-import('./menu-preview.js?v=1.0.0-prealpha.4.1').then(module=>{MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});
+import('./menu-preview.js?v=1.0.0-prealpha.5').then(module=>{MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});
