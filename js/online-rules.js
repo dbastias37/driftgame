@@ -23,7 +23,7 @@ globalThis.DriftNet = (() => {
     if(fit){car.bodyDimensions={length:fit.length,width:fit.width,height:fit.height,cgHeight:fit.height*.46};globalThis.DriftRoadContact.alignWheelEffects(car,data.sprite);}
     globalThis.DriftRoadContact.alignWheelEffects(car,data.sprite);globalThis.DriftDynamics.configure(car,data.sprite);car.auto=auto;
   }
-  function grid(car,track,slot){const n=track.normalAt(0),p=track.point(0);car.pos.x=p.x+n.x*(slot-1)*3.2;car.pos.y=p.y+n.y*(slot-1)*3.2;}
+  function grid(car,track,slot){const n=track.normalAt(0),p=track.point(0),a=track.tangentAt(0);car.pos.x=p.x-Math.cos(a)*4+n.x*(slot-1)*3.2;car.pos.y=p.y-Math.sin(a)*4+n.y*(slot-1)*3.2;}
   function pose(car){return [car.pos.x,car.pos.y,car.angle,car.vel.x,car.vel.y,car.steerAngle,(car.handbrake?1:0)|(car.braking?2:0),car.accelLong||0,car.accelLat||0,car.frontSlip||0,car.rearSlip||0,car.driveSlip||0];}
   function interpolate(frames,at){
     if(!frames.length)return null;

@@ -54,3 +54,13 @@ test('workshop neon and smoke render without extra lights or particle allocation
  v.render({track:tr,player:p,dt:1/60});assert(v.car.neon.visible);assert.equal(v.car.neon.material.color.getHexString(),'c58bff');assert(v.smokeGeo.attributes.color.itemSize===4);assert(v.smokeGeo.attributes.color.getW(0)>0);assert.equal(v.smokePos,array);assert(v.smokeGeo.drawRange.count<=450*6);assert.notEqual(v.car.neon.material.map,v.smokeTexture);
  const root=v.car.root;p.cosmetics={};v.render({track:tr,player:p,dt:1/60});assert.equal(v.car.root,root);assert.equal(v.car.neon.visible,false);assert.equal(v.smokeMat.depthWrite,false);v.dispose();
 });
+
+test('training scene keeps live cones and barriers after batching and animates rain during staging',async()=>{
+ global.document={createElement:canvas};global.innerWidth=800;global.innerHeight=560;global.devicePixelRatio=1;
+ const {DriftView3D}=await import('../js/view3d.js'),{createTrack,createCar}=await import('../server/engine.js');await import('../js/training.js');
+ const old=console.error;console.error=()=>{};let v;try{v=new DriftView3D(canvas(),{loadVehicle:null,loadYugoVehicle:null,loadFujiwaraVehicle:null});}finally{console.error=old;}
+ try{const t=DriftTraining.create(createTrack(1).constructor),p=createCar(t,'blue',true,0);v.render({track:t,player:p,weather:'rain',time:0,weatherTime:0,dt:0});assert.equal(v.trainingScene.parts.length,3);assert.equal(v.trainingScene.parts[0].count,t.coneSpawns.length);
+ const rain=Array.from(v.weatherEffects.positions);v.render({track:t,player:p,weather:'rain',time:0,weatherTime:1,dt:0});assert.notDeepEqual(Array.from(v.weatherEffects.positions),rain);const frozen=Array.from(v.weatherEffects.positions);v.render({track:t,player:p,weather:'rain',time:0,weatherTime:1,dt:0});assert.deepEqual(Array.from(v.weatherEffects.positions),frozen);
+ const matrix=Array.from(v.trainingScene.parts[0].instanceMatrix.array);t.practice.cones[0].x+=3;t.practice.cones[0].z=1;t.practice.cones[0].tiltX=.6;t.practice.gateAngles[0]=1;v.render({track:t,player:p,weather:'rain',weatherTime:1,dt:0,timeOfDay:1});assert.notDeepEqual(Array.from(v.trainingScene.parts[0].instanceMatrix.array),matrix);assert.equal(v.trainingScene.arms[0].rotation.z,1);assert(v.streetLights.lamps.length>=7);
+ }finally{v.dispose();}
+});

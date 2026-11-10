@@ -1,19 +1,20 @@
 import * as T from '../vendor/three.module.min.js';
-import {SoftwareRenderer} from './software-renderer.js?v=1.0.0-prealpha.5';
-import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles} from './track-surface.js?v=1.0.0-prealpha.5';
-import {buildMountain} from './mountain-scene.js?v=1.0.0-prealpha.5';
-import {loadRX7,createRX7} from './rx7-model.js?v=1.0.0-prealpha.5';
-import {loadYugo,createYugo} from './yugo-model.js?v=1.0.0-prealpha.5';
-import {loadFujiwara,createFujiwara} from './fujiwara-model.js?v=1.0.0-prealpha.5';
-import {batchWorld,updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.5';
-import {Atmosphere,buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.5';
-import {CinematicDirector} from './cinematic-camera.js?v=1.0.0-prealpha.5';
-import {loadNova,loadSkyline,createReplacement,updateVehicleLights} from './replacement-model.js?v=1.0.0-prealpha.5';
-import {applyVehiclePaint,disposePaint} from './vehicle-paint.js?v=1.0.0-prealpha.5';
-import {cloudTexture,TireSmokeRenderer} from './smoke-renderer.js?v=1.0.0-prealpha.5';
-import {RetroRenderer} from './retro-renderer.js?v=1.0.0-prealpha.5';
-import {WeatherEffects} from './weather.js?v=1.0.0-prealpha.5';
-import {onboardCameras,onboardShot,startShot} from './driving-cameras.js?v=1.0.0-prealpha.5';
+import {SoftwareRenderer} from './software-renderer.js?v=1.0.0-prealpha.6';
+import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles} from './track-surface.js?v=1.0.0-prealpha.6';
+import {buildMountain} from './mountain-scene.js?v=1.0.0-prealpha.6';
+import {loadRX7,createRX7} from './rx7-model.js?v=1.0.0-prealpha.6';
+import {loadYugo,createYugo} from './yugo-model.js?v=1.0.0-prealpha.6';
+import {loadFujiwara,createFujiwara} from './fujiwara-model.js?v=1.0.0-prealpha.6';
+import {batchWorld,updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.6';
+import {Atmosphere,buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.6';
+import {CinematicDirector} from './cinematic-camera.js?v=1.0.0-prealpha.6';
+import {loadNova,loadSkyline,createReplacement,updateVehicleLights} from './replacement-model.js?v=1.0.0-prealpha.6';
+import {applyVehiclePaint,disposePaint} from './vehicle-paint.js?v=1.0.0-prealpha.6';
+import {cloudTexture,TireSmokeRenderer} from './smoke-renderer.js?v=1.0.0-prealpha.6';
+import {RetroRenderer} from './retro-renderer.js?v=1.0.0-prealpha.6';
+import {WeatherEffects} from './weather.js?v=1.0.0-prealpha.6';
+import {buildTraining} from './training-scene.js?v=1.0.0-prealpha.6';
+import {onboardCameras,onboardShot,startShot} from './driving-cameras.js?v=1.0.0-prealpha.6';
 const TAU=Math.PI*2;
 const SKINS={fujiwara:{color:0xe8e8da,roof:1.335,length:4.215},yugo:{color:0xce362b,roof:1.335,length:3.49},blue:{color:0x2955b8,roof:1.35,length:4.6,spoiler:true},yellow:{color:0xe6b52b,roof:.95,length:4.45,spoiler:true},gray:{color:0x16171a,roof:1.36,length:4.81}};
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -120,6 +121,8 @@ export class DriftView3D{
   zoomBy(m){const key=this.cameraMode||'chase';this.cameraZoom[key]=this.distance=clamp((this.cameraZoom[key]||1)*m,.55,2.2);this.cameraReady=false;}
   build(track){
     disposeGroup(this.world);this.trailCache=new WeakMap();this.track=track;const r=rng(),b=track.bounds,cx=b.minX+b.w/2,cz=b.minY+b.h/2,half=track.roadHalf;
+    this.trainingScene=null;
+    if(track.training){this.trainingScene=buildTraining(track,this.world);this.streetLights=this.trainingScene.street;return;}
     if(track.downhill){buildMountain(track,this.world,this.low);this.streetLights=buildStreetLights(track,this.world);batchWorld(this.world);return;}
     const asphaltTexture=noiseTexture(),kerbTexture=curbTexture();
     asphaltTexture.anisotropy=Math.min(8,this.renderer.capabilities?.getMaxAnisotropy()||1);
@@ -147,7 +150,7 @@ export class DriftView3D{
     for(const sign of [-1,1])box(gate,metal,0,3.7,sign*(half+3),.55,7.4,.55);
     box(gate,metal,0,7.4,0,.75,.85,(half+3)*2);box(gate,orange,.4,7.4,0,.08,.32,half*1.5);
     for(let row=0;row<2;row++)for(let j=0;j<Math.ceil(half*2);j++){const check=box(gate,(j+row)%2?white:metal,row*.65,.055,j-half+.5,.65,.025,1);check.renderOrder=-55;}
-    const signCanvas=document.createElement('canvas');signCanvas.width=512;signCanvas.height=64;const sg=signCanvas.getContext('2d');sg.fillStyle='#17242b';sg.fillRect(0,0,512,64);sg.fillStyle='#e8ece4';sg.font='bold 40px DriftPixel';sg.textAlign='center';sg.fillText('DRIFT / RACER',256,46);const signTexture=new T.CanvasTexture(signCanvas);signTexture.colorSpace=T.SRGBColorSpace;
+    const signCanvas=document.createElement('canvas');signCanvas.width=512;signCanvas.height=64;const sg=signCanvas.getContext('2d');sg.fillStyle='#17242b';sg.fillRect(0,0,512,64);sg.fillStyle='#e8ece4';sg.font='bold 40px DriftDisplay';sg.textAlign='center';sg.fillText('DRIFT / RACER',256,46);const signTexture=new T.CanvasTexture(signCanvas);signTexture.colorSpace=T.SRGBColorSpace;
     const sign=mesh(new T.PlaneGeometry(Math.min(10,half),1.15),new T.MeshBasicMaterial({map:signTexture,side:T.DoubleSide}),gate,-.45,7.4,0);sign.rotation.y=-Math.PI/2;
     // Distant scenery stays beyond runoff; no new collision rules are introduced.
     const treeGeo=new T.ConeGeometry(2.2,7,5),treeMat=mat(0x284b43),trunkMat=mat(0x514b3c),trees=new T.InstancedMesh(treeGeo,treeMat,200),trunks=new T.InstancedMesh(new T.CylinderGeometry(.22,.35,3,5),trunkMat,200);
@@ -228,7 +231,7 @@ export class DriftView3D{
     this.trailGeo.setDrawRange(0,v/3);this.trailGeo.attributes.position.needsUpdate=true;
   }
 
-  render({track,player,ghost,rivals=[],skin='blue',dt=0,inMenu=false,time=0,camera='chase',motion='full',timeOfDay=0,anchor,impulse=0,frameDt=dt,weather='clear',retro,startIntro=null}){
+  render({track,player,ghost,rivals=[],skin='blue',dt=0,inMenu=false,time=0,camera='chase',motion='full',timeOfDay=0,anchor,impulse=0,frameDt=dt,weather='clear',retro,startIntro=null,weatherTime=time}){
     if(!track||!player)return;this.setTimeOfDay(timeOfDay,weather);this.setRetro(retro);this.cameraMode=camera;this.distance=this.cameraZoom[camera]||1;this.adaptResolution(frameDt);if(this.track!==track){this.build(track);this.resetCamera();}this.setSkin(skin);
     const w=this.canvas.clientWidth||innerWidth,h=this.canvas.clientHeight||innerHeight;if(this.width!==w||this.height!==h){this.width=w;this.height=h;this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();}
     const p=player.pos,a=player.angle,speed=player.worldSpeed();this.car.root.position.set(p.x,0,p.y);this.car.root.rotation.set(0,-a,0,'YXZ');
@@ -267,7 +270,7 @@ export class DriftView3D{
     else if(camera==='aerial'){desired.set(p.x-22,38,p.y+24);target.set(p.x+f.x*4,0,p.y+f.z*4);this.camera.fov=52;}
     else if(onboard){const mounted=onboardShot(camera,this.car,player.bodyDimensions);desired.copy(mounted.position);target.copy(mounted.target);this.camera.fov=clamp(mounted.fov*Math.sqrt(this.distance),38,105);}
     else{const d=12.5+Math.min(speed,45)*.075;desired.set(p.x-f.x*d,6.5,p.y-f.z*d);target.set(p.x+f.x*7,.6,p.y+f.z*7);this.camera.fov=58+(motion==='reduced'?0:Math.min(speed*.12,7));}
-    if(startIntro!==null){const opening=startShot([player,...rivals],motion==='reduced'?2.4:startIntro);desired.copy(opening.position);target.copy(opening.target);this.camera.fov=opening.fov;}
+    if(startIntro!==null){const opening=startShot([player,...rivals],motion==='reduced'?5.99:startIntro);desired.copy(opening.position);target.copy(opening.target);this.camera.fov=opening.fov;}
     else if(!onboard){if(shot?.kind==='trackside')this.camera.fov=clamp(this.camera.fov*Math.sqrt(this.distance),30,100);else desired.sub(target).multiplyScalar(this.distance).add(target);}
     if(this.track.downhill&&!inMenu){
       const elevation=falling?descent.y:ride.height;
@@ -295,7 +298,8 @@ export class DriftView3D{
       if(projected.z>-1&&projected.z<1&&Math.abs(projected.x)<1&&Math.abs(projected.y)<1)this.rivalLabels.push({name:car.name,x:(projected.x+1)*w/2,y:(1-projected.y)*h/2});
     }
     this.smokeRenderer.update([player,...rivals].flatMap(c=>c.smoke||[]),this.camera,track,this.low,player.cosmetics);
-    this.weatherEffects.update({track,world:this.world,camera:this.camera,time,weather,night:this.atmosphere.state?.night||0,low:this.low});
+    this.trainingScene?.update();
+    this.weatherEffects.update({track,world:this.world,camera:this.camera,time:weatherTime,weather,night:this.atmosphere.state?.night||0,low:this.low});
     const renderStart=performance.now();this.retro.render(this.scene,this.camera,w,h);this.lastRenderMs=performance.now()-renderStart;
   }
   dispose(){this.disposed=true;this.canvas.removeEventListener('webglcontextlost',this.contextLost);this.atmosphere.dispose();this.weatherEffects.dispose();this.retro.dispose();disposePaint(this.car);for(const model of this.rivalModels.values())disposePaint(model);disposeGroup(this.scene);this.renderer.dispose();}

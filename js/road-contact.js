@@ -11,6 +11,7 @@ globalThis.DriftRoadContact ||= (()=>{
     return t>0&&t<1?curb.height*Math.sin(Math.PI*t)**2:0;
   }
   function terrain(track){
+    if(track.training)return {height:()=>0};
     if(track.downhill)return {height:track.surfaceHeight};
     const previous=terrainCache.get(track);if(previous?.half===track.roadHalf)return previous;
     const grid=new Map(),longSegments=[],pad=track.roadHalf+curb.start+curb.width;
@@ -84,9 +85,9 @@ globalThis.DriftRoadContact ||= (()=>{
       const t=i/count;
       target=contacts(track,{pos:{x:r.lastX+(car.pos.x-r.lastX)*t,y:r.lastY+(car.pos.y-r.lastY)*t},angle:r.lastAngle+da*t},skin);
       const handling=car.handling||{},stiffness=car.suspensionTune?.stiffness||1;
-      target.roll-=clamp((car.accelLat||0)/9.81*(handling.roll||.075)/stiffness,-.16,.16);
-      target.pitch+=clamp((car.accelLong||0)/9.81*(handling.pitch||.055)/stiffness,-.11,.11);
-      for(const [axis,velocity,k,damping] of [['height','vy',180,22],['roll','vr',handling.spring||62,handling.damp||10],['pitch','vp',(handling.spring||62)*1.15,(handling.damp||10)*1.1]]){
+      target.roll-=clamp((car.accelLat||0)/9.81*(handling.roll||.075)*1.24/stiffness,-.19,.19);
+      target.pitch+=clamp((car.accelLong||0)/9.81*(handling.pitch||.055)*1.24/stiffness,-.14,.14);
+      for(const [axis,velocity,k,damping] of [['height','vy',145,19],['roll','vr',(handling.spring||62)*.88,(handling.damp||10)*.94],['pitch','vp',(handling.spring||62)*1.02,(handling.damp||10)*1.03]]){
         r[velocity]+=(k*(car.suspensionTune?.stiffness||1)*(target[axis]-r[axis])-damping*(car.suspensionTune?.damping||1)*r[velocity])*h;
         r[axis]+=r[velocity]*h;
       }

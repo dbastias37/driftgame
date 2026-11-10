@@ -2,11 +2,11 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Drift Racer — 1.0 pre-alpha</title>
-<meta name="application-version" content="1.0.0-prealpha.5">
+<meta name="application-version" content="1.0.0-prealpha.6">
 <meta name="theme-color" content="#111719">
 <style>
   :root{--bg:#0b0b0b;--ink:#e6f1ff;}
-  html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:"Montserrat",DriftPixel, monospace,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,DriftPixel}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:"Montserrat",DriftDisplay, Impact, sans-serif,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,DriftDisplay}
   button{cursor:pointer;background:#2b72ff;border:none;color:#fff;padding:10px 16px;border-radius:10px;font-weight:700;box-shadow:0 6px 20px rgba(43,114,255,.3)}
   /* Los controles táctiles no seleccionan etiquetas ni abren el menú de texto de iOS. */
   button,button *,#touchHUD,#touchHUD *,.tx-select label{
@@ -25,7 +25,7 @@
   #overlay.hidden{display:none}
   #overlay .btnrow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
   #overlay .btnrow .gray{background:#374151}
-  #tests{position:fixed;bottom:10px;left:12px;font:12px/1.2 DriftPixel, monospace;color:#cfe6ff;opacity:.9;background:rgba(0,0,0,.35);padding:6px 8px;border-radius:8px;border:1px solid rgba(255,255,255,.08);z-index:10;display:none}
+  #tests{position:fixed;bottom:10px;left:12px;font:12px/1.2 DriftDisplay, Impact, sans-serif;color:#cfe6ff;opacity:.9;background:rgba(0,0,0,.35);padding:6px 8px;border-radius:8px;border:1px solid rgba(255,255,255,.08);z-index:10;display:none}
   #times{position:fixed;top:12px;right:12px;width:260px;color:#e6f1ff;background:rgba(0,0,0,.45);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.08);z-index:10}
   #times h3{margin:0 0 8px;font-size:14px;opacity:.9}
   #times ul{margin:0;padding-left:16px;max-height:180px;overflow:auto}
@@ -41,7 +41,7 @@
   #bMsg{margin-top:8px;min-height:20px}
   #btnStart{background:#00b341}
   #cWarn{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:8px 12px;background:rgba(0,0,0,.65);border:1px solid rgba(255,255,255,.2);border-radius:10px;color:#fff;z-index:30;display:none}
-  #countHint{position:fixed;top:18%;left:50%;transform:translateX(-50%);font:bold 26px DriftPixel, monospace;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.6);z-index:15;display:none}
+  #countHint{position:fixed;top:18%;left:50%;transform:translateX(-50%);font:bold 26px DriftDisplay, Impact, sans-serif;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.6);z-index:15;display:none}
 
   /* ===== Panel de coches ===== */
   .modal{position:fixed;inset:0;display:grid;place-items:center;background:#000a;z-index:60}
@@ -156,7 +156,7 @@
   #radioBar .text{
     display:flex; flex-wrap:wrap; gap:6px; align-items:center;
     background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);
-    padding:6px 10px; border-radius:10px; font:12px/1.2 DriftPixel, monospace;
+    padding:6px 10px; border-radius:10px; font:12px/1.2 DriftDisplay, Impact, sans-serif;
   }
   #radioBar.flash{ animation:rbFlash 4s ease 1; }
   @keyframes rbFlash{
@@ -220,11 +220,12 @@
   @media(max-height:500px){#carPreview{height:110px} #carPanel h2{font-size:19px} #times{top:122px} #ui{max-width:330px} #stickZone{width:120px;height:120px} #gasZone{height:135px}}
 .daytime-control{display:block;max-width:330px;margin:14px 0 8px;font-size:12px;color:#aebbbb}.daytime-control output{float:right;color:#ff7544}.daytime-control input{display:block;width:100%;margin:10px 0;accent-color:#ff7544;cursor:pointer}.daytime-ends{display:flex;justify-content:space-between;font-size:10px;color:#829597}
 </style>
-<link rel="stylesheet" href="css/experience.css?v=1.0.0-prealpha.5">
-<link rel="stylesheet" href="css/online.css?v=1.0.0-prealpha.5">
-<link rel="stylesheet" href="css/raw-menu.css?v=1.0.0-prealpha.5">
-<link rel="stylesheet" href="css/career.css?v=1.0.0-prealpha.5">
-<link rel="stylesheet" href="css/psx.css?v=1.0.0-prealpha.5">
+<link rel="stylesheet" href="css/experience.css?v=1.0.0-prealpha.6">
+<link rel="stylesheet" href="css/online.css?v=1.0.0-prealpha.6">
+<link rel="stylesheet" href="css/raw-menu.css?v=1.0.0-prealpha.6">
+<link rel="stylesheet" href="css/career.css?v=1.0.0-prealpha.6">
+<link rel="stylesheet" href="css/display-font.css?v=1.0.0-prealpha.6">
+<link rel="stylesheet" href="css/psx.css?v=1.0.0-prealpha.6">
 </head>
 <body>
   <div id="ui">
@@ -302,6 +303,7 @@
 
   <div id="cWarn"></div>
   <div id="countHint"></div>
+  <aside id="trainingHud" class="hidden" aria-label="Entrenamiento"><b>MERCADO OCHO</b><span id="trainingStats">0 vueltas · 0 conos</span><small id="trainingHint">Drift libre · −100 por cono derribado</small></aside>
   <div id="tests">Tests: <span id="testsResult">—</span></div>
 
   <canvas id="scene3d" aria-label="Circuito tridimensional"></canvas>
@@ -342,7 +344,8 @@
         <button id="btnModeChallenge"><i>03</i><span>CAMPAÑA <small>20 ETAPAS · 60 OBJETIVOS</small></span><b>↗</b></button>
         <button id="btnModeOnline"><i>04</i><span>ONLINE <small>BETA · 3 PILOTOS</small></span><b>↗</b></button>
         <button id="btnModeTT"><i>05</i><span>CONTRARRELOJ</span><b>↗</b></button>
-        <button id="btnModeCreative"><i>06</i><span>CREA TU CIRCUITO</span><b>↗</b></button>
+        <button id="btnModeTraining"><i>06</i><span>ENTRENAMIENTO <small>MERCADO OCHO · CONOS Y ZONA LIBRE</small></span><b>↗</b></button>
+        <button id="btnModeCreative"><i>07</i><span>CREA TU CIRCUITO</span><b>↗</b></button>
       </nav>
       <footer class="raw-home-footer"><button id="btnCredits" class="text-button">CRÉDITOS</button><button id="btnSettings" class="text-button">AJUSTES</button><button id="btnMenuHelp" class="text-button">CONTROLES</button><button id="btnImport" class="text-button">IMPORTAR</button><button id="btnBackTitle" class="text-button">← INICIO</button></footer>
       <div id="homeWallet" class="home-wallet"></div><div class="raw-demo-label"><span>EXHIBICIÓN / DRIFT ELITE</span><b id="homeDemoInfo"></b></div>
@@ -439,7 +442,7 @@
   </div>
   <div id="importMenu" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="importTitle"><div class="card settings-card"><p class="eyebrow">DE PILOTO A PILOTO</p><h2 id="importTitle">Importar circuito</h2><label for="importCode">Código de pista TRK / TRK2</label><textarea id="importCode" placeholder="Pegar código de pista…" rows="4"></textarea><p id="importMessage" role="status"></p><div class="row"><button id="btnImportBack">Volver</button><button id="btnLoadCode">Cargar circuito</button></div></div></div>
 
-<div id="creditsMenu" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="creditsTitle"><section class="credits-shell"><p class="eyebrow">DRIFT RACER / 1.0 PRE-ALPHA</p><h2 id="creditsTitle">CRÉDITOS</h2><p class="creator-credit">Juego creado por <strong>Diego Bastias A.</strong><br>a través de <strong>ChatGPT 6 Astra.</strong></p><p>Gracias a los artistas 3D que comparten su trabajo y hacen posible estos vehículos.</p><div id="modelCredits"></div><p class="credits-tech">Escenarios, circuitos y autos procedurales: Drift Racer.<br>Tipografía Drift Pixel: derivada de DejaVu Sans Mono · <a href="assets/fonts/LICENSE.txt" target="_blank" rel="noopener">Licencia</a>.<br>Three.js y herramientas GLTF: three.js authors · <a href="vendor/THREE-LICENSE.txt" target="_blank" rel="noopener">MIT</a>.<br>Clipper: Angus Johnson · JavaScript: Timo · <a href="vendor/CLIPPER-LICENSE.txt" target="_blank" rel="noopener">Boost 1.0</a>.</p><button id="btnCreditsBack">← VOLVER</button></section></div>
+<div id="creditsMenu" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="creditsTitle"><section class="credits-shell"><p class="eyebrow">DRIFT RACER / 1.0 PRE-ALPHA</p><h2 id="creditsTitle">CRÉDITOS</h2><p class="creator-credit">Juego creado por <strong>Diego Bastias A.</strong><br>a través de <strong>ChatGPT 6 Astra.</strong></p><p>Gracias a los artistas 3D que comparten su trabajo y hacen posible estos vehículos.</p><div id="modelCredits"></div><p class="credits-tech">Escenarios, circuitos y autos procedurales: Drift Racer.<br>Tipografía Drift Display: derivada de Anton (The Anton Project Authors) · <a href="assets/fonts/Anton-OFL.txt" target="_blank" rel="noopener">SIL OFL</a>. Símbolos DejaVu · <a href="assets/fonts/LICENSE.txt" target="_blank" rel="noopener">Licencia</a>.<br>Three.js y herramientas GLTF: three.js authors · <a href="vendor/THREE-LICENSE.txt" target="_blank" rel="noopener">MIT</a>.<br>Clipper: Angus Johnson · JavaScript: Timo · <a href="vendor/CLIPPER-LICENSE.txt" target="_blank" rel="noopener">Boost 1.0</a>.</p><button id="btnCreditsBack">← VOLVER</button></section></div>
 <div id="rendererError" class="modal hidden" role="alertdialog" aria-labelledby="rendererErrorTitle"><div class="card"><h2 id="rendererErrorTitle">No se pudo iniciar el entorno 3D</h2><p>La carrera está detenida. Recarga el juego para volver a intentarlo.</p><button id="btnRetryRenderer">RECARGAR</button></div></div>
   <div id="crtOverlay" aria-hidden="true"></div>
   <div id="racePosition" class="hidden" aria-label="Posición en carrera"></div>
@@ -498,22 +501,23 @@
 
   <audio id="radio" preload="none" crossorigin="anonymous"></audio>
 
-<script src="js/career.js?v=1.0.0-prealpha.5"></script>
-<script src="js/replay.js?v=1.0.0-prealpha.5"></script>
-<script src="js/drift-effects.js?v=1.0.0-prealpha.5"></script>
-<script src="js/attract-demo.js?v=1.0.0-prealpha.5"></script>
-<script src="js/circuit-layouts.js?v=1.0.0-prealpha.5"></script>
-<script src="js/vehicle-fit.js?v=1.0.0-prealpha.5"></script>
-<script src="js/road-contact.js?v=1.0.0-prealpha.5"></script>
-<script src="js/downhill.js?v=1.0.0-prealpha.5"></script>
-<script src="js/yugo-physics.js?v=1.0.0-prealpha.5"></script>
-<script src="js/gamepad.js?v=1.0.0-prealpha.5"></script>
-<script src="js/instruments.js?v=1.0.0-prealpha.5"></script>
-<script src="js/game-options.js?v=1.0.0-prealpha.5"></script>
-<script src="js/ai-race.js?v=1.0.0-prealpha.5"></script>
-<script src="js/vehicle-dynamics.js?v=1.0.0-prealpha.5"></script>
-<script src="js/tire-smoke.js?v=1.0.0-prealpha.5"></script>
-<script src="js/online-rules.js?v=1.0.0-prealpha.5"></script>
+<script src="js/career.js?v=1.0.0-prealpha.6"></script>
+<script src="js/replay.js?v=1.0.0-prealpha.6"></script>
+<script src="js/drift-effects.js?v=1.0.0-prealpha.6"></script>
+<script src="js/attract-demo.js?v=1.0.0-prealpha.6"></script>
+<script src="js/circuit-layouts.js?v=1.0.0-prealpha.6"></script>
+<script src="js/vehicle-fit.js?v=1.0.0-prealpha.6"></script>
+<script src="js/road-contact.js?v=1.0.0-prealpha.6"></script>
+<script src="js/downhill.js?v=1.0.0-prealpha.6"></script>
+<script src="js/yugo-physics.js?v=1.0.0-prealpha.6"></script>
+<script src="js/gamepad.js?v=1.0.0-prealpha.6"></script>
+<script src="js/instruments.js?v=1.0.0-prealpha.6"></script>
+<script src="js/game-options.js?v=1.0.0-prealpha.6"></script>
+<script src="js/training.js?v=1.0.0-prealpha.6"></script>
+<script src="js/ai-race.js?v=1.0.0-prealpha.6"></script>
+<script src="js/vehicle-dynamics.js?v=1.0.0-prealpha.6"></script>
+<script src="js/tire-smoke.js?v=1.0.0-prealpha.6"></script>
+<script src="js/online-rules.js?v=1.0.0-prealpha.6"></script>
 <script>
 "use strict";
 
@@ -838,7 +842,7 @@ function hidePanels(){
   clearInputs();
   for(const id of ['creditsMenu','rendererError','titleScreen','mainMenu','challengeMenu','startPanel','carPanel','pauseMenu','overlay','help','settingsMenu','importMenu','circuitMenu','onlineMenu'])document.getElementById(id).classList.add('hidden');
   document.getElementById('help').classList.remove('show');
-  state='menu';syncTouchHUD();document.body.classList.remove('in-game','downhill');$('#descentHud').classList.add('hidden');document.getElementById('gameActions').classList.remove('show');
+  state='menu';syncTouchHUD();document.body.classList.remove('in-game','downhill','training');$('#trainingHud').classList.add('hidden');$('#descentHud').classList.add('hidden');document.getElementById('gameActions').classList.remove('show');
   document.getElementById('challengeBadge').classList.remove('show');
 }
 function showMainMenu(){
@@ -911,10 +915,10 @@ class Car{
     // detección robusta sentido contrario
     const tdir = {x:C(s.tang), y:S(s.tang)};
     const dotFW = f.x*tdir.x + f.y*tdir.y;
-    this.wrongWay = (kmh > 12 && dotFW < -0.25);
+    this.wrongWay = !track.training && (kmh > 12 && dotFW < -0.25);
 
-    this.offTrack=Math.abs(s.dist)>track.roadHalf; this.edgeShake=Math.max(0,this.edgeShake-dt);
-    { const pen=Math.abs(s.dist)-(track.roadHalf-1); if(pen>0){ const k=clamp(pen/2,0,1);
+    this.offTrack=!track.training&&Math.abs(s.dist)>track.roadHalf; this.edgeShake=Math.max(0,this.edgeShake-dt);
+    { const pen=track.training?0:Math.abs(s.dist)-(track.roadHalf-1); if(pen>0){ const k=clamp(pen/2,0,1);
       const drag = 1 - (0.22 * k) * dt * 4;
       this.vel.x *= drag;
       this.vel.y *= drag;
@@ -1042,7 +1046,7 @@ cvs.addEventListener('wheel',e=>{if(!['running','paused','countdown'].includes(s
 /* ===== Velocímetro y mini-mapa ===== */
 const GAUGE={r:110,minA:-2.35,maxA:2.35,vmax:220};
 function gaugeAngleForSpeed(k){ const t=clamp(k/GAUGE.vmax,0,1); return GAUGE.minA+(GAUGE.maxA-GAUGE.minA)*t; }
-function drawSpeedometer(g,kmh){ const w=260,h=260,pad=16,x=view.width-w-pad,y=view.height-h-pad; g.save(); g.translate(x,y); g.globalAlpha=.92; fillCard(g,0,0,w,h,16); g.save(); g.translate(w*.5,h*.58); g.strokeStyle='rgba(255,255,255,.25)'; g.lineWidth=10; g.beginPath(); g.arc(0,0,GAUGE.r,GAUGE.minA,GAUGE.maxA); g.stroke(); g.lineWidth=3; g.strokeStyle='rgba(255,255,255,.55)'; for(let v=0; v<=GAUGE.vmax; v+=20){ const a=gaugeAngleForSpeed(v), r1=GAUGE.r-6, r2=GAUGE.r-18; g.beginPath(); g.moveTo(C(a)*r1,S(a)*r1); g.lineTo(C(a)*r2,S(a)*r2); g.stroke(); } g.fillStyle='rgba(255,255,255,.85)'; g.font='bold 16px DriftPixel, monospace'; g.textAlign='center'; for(let v=0; v<=GAUGE.vmax; v+=40){ const a=gaugeAngleForSpeed(v), r=GAUGE.r-34; g.fillText(String(v), C(a)*r, S(a)*r+5); } const ang=gaugeAngleForSpeed(kmh); g.rotate(ang); g.fillStyle='#ff5a5a'; g.beginPath(); g.moveTo(-5,-3); g.lineTo(-5,3); g.lineTo(GAUGE.r-28,0); g.closePath(); g.fill(); g.fillStyle='rgba(255,255,255,.9)'; g.beginPath(); g.arc(0,0,7,0,PI*2); g.fill(); g.restore(); g.fillStyle='rgba(255,255,255,.95)'; g.font='bold 24px DriftPixel, monospace'; g.textAlign='center'; g.fillText(Math.round(kmh)+' KM/H', w*.5, h*.58+30); g.restore(); }
+function drawSpeedometer(g,kmh){ const w=260,h=260,pad=16,x=view.width-w-pad,y=view.height-h-pad; g.save(); g.translate(x,y); g.globalAlpha=.92; fillCard(g,0,0,w,h,16); g.save(); g.translate(w*.5,h*.58); g.strokeStyle='rgba(255,255,255,.25)'; g.lineWidth=10; g.beginPath(); g.arc(0,0,GAUGE.r,GAUGE.minA,GAUGE.maxA); g.stroke(); g.lineWidth=3; g.strokeStyle='rgba(255,255,255,.55)'; for(let v=0; v<=GAUGE.vmax; v+=20){ const a=gaugeAngleForSpeed(v), r1=GAUGE.r-6, r2=GAUGE.r-18; g.beginPath(); g.moveTo(C(a)*r1,S(a)*r1); g.lineTo(C(a)*r2,S(a)*r2); g.stroke(); } g.fillStyle='rgba(255,255,255,.85)'; g.font='bold 16px DriftDisplay, Impact, sans-serif'; g.textAlign='center'; for(let v=0; v<=GAUGE.vmax; v+=40){ const a=gaugeAngleForSpeed(v), r=GAUGE.r-34; g.fillText(String(v), C(a)*r, S(a)*r+5); } const ang=gaugeAngleForSpeed(kmh); g.rotate(ang); g.fillStyle='#ff5a5a'; g.beginPath(); g.moveTo(-5,-3); g.lineTo(-5,3); g.lineTo(GAUGE.r-28,0); g.closePath(); g.fill(); g.fillStyle='rgba(255,255,255,.9)'; g.beginPath(); g.arc(0,0,7,0,PI*2); g.fill(); g.restore(); g.fillStyle='rgba(255,255,255,.95)'; g.font='bold 24px DriftDisplay, Impact, sans-serif'; g.textAlign='center'; g.fillText(Math.round(kmh)+' KM/H', w*.5, h*.58+30); g.restore(); }
 function drawGearPanel(g,gear,blink=false){
   if(player && player.auto){
     const w=260,h=260,pad=16,x=view.width-w-pad,y=view.height-h-pad;
@@ -1051,7 +1055,7 @@ function drawGearPanel(g,gear,blink=false){
     g.save();
     g.translate(gx+W/2,gy+H/2);
     g.fillStyle='rgba(255,255,255,.92)';
-    g.font='bold 18px DriftPixel, monospace';
+    g.font='bold 18px DriftDisplay, Impact, sans-serif';
     g.textAlign='center';
     g.fillText('AUTO',0,6);
     g.restore();
@@ -1063,7 +1067,7 @@ function drawGearPanel(g,gear,blink=false){
   g.save();
   g.translate(gx+W/2,gy+16);
   g.fillStyle='rgba(255,255,255,.85)';
-  g.font='bold 12px DriftPixel, monospace';
+  g.font='bold 12px DriftDisplay, Impact, sans-serif';
   g.textAlign='center';
   g.fillText('GEARS',0,0);
   for(let i=1;i<=4;i++){
@@ -1071,7 +1075,7 @@ function drawGearPanel(g,gear,blink=false){
     g.fillStyle=i===gear?(blink?'#ff4d4d':'#2b72ff'):'rgba(255,255,255,.18)';
     roundedRect(g,-22,yy,44,18,8); g.fill();
     g.fillStyle=i===gear?'#fff':'rgba(255,255,255,.75)';
-    g.font='bold 13px DriftPixel, monospace';
+    g.font='bold 13px DriftDisplay, Impact, sans-serif';
     g.fillText(String(i),0,yy+13);
   }
   g.restore();
@@ -1194,11 +1198,15 @@ function startWithTrack(tr, m='race',conditions=null){
   $('#titleScreen').classList.add('hidden');
   if(!tr){ alert('Pista inválida.'); return; }
   if(replayUI?.active)replayUI.close();
-  mode = tr.downhill?'downhill':m;
+  mode = tr.training?'training':tr.downhill?'downhill':m;
   TOTAL_LAPS=mode==='challenge'?1:5;careerRun=new DriftCareer.Run(mode,mode==='challenge'?activeChallengeLevel:tr.routeLevel||1);
   track = tr;
   player = new Car(track,'#2b72ff');
   try{ applyChosen?.(); }catch(_){ }
+  if(tr.downhill){const p=tr.point(0),a=tr.tangentAt(0);player.pos={x:p.x-Math.cos(a)*4,y:p.y-Math.sin(a)*4};player.angle=a;}
+  else DriftRace.grid(player,tr,0);
+  if(tr.training){tr.practice=new DriftTraining.Run(tr);player.lives=Infinity;}
+  document.body.classList.toggle('training',!!tr.training);$('#trainingHud').classList.toggle('hidden',!tr.training);
   raceConditions=DriftOptions.conditions(conditions||renderPrefs);DriftOptions.apply(player,raceConditions);offlineRivals=[];offlineRace=null;startElapsed=0;
   if(mode==='race'&&renderPrefs.rivals){
     const entries=CAR_DATA.filter(c=>c.sprite!==chosen.sprite);
@@ -1329,6 +1337,7 @@ function respawnAtNearestCenter() {
 function loseLifeAndRespawn() {
   careerRun?.recover();
   if(mode==='online'){online?.recover();return;}
+  if(mode==='training'&&player&&state==='running'){respawnAtNearestCenter();track.practice.last={...player.pos};return;}
   if(!player || state!=='running' || player.lives<=0)return;
   player.lives=Math.max(0,player.lives-1);
   if(elLives) elLives.textContent = player.lives;
@@ -1344,7 +1353,7 @@ function input(){
     return {left:false,right:false,accel:false,brake:true,handbrake:false,steerAxis:0};
   }
 
-  if(state!=='running') return {left:false,right:false,accel:false,brake:false,handbrake:false,steerAxis:0};
+  if(!['running','countdown'].includes(state)) return {left:false,right:false,accel:false,brake:false,handbrake:false,steerAxis:0};
 
   const kLeft  = keys.has('a') || keys.has('arrowleft');
   const kRight = keys.has('d') || keys.has('arrowright');
@@ -1376,7 +1385,7 @@ function drawComboOverlay(){
     ctx.save();
     ctx.globalAlpha=a;
     ctx.fillStyle='#ff5050';
-    ctx.font=compact?'bold 22px DriftPixel, monospace':'bold 64px DriftPixel, monospace';
+    ctx.font=compact?'bold 22px DriftDisplay, Impact, sans-serif':'bold 64px DriftDisplay, Impact, sans-serif';
     ctx.textAlign='center';
     ctx.fillText('COMBO BREAK!',view.width/2,compact?view.height*.33:view.height*.24);
     ctx.restore();
@@ -1389,16 +1398,16 @@ function drawComboOverlay(){
   ctx.translate(cx,cy);
   ctx.scale(scale,scale);
   ctx.textAlign='center';
-  ctx.font='bold 72px DriftPixel, monospace';
+  ctx.font='bold 72px DriftDisplay, Impact, sans-serif';
   ctx.shadowColor=color;
   ctx.shadowBlur=30;
   ctx.fillStyle=color;
   ctx.fillText('X'+player.comboState,0,0);
   ctx.shadowBlur=0;
-  ctx.font='bold 26px DriftPixel, monospace';
+  ctx.font='bold 26px DriftDisplay, Impact, sans-serif';
   ctx.fillStyle='rgba(255,255,255,.95)';
   ctx.fillText(player.comboState===5?'PIANO PERFECTO':player.comboPhrase||(player.comboState===2?'Good Drift!':'Insane Drift!'),0,34);
-  ctx.font='bold 36px DriftPixel, monospace';
+  ctx.font='bold 36px DriftDisplay, Impact, sans-serif';
   ctx.fillStyle='#fff';
   ctx.fillText('+'+Math.floor(player.comboPoints).toLocaleString(),0,74);
   ctx.restore();
@@ -1410,6 +1419,8 @@ function drawWarnings(){
   if(warn) warn.style.display='none';
   if(hint) hint.style.display='none';
 
+  if(state==='countdown'&&hint){hint.style.display='block';hint.textContent=startElapsed<DriftRace.INTRO.roll?'POSICIONANDO AUTOS':startElapsed<DriftRace.INTRO.roll+DriftRace.INTRO.settle?'PREPARA LA SALIDA':'MANTÉN EL ACELERADOR';}
+  if(mode==='training')return;
   if(mode==='downhill'){
     if(warn&&player.descent?.motion==='falling'){warn.style.display='block';warn.textContent=`Caída · Recuperación en ${Math.max(.1,4.5-player.descent.fallTime).toFixed(1)} s · R: volver ahora`;}
     else if(warn&&player.descent?.routeLostTime>0){warn.style.display='block';warn.textContent='Fuera del trazado · Volviendo al último punto seguro…';}
@@ -1488,7 +1499,8 @@ function updateHUD(dt){
     if(elLives) elLives.textContent = player.lives;
     if(elMulti) elMulti.textContent = player.mult.toFixed(0);
     if(elLap){
-      if(mode==='downhill')elLap.textContent=Math.min(100,Math.floor(player.descent.s/track.finishS*100))+'%';
+      if(mode==='training')elLap.textContent=String(track.practice.laps);
+      else if(mode==='downhill')elLap.textContent=Math.min(100,Math.floor(player.descent.s/track.finishS*100))+'%';
       else if(mode==='tt') elLap.textContent = `${lap}`;
       else elLap.textContent = `${Math.min(lap,TOTAL_LAPS)}/${TOTAL_LAPS}`;
     }
@@ -1515,10 +1527,13 @@ function advanceLap(prevIdx,currentIdx){
 function simulate(step){
   if(mode==='online'&&online?.racing){online.simulate(step);return;}
   if(state==='countdown'){
-    startElapsed+=step;if(mode==='race'&&startElapsed<2.4)return;
+    startElapsed+=step;const delay=['race','training'].includes(mode)?DriftRace.INTRO.roll+DriftRace.INTRO.settle:0;
+    if(startElapsed<delay)return;
+    if(!player.launchHold){renderPrefs.camera='chase';syncRenderUI();sceneView?.resetCamera();}
+    DriftRace.rev(player,input().accel,step);
     countdownTimer+=step;
     while(countdownTimer>=1 && countdown>0){countdown--;countdownTimer-=1;}
-    if(countdown<=0){state='running';raceTime=0;lapTime=0;if(ghost)ghost.reset();if(mode==='tt')startTTRecording();}
+    if(countdown<=0){player.launchHold=false;player.throttleSm=player.launchThrottle||0;state='running';raceTime=0;lapTime=0;if(ghost)ghost.reset();if(mode==='tt')startTTRecording();}
     return;
   }
   if(state!=='running'||!player||!track)return;
@@ -1532,6 +1547,7 @@ function simulate(step){
   const prevIdx=track.sample(player.pos.x,player.pos.y).i;
   const ret=player.update(step,input(),track);
   offlineRace?.step(step);
+  if(track.training){track.practice.step(step,player);DriftRoadContact.update(track,player,step,chosen.sprite);$('#trainingStats').textContent=track.practice.laps+' vuelta'+(track.practice.laps===1?'':'s')+' · '+track.practice.hits+' cono'+(track.practice.hits===1?'':'s');$('#trainingHint').textContent=track.practice.notice?'CONO DERRIBADO · −100 PTS':'Zona libre / ocho · −100 por cono';return;}
   DriftRoadContact.update(track,player,step,chosen.sprite);
   wrongTimer=player.wrongWay?wrongTimer+step:Math.max(0,wrongTimer-step*2);
   if(mode==='tt'){
@@ -1555,7 +1571,7 @@ function loop(ms){
     }else{simAccumulator=0;}
     online?.frame(dt);
     if(state==='running'||(mode==='online'&&online?.racing&&raceTime>0))replayUI?.capture(dt);
-    const replayFrame=replayUI?.frame(dt),opening=state==='countdown'&&mode==='race'?DriftRace.presentation([player,...offlineRivals],startElapsed):null,shown=replayFrame?.player||opening?.[0]||player;
+    const replayFrame=replayUI?.frame(dt),opening=(state==='countdown'||state==='paused'&&pausedState==='countdown')&&['race','training'].includes(mode)?DriftRace.presentation([player,...offlineRivals],startElapsed):null,shown=replayFrame?.player||opening?.[0]||player;
     // Legacy camera is retained for development; no 2D world is rendered.
     if(LEGACY_2D_ENABLED)camera.update(shown||{pos:{x:0,y:0}});
 
@@ -1575,7 +1591,7 @@ function loop(ms){
       const shouldRender=inSession?(active||changed):(changed||(demoVisible&&!attractDemo.paused&&!document.hidden&&now-lastSceneFrame>=1/(sceneView.software?18:60)));
       if(shouldRender){
         const presentationDt=inSession?(active?dt:0):Math.min(.1,now-lastSceneFrame);lastScenePresentation=revision;lastSceneFrame=now;
-        try{sceneView.render({track:inSession?track:attractTrack,player:inSession?shown:demoFrame.player,ghost:inSession&&!replayFrame?ghost:null,rivals:!inSession?demoFrame.rivals:replayFrame?.rivals||(mode==='online'?online?.rivals():opening?.slice(1)||offlineRivals),skin:!inSession?demoFrame.player.skin:replayFrame?.skin||chosen.sprite,dt:replayFrame?replayFrame.dt:presentationDt,inMenu:!inSession,time:replayFrame?.time??(inSession?raceTime:demoFrame.time),camera:!inSession?'demo':replayFrame?.camera||renderPrefs.camera,anchor:!inSession?demoFrame.anchor:replayFrame?.anchor,motion:renderPrefs.motion,timeOfDay:!inSession?demoFrame.day:replayFrame?.timeOfDay??renderPrefs.timeOfDay,impulse:driftEffect.boost,frameDt:presentationDt,retro:renderPrefs.retro,weather:inSession?replayFrame?.weather||raceConditions.weather:renderPrefs.weather,startIntro:state==='countdown'&&mode==='race'?startElapsed:null});}
+        try{sceneView.render({track:inSession?track:attractTrack,player:inSession?shown:demoFrame.player,ghost:inSession&&!replayFrame?ghost:null,rivals:!inSession?demoFrame.rivals:replayFrame?.rivals||(mode==='online'?online?.rivals():opening?.slice(1)||offlineRivals),skin:!inSession?demoFrame.player.skin:replayFrame?.skin||chosen.sprite,dt:replayFrame?replayFrame.dt:presentationDt,inMenu:!inSession,time:replayFrame?.time??(inSession?raceTime:demoFrame.time),camera:!inSession?'demo':replayFrame?.camera||renderPrefs.camera,anchor:!inSession?demoFrame.anchor:replayFrame?.anchor,motion:renderPrefs.motion,timeOfDay:!inSession?demoFrame.day:replayFrame?.timeOfDay??renderPrefs.timeOfDay,impulse:driftEffect.boost,frameDt:presentationDt,retro:renderPrefs.retro,weather:inSession?replayFrame?.weather||raceConditions.weather:renderPrefs.weather,weatherTime:replayFrame?.time??(inSession?startElapsed+raceTime:demoFrame.time),startIntro:(state==='countdown'||state==='paused'&&pausedState==='countdown')&&['race','training'].includes(mode)&&startElapsed<DriftRace.INTRO.roll+DriftRace.INTRO.settle?startElapsed:null});}
         catch(error){fail3D(error);}
       }
     }else if(LEGACY_2D_ENABLED&&!preparing){
@@ -1593,10 +1609,10 @@ function loop(ms){
       if(inSession && shown)Car.prototype.draw.call(shown,ctx,camera);ctx.restore();
     }
     if(draw3D&&inSession&&shown)driftEffect.draw(ctx,view.width,view.height,{mode:renderPrefs.speedLines,night:renderPrefs.timeOfDay,intensity:renderPrefs.speedLinesIntensity,focus:draw3D?sceneView.screenFocus:{x:shown.pos.x*camera.s+camera.tx,y:shown.pos.y*camera.s+camera.ty}});
-    if(draw3D&&inSession&&(mode==='online'||offlineRace)&&!replayFrame){ctx.save();ctx.font='600 12px DriftPixel, monospace';ctx.textAlign='center';for(const label of sceneView.rivalLabels||[]){ctx.fillStyle='#101c22d9';const width=ctx.measureText(label.name).width+16;ctx.fillRect(label.x-width/2,label.y-15,width,22);ctx.fillStyle='#e8f5ef';ctx.fillText(label.name,label.x,label.y);}ctx.restore();}
+    if(draw3D&&inSession&&(mode==='online'||offlineRace)&&!replayFrame){ctx.save();ctx.font='600 12px DriftDisplay, Impact, sans-serif';ctx.textAlign='center';for(const label of sceneView.rivalLabels||[]){ctx.fillStyle='#101c22d9';const width=ctx.measureText(label.name).width+16;ctx.fillRect(label.x-width/2,label.y-15,width,22);ctx.fillStyle='#e8f5ef';ctx.fillText(label.name,label.x,label.y);}ctx.restore();}
     if(inSession && player&&!replayFrame){drawMiniMap(ctx,track,player);updateDriveHUD(dt);}
-    if(inSession&&!replayFrame&&((state==='countdown'&&(mode!=='race'||startElapsed>=2.4))||(state==='running'&&raceTime<.75))){
-      ctx.save();ctx.textAlign='center';ctx.font='72px DriftPixel, monospace';ctx.lineWidth=8;ctx.strokeStyle='#10151d';ctx.fillStyle=state==='running'?'#f8b040':'#f0f0df';const text=state==='running'?'¡YA!':String(countdown);ctx.strokeText(text,view.width/2,view.height*.43);ctx.fillText(text,view.width/2,view.height*.43);ctx.restore();
+    if(inSession&&!replayFrame&&((state==='countdown'&&(!['race','training'].includes(mode)||startElapsed>=DriftRace.INTRO.roll+DriftRace.INTRO.settle))||(state==='running'&&raceTime<.75))){
+      ctx.save();ctx.textAlign='center';ctx.font='72px DriftDisplay, Impact, sans-serif';ctx.lineWidth=8;ctx.strokeStyle='#10151d';ctx.fillStyle=state==='running'?'#f8b040':'#f0f0df';const text=state==='running'?'¡YA!':String(countdown);ctx.strokeText(text,view.width/2,view.height*.43);ctx.fillText(text,view.width/2,view.height*.43);ctx.restore();
     }
     if(inSession&&!replayFrame)drawComboOverlay();
     if(replayFrame)replayUI.decorate(ctx,view.width,view.height,sceneView?.cinematicLabel);
@@ -1685,7 +1701,7 @@ function openCarPanel(){
   $('#garageTrackName').textContent=preparedTrack.layout?.name||'Circuito personalizado';
   $('#btnChooseStart').textContent=mode==='online'?'CONFIRMAR AUTO ✓':'A LA PISTA ↗';
   $('#btnCarBack').textContent=mode==='online'?'← Volver a la sala':'← Volver a la pista';
-  $('#sessionBrief').textContent=mode==='online'?'Online beta · Hasta 3 pilotos · Confirma tu auto y marca listo en la sala':mode==='downhill'?`Sprint · ${preparedTrack.goal.toLocaleString('es-CL')} pts antes de la meta · 3 vidas · R: último punto seguro`:mode==='challenge'?`Campaña ${activeChallengeLevel} · Una vuelta · Tres objetivos acumulables · 3 vidas`:mode==='tt'?'Contrarreloj · Vueltas libres · Fantasma de tu récord':`5 vueltas · ${renderPrefs.rivals?renderPrefs.rivals+' rivales · Colisiones '+(renderPrefs.collisions?'sí':'no'):'Sin rivales'}`;
+  $('#sessionBrief').textContent=mode==='training'?'Entrenamiento libre · Ocho y zona abierta · −100 por cono · Sin límite de tiempo · R: volver al trazado':mode==='online'?'Online beta · Hasta 3 pilotos · Confirma tu auto y marca listo en la sala':mode==='downhill'?`Sprint · ${preparedTrack.goal.toLocaleString('es-CL')} pts antes de la meta · 3 vidas · R: último punto seguro`:mode==='challenge'?`Campaña ${activeChallengeLevel} · Una vuelta · Tres objetivos acumulables · 3 vidas`:mode==='tt'?'Contrarreloj · Vueltas libres · Fantasma de tu récord':`5 vueltas · ${renderPrefs.rivals?renderPrefs.rivals+' rivales · Colisiones '+(renderPrefs.collisions?'sí':'no'):'Sin rivales'}`;
   updatePanel();
 }
 addEventListener('resize',()=>{if(carPanel && !carPanel.classList.contains('hidden'))drawCarPreview();});
@@ -1962,10 +1978,10 @@ function checkChallengeProgress(){
 }
 
 </script>
-<script src="js/experience.js?v=1.0.0-prealpha.5"></script>
-<script src="js/gamepad-ui.js?v=1.0.0-prealpha.5"></script>
-<script src="js/career-ui.js?v=1.0.0-prealpha.5"></script>
-<script src="js/replay-ui.js?v=1.0.0-prealpha.5"></script>
-<script src="js/online-config.js?v=1.0.0-prealpha.5"></script>
-<script src="js/online-client.js?v=1.0.0-prealpha.5"></script>
+<script src="js/experience.js?v=1.0.0-prealpha.6"></script>
+<script src="js/gamepad-ui.js?v=1.0.0-prealpha.6"></script>
+<script src="js/career-ui.js?v=1.0.0-prealpha.6"></script>
+<script src="js/replay-ui.js?v=1.0.0-prealpha.6"></script>
+<script src="js/online-config.js?v=1.0.0-prealpha.6"></script>
+<script src="js/online-client.js?v=1.0.0-prealpha.6"></script>
 </body></html>

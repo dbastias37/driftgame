@@ -10,7 +10,7 @@ test('twenty distinct open mountain routes descend continuously, with separated 
 });
 test('gravity respects the slope and mass; coasting accelerates while brakes hold a stopped car',()=>{
  const r=harness();assert.deepEqual(r('(()=>{const a=DriftDownhill.gravity({grade:0,tang:0},1000),b=DriftDownhill.gravity({grade:.1,tang:0},1000),c=DriftDownhill.gravity({grade:.1,tang:0},2000);return {flat:a.x,independent:b.x===c.x,doubleForce:c.force===2*b.force}})()'),{flat:0,independent:true,doubleForce:true});
- r(boot+'for(let i=0;i<300;i++)simulate(SIM_DT)');assert.ok(r('player.worldSpeed()')>3);assert.ok(r('player.descent.s')>8);assert.equal(r('player.score'),0);
+ r(boot+'var coastStart={...player.pos};for(let i=0;i<300;i++)simulate(SIM_DT)');assert.ok(r('player.worldSpeed()')>3);assert.ok(r('Math.hypot(player.pos.x-coastStart.x,player.pos.y-coastStart.y)')>8);assert.equal(r('player.score'),0);
  r(boot+"keys.add('s');for(let i=0;i<300;i++)simulate(SIM_DT)");assert.equal(r('player.worldSpeed()'),0);assert.equal(r('player.descent.s'),0);
 });
 test('more mass preserves more momentum under the same braking force',()=>{

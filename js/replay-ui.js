@@ -4,9 +4,9 @@ replayUI=(()=>{
   const recorder=new DriftReplay.Recorder(),buttons=['btnReplayPause','btnReplayEnd','btnReplayOnline'];
   let clock=0,session=null,playing=true,speed=1,at=0,returnState='',returnLocked=false,revision=0,lastEffects=-Infinity;
   const names={cinematic:'Montaje',drone:'Dron',isometric:'Isométrica',trackside:'Curva'};
-  function syncButtons(){for(const id of buttons){const b=$('#'+id);if(b)b.disabled=recorder.duration<2||!!online?.racing;}}
+  function syncButtons(){for(const id of buttons){const b=$('#'+id);if(b)b.disabled=!!track?.training||recorder.duration<2||!!online?.racing;}}
   function reset(){if(session)close();clock=0;recorder.reset({track,skin:chosen.sprite,timeOfDay:renderPrefs.timeOfDay,...raceConditions});driftEffect.reset();syncButtons();}
-  function capture(dt=1/60){if(player&&track&&!session){clock+=Math.min(dt,.25);recorder.capture(clock,player,mode==='online'?online?.rivals()||[]:offlineRivals);}syncButtons();}
+  function capture(dt=1/60){if(player&&track&&!track.training&&!session){clock+=Math.min(dt,.25);recorder.capture(clock,player,mode==='online'?online?.rivals()||[]:offlineRivals);}syncButtons();}
   function open(){
     if(session||recorder.duration<2||online?.racing)return;
     returnState=state;returnLocked=controlsLocked;clearInputs();controlsLocked=true;state='replay';
@@ -48,7 +48,7 @@ replayUI=(()=>{
   }
   function decorate(g,w,h,label){
     g.save();g.fillStyle='#081116';g.fillRect(0,0,w,Math.min(32,h*.045));g.fillRect(0,h-Math.min(32,h*.045),w,Math.min(32,h*.045));
-    g.fillStyle='#ecefe6';g.font='12px DriftPixel, monospace';g.textAlign='right';g.fillText((label||names[session?.camera]||'MONTAJE').toUpperCase(),w-20,25);g.restore();
+    g.fillStyle='#ecefe6';g.font='12px DriftDisplay, Impact, sans-serif';g.textAlign='right';g.fillText((label||names[session?.camera]||'MONTAJE').toUpperCase(),w-20,25);g.restore();
   }
   for(const id of buttons)$('#'+id).addEventListener('click',open);
   $('#replayExit').addEventListener('click',close);$('#replayPlay').addEventListener('click',toggle);

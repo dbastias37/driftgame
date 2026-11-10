@@ -64,3 +64,9 @@ test('raised kerb vertices use the exact same height field and keep the original
   const fs=require('node:fs'),path=require('node:path'),source=fs.readFileSync(path.join(__dirname,'../js/view3d.js'),'utf8');
   assert.ok(source.includes("ctx.fillStyle='#c85837'"));assert.ok(source.includes("ctx.fillStyle='#d7cec0'"));
 });
+
+test('additional body compliance responds to braking and cornering, then settles without tyre displacement',async()=>{
+ const R=await ready,t={...track,training:true},car={pos:{x:0,y:0},angle:0,accelLat:8,accelLong:-7,handling:{roll:.075,pitch:.055,spring:62,damp:10}};R.reset(t,car,'blue');
+ for(let i=0;i<240;i++)R.update(t,car,1/60,'blue');assert(car.ride.roll<-.075);assert(car.ride.pitch<-.048);assert(car.ride.wheels.every(w=>w.height===0));
+ car.accelLat=car.accelLong=0;for(let i=0;i<300;i++)R.update(t,car,1/60,'blue');assert(Math.abs(car.ride.roll)<1e-5);assert(Math.abs(car.ride.pitch)<1e-5);assert.deepEqual(car.pos,{x:0,y:0});
+});

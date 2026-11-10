@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
-import {buildMountainTerrain} from './mountain-terrain.js?v=1.0.0-prealpha.5';
-import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.5';
+import {buildMountainTerrain} from './mountain-terrain.js?v=1.0.0-prealpha.6';
+import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.6';
 const mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.88,...extra});
 function mesh(parent,geo,material,x=0,y=0,z=0){const o=new T.Mesh(geo,material);o.position.set(x,y,z);parent.add(o);return o;}
 function box(p,m,x,y,z,w,h,d){return mesh(p,new T.BoxGeometry(w,h,d),m,x,y,z);}
@@ -15,7 +15,7 @@ function band(track,parent,material,a,b,height=()=>.025,filter=()=>true){
     const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(pos,3));geo.setAttribute('uv',new T.Float32BufferAttribute(uv,2));geo.setIndex(indices);geo.computeVertexNormals();mesh(parent,geo,material).name='mountain-road';
   }
 }
-function label(text){const c=document.createElement('canvas');c.width=512;c.height=96;const g=c.getContext('2d');g.fillStyle='#17242b';g.fillRect(0,0,512,96);g.fillStyle='#f0f0e7';g.textAlign='center';g.font='bold 48px DriftPixel';g.fillText(text,256,64);const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;return new T.MeshBasicMaterial({map:t,side:T.DoubleSide});}
+function label(text){const c=document.createElement('canvas');c.width=512;c.height=96;const g=c.getContext('2d');g.fillStyle='#17242b';g.fillRect(0,0,512,96);g.fillStyle='#f0f0e7';g.textAlign='center';g.font='bold 48px DriftDisplay';g.fillText(text,256,64);const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;return new T.MeshBasicMaterial({map:t,side:T.DoubleSide});}
 export function buildMountain(track,world,low=false){
   const grass=mat(0x526253),rock=mat(0x728a84),dark=mat(0x283b43),white=mat(0xdde0d3),orange=mat(0xc85837),metal=mat(0x8a9694,{metalness:.45}),asphalt=mat(0xaeb7ba,{map:noise()}),sand=mat(0x7a8074);
   const b=track.bounds,tile=64,step=8;
@@ -34,7 +34,7 @@ export function buildMountain(track,world,low=false){
   for(const side of [-1,1])band(track,world,sand,side<0?-half-1.3:half+.86,side<0?-half-.86:half+1.3,()=>.02);
   asphalt.userData.roadSurface=true;
   band(track,world,asphalt,-half+.16,half-.16,()=>.02);
-  const start=track.points[0],heading=track.tangentAt(0),apron=box(world,asphalt,start.x-Math.cos(heading)*2,start.h-.04,start.y-Math.sin(heading)*2,4,.12,half*2);apron.rotation.y=-heading;
+  const start=track.points[0],heading=track.tangentAt(0),apron=box(world,asphalt,start.x-Math.cos(heading)*5,start.h-.04,start.y-Math.sin(heading)*5,10,.12,half*2);apron.rotation.y=-heading;
   const curbCanvas=document.createElement('canvas');curbCanvas.width=64;curbCanvas.height=4;const cg=curbCanvas.getContext('2d');cg.fillStyle='#c85837';cg.fillRect(0,0,32,4);cg.fillStyle='#dde0d3';cg.fillRect(32,0,32,4);
   const curbMap=new T.CanvasTexture(curbCanvas);curbMap.wrapS=T.RepeatWrapping;curbMap.colorSpace=T.SRGBColorSpace;
   const curbMat=mat(0xffffff,{map:curbMap});

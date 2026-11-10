@@ -100,6 +100,7 @@ document.querySelectorAll('[data-settings-tab]').forEach(button=>button.addEvent
 }));
 $('#btnCamera').addEventListener('click',cycleCamera);
 $('#btnModeDownhill').addEventListener('click',()=>{mode='downhill';showDownhillMenu();});
+$('#btnModeTraining').addEventListener('click',showTrainingMenu);
 $('#btnQuickRace').addEventListener('click',()=>{mode='race';showCircuitMenu();});
 $('#btnSettings').addEventListener('click',openSettings);$('#btnPauseSettings').addEventListener('click',openSettings);$('#btnSettingsBack').addEventListener('click',closeSettings);
 $('#btnMenuHelp').addEventListener('click',()=>toggleHelp());$('#btnHelpClose').addEventListener('click',()=>toggleHelp(false));
@@ -132,7 +133,9 @@ addEventListener('keydown',e=>{
 syncRenderUI();
 requestAnimationFrame(loop);
 let MenuPreviewClass=null,menuPreview=null,previewSelection=null,previewSpinning=renderPrefs.motion!=='reduced',previewFailed=false,previewLastFrame=0;
+function showTrainingMenu(){mode='training';showCustomTrackPreview(DriftTraining.create(Track),'training');}
 function showCircuitMenu(){
+  if(mode==='training'){showTrainingMenu();return;}
   if(mode==='downhill'){showDownhillMenu();return;}
   hidePanels();garageOrigin='circuits';$('#circuitMenu').classList.remove('hidden');$('#circuitList').classList.remove('hidden');
   $('#circuitTitle').textContent=mode==='tt'?'Contrarreloj · Elige circuito':'Carrera · Elige circuito';
@@ -151,8 +154,8 @@ function previewCircuit(n,challenge=false){
 function showCustomTrackPreview(track,origin='import'){
   hidePanels();garageOrigin=origin;previewSelection={track,level:0,origin,challenge:false};
   $('#circuitMenu').classList.remove('hidden');$('#circuitList').classList.add('hidden');
-  $('#circuitTitle').textContent=origin==='board'?'Tu circuito · Vista previa':'Circuito importado · Vista previa';
-  $('#btnCircuitBack').textContent=origin==='board'?'← Volver al dibujo':'← Importar otro circuito';
+  $('#circuitTitle').textContent=origin==='training'?'Entrenamiento · Mercado Ocho':origin==='board'?'Tu circuito · Vista previa':'Circuito importado · Vista previa';
+  $('#btnCircuitBack').textContent=origin==='training'?'← Menú principal':origin==='board'?'← Volver al dibujo':'← Importar otro circuito';
   updateTrackPreviewDetails();syncPreparationPreview();
 }
 function updateTrackPreviewDetails(){
@@ -164,6 +167,7 @@ function updateTrackPreviewDetails(){
   const locked=challenge&&level>unlockedLevel,button=$(challenge?'#btnChallengeContinue':'#btnCircuitContinue');
   button.disabled=locked;button.textContent=locked?'SUPERA EL DESAFÍO ANTERIOR':'ELEGIR AUTO ↗';
   $('#circuitPreviewGoal').textContent=t.downhill?`Objetivo: ${t.goal.toLocaleString('es-CL')} pts antes del 100% · 3 vidas · Mejor: ${downhillBest(t.routeLevel).score.toLocaleString('es-CL')} pts`:'';
+  if(t.training){$('#circuitPreviewDetails').textContent='Estacionamiento abierto · Recorrido en ocho · Zona libre';$('#circuitPreviewGoal').textContent='Derrapa para sumar. Derribar un cono resta 100 puntos. Sin límite de tiempo ni vidas.';}
   if(t.downhill)$('#circuitPreviewDetails').textContent=`${(t.finishS/1000).toFixed(2)} km · ↓ ${Math.round(t.drop)} m · Pendiente ${Math.round(t.drop/t.length*100)}% media`;
   if(challenge)$('#challengePreviewGoal').textContent=`Una vuelta · ${DriftCareer.load().missions[level].filter(Boolean).length}/3 objetivos · Se conservan entre intentos${locked?' · Completa la etapa anterior':''}`;
   document.querySelectorAll('[data-circuit],.btnPickChallenge,[data-downhill-pick]').forEach(b=>{
@@ -175,7 +179,7 @@ function confirmTrackPreview(){
   if(!previewSelection)return;
   const {track:selected,level,origin,challenge}=previewSelection;
   if(challenge&&level>unlockedLevel)return;
-  if(selected.downhill)mode='downhill';
+  if(selected.training)mode='training';else if(selected.downhill)mode='downhill';
   garageOrigin=origin;preparedTrack=selected;pendingTrackFactory=()=>selected;
   if(challenge){mode='challenge';activeChallengeLevel=level;activeChallengeGoal=challengeRequiredPoints(level);challengeCompletedThisRun=false;$('#challengeGoal').textContent=activeChallengeGoal.toLocaleString('es-CL');$('#challengeLevel').textContent=level;}
   openCarPanel();
@@ -183,6 +187,7 @@ function confirmTrackPreview(){
 function returnToTrackPreview(){
   if(mode==='online'&&online?.inRoom){online.showLobby();return;}
   if(!preparedTrack){showTrackSelection();return;}
+  if(preparedTrack.training){showTrainingMenu();return;}
   if(preparedTrack.downhill){mode='downhill';showDownhillMenu(preparedTrack.routeLevel);return;}
   if(!preparedTrack.layout?.level){showCustomTrackPreview(preparedTrack,garageOrigin==='board'?'board':'import');return;}
   const n=preparedTrack.layout.level;showTrackSelection();previewCircuit(n,mode==='challenge');
@@ -274,8 +279,9 @@ $('#btnRecover').addEventListener('click',loseLifeAndRespawn);
 
 
 
-import('./view3d.js?v=1.0.0-prealpha.5').then(({DriftView3D})=>{
+import('./view3d.js?v=1.0.0-prealpha.6').then(async({DriftView3D})=>{
+  await document.fonts?.load('32px DriftDisplay');
   sceneView=new DriftView3D($('#scene3d'),{quality:renderPrefs.quality,onFailure:fail3D,onVehicleFailure:()=>toast('No se pudo cargar un modelo de auto. Recarga para volver a intentarlo.')});
   if(sceneView.software)toast('3D compatible activo · Calidad ligera');
 }).catch(fail3D);
-import('./menu-preview.js?v=1.0.0-prealpha.5').then(module=>{MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});
+import('./menu-preview.js?v=1.0.0-prealpha.6').then(async module=>{await document.fonts?.load('32px DriftDisplay');MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});
