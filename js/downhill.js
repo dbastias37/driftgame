@@ -127,7 +127,7 @@ globalThis.DriftDownhill=(()=>{
     return inverse?rz(rx(ry(v,yaw),-roll),-pitch):ry(rx(rz(v,pitch),roll),-yaw);
   }
   function fall(track,car,dt){
-    const d=car.descent;d.fallTime+=dt;car.smoke=[];car.trailOn=false;
+    const d=car.descent;d.fallTime+=dt;car.smoke=[];car.trailOn=false;globalThis.DriftWheelParticles?.reset(car);
     car.vel.x*=Math.exp(-.025*dt);car.vel.y*=Math.exp(-.025*dt);d.vy-=G*dt;
     car.pos.x+=car.vel.x*dt;car.pos.y+=car.vel.y*dt;d.y+=d.vy*dt;car.angle+=car.omega*dt;
     d.roll+=d.rollV*dt;d.pitch+=d.pitchV*dt;

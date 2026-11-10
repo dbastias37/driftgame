@@ -1,3 +1,11 @@
+## 1.0.0-prealpha.17 — Partículas por superficie
+
+- Gravilla con caras, rebote y polvo desde las ruedas que pisan la zona de escape. Intensidad por velocidad, derrape, frenado e impacto; marcha atrás incluida.
+- Gotas y bruma en lluvia y lluvia intensa, también en línea recta. Menos polvo y humo sobre mojado; túneles secos y hombros de hormigón en túneles/viaductos.
+- Pool por auto y dos mallas compartidas para todos los vehículos, con presupuesto menor en móvil/calidad ligera. Recuperaciones y caídas limpian los efectos.
+- Integración visual con rivales online y repetición sin modificar fuerzas, protocolo o tamaño de la grabación.
+- Pruebas de superficies, partículas, repetición, renderizado y equivalencia física. Revisión visual en navegador de compatibilidad; GPU y Android físico pendientes.
+
 ## 1.0.0-prealpha.16 — Circuitos 2.0
 
 Cinco circuitos originales de 6,4 a 8,4 km con ascensos, descensos, curvas amplias y peraltes progresivos. Cada ruta incluye túneles y un viaducto con estructura modelada. Carrera permite elegir 4 o 5 vueltas; también están disponibles en contrarreloj. Acceso: **Jugar → Carrera rápida → primeras cinco tarjetas «2.0»**.

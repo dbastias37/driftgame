@@ -1,11 +1,11 @@
 /* Playback is a presentation layer. The live player, clocks, result and inputs
  * are never restored from a recording. Leaving returns to the same paused UI. */
 replayUI=(()=>{
-  const recorder=new DriftReplay.Recorder(),buttons=['btnReplayPause','btnReplayEnd','btnReplayOnline'];
+  const recorder=new DriftReplay.Recorder(),wheelPlayback=new DriftWheelParticles.Playback(),buttons=['btnReplayPause','btnReplayEnd','btnReplayOnline'];
   let clock=0,session=null,playing=true,speed=1,at=0,returnState='',returnLocked=false,revision=0,lastEffects=-Infinity;
   const names={cinematic:'Montaje',drone:'Dron',isometric:'Isométrica',trackside:'Curva'};
   function syncButtons(){for(const id of buttons){const b=$('#'+id);if(b)b.disabled=!!track?.training||recorder.duration<2||!!online?.racing;}}
-  function reset(){if(session)close();clock=0;recorder.reset({track,skin:chosen.sprite,timeOfDay:renderPrefs.timeOfDay,...raceConditions});driftEffect.reset();syncButtons();}
+  function reset(){if(session)close();clock=0;recorder.reset({track,skin:chosen.sprite,timeOfDay:renderPrefs.timeOfDay,...raceConditions});wheelPlayback.reset();driftEffect.reset();syncButtons();}
   function capture(dt=1/60){if(player&&track&&!track.training&&!session){clock+=Math.min(dt,.25);recorder.capture(clock,player,mode==='online'?online?.rivals()||[]:offlineRivals,track.trackProps?.props||[]);}syncButtons();}
   function open(){
     if(session||recorder.duration<2||online?.racing)return;
@@ -39,11 +39,15 @@ replayUI=(()=>{
       const trails=[],smoke=[];
       for(let age=2.4;age>=0;age-=.1){const old=recorder.sample(at-age);if(!old?.player?.trailOn||at-age<recorder.start)continue;const p=old.player,off=DriftRoadContact.wheelOffsets(p.skin)[0],c=Math.cos(p.angle),s=Math.sin(p.angle),x=p.pos.x+c*off.x,y=p.pos.y+s*off.x,w=Math.abs(off.z);
         trails.push({x1:x+s*w,y1:y-c*w,x2:x-s*w,y2:y+c*w,a:.3});
-        if(age<.7)for(const sign of [-1,1])smoke.push({x:x+s*w*sign+Math.sin((at-age)*31)*age,y:y-c*w*sign,life:age,a:.25*(1-age),r:.4+age});
+        if(age<.7)for(const sign of [-1,1]){const px=x+s*w*sign,py=y-c*w*sign,surface=DriftRoadContact.surface(recorder.meta.track,px,py,DriftWheelParticles.wetness(recorder.meta.weather));
+          if(surface.kind==='gravel'||surface.kind==='grass')continue;
+          smoke.push({x:px+Math.sin((at-age)*31)*age,y:py,height:surface.height+.15+age*.5,life:age,a:.25*(1-age)*(1-surface.wetness*.85),r:.4+age});
+        }
       }
       session.effects={trails,smoke};lastEffects=at;
     }
     sample.player.tireTrails=session.effects?.trails||[];sample.player.smoke=session.effects?.smoke||[];
+    wheelPlayback.apply(recorder,at,sample);
     updateUI();return sample;
   }
   function decorate(g,w,h,label){

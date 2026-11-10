@@ -154,7 +154,10 @@ export function buildTouring(track,world,low=false){
     band(side<0?-half-.16:half-.16,side<0?-half+.16:half+.16,M.white);
   }
   // Shoulders and kerbs are outside the carriageway, with matching support.
-  band(-track.cutHalf,-half-.86,M.sand);band(half+.86,track.cutHalf,M.sand);
+  for(const [a,b] of [[-track.cutHalf,-half-.86],[half+.86,track.cutHalf]]){
+    band(a,b,M.sand,{filter:s=>!track.featureAt(s)});
+    band(a,b,M.concrete,{filter:s=>!!track.featureAt(s)});
+  }
   for(const side of [-1,1])for(let j=0;j<6;j++){
     const a=half+.16+j*.7/6,b=half+.16+(j+1)*.7/6;
     band(side<0?-b:a,side<0?-a:b,j%2?M.white:M.portal,{lift:o=>globalThis.DriftRoadContact.profile(Math.abs(o)-half)+.018});

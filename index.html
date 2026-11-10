@@ -2,7 +2,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>DR1FT — 1.0 pre-alpha</title>
-<meta name="application-version" content="1.0.0-prealpha.12">
+<meta name="application-version" content="1.0.0-prealpha.17">
 <meta name="theme-color" content="#111719">
 <style>
   :root{--bg:#0b0b0b;--ink:#e6f1ff;}
@@ -521,8 +521,8 @@
 <script src="js/circuit-layouts.js?v=1.0.0-prealpha.12"></script>
 <script src="js/touring-circuits.js?v=1.0.0-prealpha.16"></script>
 <script src="js/vehicle-fit.js?v=1.0.0-prealpha.12"></script>
-<script src="js/road-contact.js?v=1.0.0-prealpha.16"></script>
-<script src="js/downhill.js?v=1.0.0-prealpha.12"></script>
+<script src="js/road-contact.js?v=1.0.0-prealpha.17"></script>
+<script src="js/downhill.js?v=1.0.0-prealpha.17"></script>
 <script src="js/yugo-physics.js?v=1.0.0-prealpha.12"></script>
 <script src="js/frame-presentation.js?v=1"></script>
 <script src="js/gamepad.js?v=1.0.0-prealpha.12-reverse1"></script>
@@ -533,7 +533,8 @@
 <script src="js/ai-race.js?v=1.0.0-prealpha.16"></script>
 <script src="js/vehicle-dynamics.js?v=1.0.0-prealpha.12-reverse1"></script>
 <script src="js/engine-audio.js?v=1.0.0-prealpha.13"></script>
-<script src="js/tire-smoke.js?v=1.0.0-prealpha.12"></script>
+<script src="js/tire-smoke.js?v=1.0.0-prealpha.17"></script>
+<script src="js/wheel-particles.js?v=1.0.0-prealpha.17"></script>
 <script src="js/online-rules.js?v=1.0.0-prealpha.12-reverse1"></script>
 <script>
 "use strict";
@@ -1013,6 +1014,7 @@ class Car{
   spawnTrails(f,r,dt,int){ const ro=-this.length*.5, rc={x:this.pos.x+f.x*ro,y:this.pos.y+f.y*ro}, ht=.9, lw={x:rc.x-r.x*ht,y:rc.y-r.y*ht}, rw={x:rc.x+r.x*ht,y:rc.y+r.y*ht}, a=clamp(.18+(int||0)*.1,.18,.9); this.tireTrails.push({x1:lw.x,y1:lw.y,x2:rw.x,y2:rw.y,a}); const MAX_TR=isTouchDevice?2500:4000; if(this.tireTrails.length>MAX_TR) this.tireTrails.splice(0,this.tireTrails.length-MAX_TR); }
   updateSmoke(dt,f,r,slip,kmh,vlat){
     DriftTireSmoke.update(this,dt,f,r,slip,kmh,vlat);
+    DriftWheelParticles.update(this,dt);
   }
   draw(g,cam){
     g.save(); g.translate(cam.tx,cam.ty); g.scale(cam.s,cam.s);
@@ -1880,12 +1882,12 @@ function checkChallengeProgress(){
 }
 
 </script>
-<script src="js/experience.js?v=1.0.0-prealpha.16"></script>
+<script src="js/experience.js?v=1.0.0-prealpha.17"></script>
 <script src="js/gamepad-ui.js?v=1.0.0-prealpha.12-reverse1"></script>
 <script src="js/career-ui.js?v=1.0.0-prealpha.12"></script>
-<script src="js/replay-ui.js?v=1.0.0-prealpha.12"></script>
+<script src="js/replay-ui.js?v=1.0.0-prealpha.17"></script>
 <script src="js/online-config.js?v=1.0.0-prealpha.12"></script>
-<script src="js/online-client.js?v=1.0.0-prealpha.12"></script>
+<script src="js/online-client.js?v=1.0.0-prealpha.17"></script>
 <script src="js/menu-feedback.js?v=1.0.0-prealpha.12"></script>
 <script src="js/menu-ux.js?v=1.0.0-prealpha.12"></script>
 <script type="module" src="js/music-ui.js?v=1.0.0-prealpha.15"></script>
