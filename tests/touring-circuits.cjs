@@ -26,8 +26,10 @@ test('gravity follows grade and banking, brakes hold on a slope and barriers pro
 
 test('touring selection preserves four/five laps, preview return, restart and record identity',()=>{
   const r=harness();r("mode='race';showCircuitMenu();previewTouring(4,5);confirmTrackPreview();returnToTrackPreview();");assert.equal(r('previewSelection.track.touringId'),4);assert.equal(r('previewSelection.track.raceLaps'),5);
-  r("confirmTrackPreview();$('#btnChooseStart').click();");assert.equal(r('TOTAL_LAPS'),5);assert(r('currentTrackId').startsWith('TOURING.v1.4:'));assert.equal(r('track.trackProps.props.length'),0);
+  r("confirmTrackPreview()");assert(r("$('#sessionBrief').textContent").startsWith('5 vueltas'));
+  r("$('#btnChooseStart').click();");assert.equal(r('TOTAL_LAPS'),5);assert(r('currentTrackId').startsWith('TOURING.v1.4:'));assert.equal(r('track.trackProps.props.length'),0);
   r('restartRaceSameTrack()');assert.equal(r('TOTAL_LAPS'),5);assert.equal(r('track.touringId'),4);
+  r("mode='race';showCircuitMenu();previewTouring(2,4);confirmTrackPreview()");assert(r("$('#sessionBrief').textContent").startsWith('4 vueltas'));
   r("startWithTrack(DriftTouring.createTrack(Track,2),'race')");assert.equal(r('TOTAL_LAPS'),4);assert.equal(r('lap'),1);
   r("startWithTrack(presetTrack(2),'race')");assert.equal(r('TOTAL_LAPS'),5);assert.equal(r('!!track.elevated'),false);
 });
