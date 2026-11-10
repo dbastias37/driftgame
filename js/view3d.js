@@ -1,19 +1,20 @@
 import * as T from '../vendor/three.module.min.js';
 import {SoftwareRenderer} from './software-renderer.js?v=1.0.0-prealpha.12';
-import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles,groundGeometry} from './track-surface.js?v=1.0.0-prealpha.12';
-import {buildMountain} from './mountain-scene.js?v=1.0.0-prealpha.12';
+import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles,groundGeometry} from './track-surface.js?v=1.0.0-prealpha.16';
+import {buildTouring} from './touring-scene.js?v=1.0.0-prealpha.16';
+import {buildMountain} from './mountain-scene.js?v=1.0.0-prealpha.16';
 import {loadRX7,createRX7} from './rx7-model.js?v=1.0.0-prealpha.12';
 import {loadYugo,createYugo} from './yugo-model.js?v=1.0.0-prealpha.12';
 import {loadFujiwara,createFujiwara} from './fujiwara-model.js?v=1.0.0-prealpha.12';
 import {batchWorld,updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.12';
-import {Atmosphere,buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.15';
-import {CinematicDirector} from './cinematic-camera.js?v=1.0.0-prealpha.12';
+import {Atmosphere,buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.16';
+import {CinematicDirector} from './cinematic-camera.js?v=1.0.0-prealpha.16';
 import {loadNova,loadSkyline,createReplacement,updateVehicleLights} from './replacement-model.js?v=1.0.0-prealpha.12';
 import {applyVehiclePaint,disposePaint} from './vehicle-paint.js?v=1.0.0-prealpha.12';
-import {cloudTexture,TireSmokeRenderer} from './smoke-renderer.js?v=1.0.0-prealpha.12';
+import {cloudTexture,TireSmokeRenderer} from './smoke-renderer.js?v=1.0.0-prealpha.16';
 import {RetroRenderer} from './retro-renderer.js?v=1.0.0-prealpha.12';
-import {WeatherEffects} from './weather.js?v=1.0.0-prealpha.12';
-import {buildTraining} from './training-scene.js?v=1.0.0-prealpha.12';
+import {WeatherEffects} from './weather.js?v=1.0.0-prealpha.16';
+import {buildTraining} from './training-scene.js?v=1.0.0-prealpha.16';
 import {onboardCameras,onboardShot,startShot} from './driving-cameras.js?v=1.0.0-prealpha.12';
 import {applyRoadFeedback,roadFeedback} from './road-feedback.js?v=1.0.0-prealpha.12';
 import {SceneSpeedLines} from './scene-speed-lines.js?v=1.0.0-prealpha.12';
@@ -128,6 +129,7 @@ export class DriftView3D{
     disposeGroup(this.world);this.trailCache=new WeakMap();this.track=track;const r=rng(),b=track.bounds,cx=b.minX+b.w/2,cz=b.minY+b.h/2,half=track.roadHalf;
     this.trainingScene=null;this.trackPropsScene=null;
     if(track.training){this.trainingScene=buildTraining(track,this.world);this.streetLights=this.trainingScene.street;this.trackPropsScene=buildTrackProps(track,this.world);return;}
+    if(track.elevated){buildTouring(track,this.world,this.low);this.streetLights=buildStreetLights(track,this.world);batchWorld(this.world);return;}
     if(track.downhill){buildMountain(track,this.world,this.low);this.streetLights=buildStreetLights(track,this.world);batchWorld(this.world);this.trackPropsScene=buildTrackProps(track,this.world);return;}
     const asphaltTexture=noiseTexture(),kerbTexture=curbTexture();
     asphaltTexture.anisotropy=Math.min(8,this.renderer.capabilities?.getMaxAnisotropy()||1);
@@ -204,7 +206,7 @@ export class DriftView3D{
   }
   placeOnRoad(model,pose,skin,ride=null){
     const contact=ride||globalThis.DriftRoadContact.contacts(this.track,pose,skin);
-    const mountain=!!this.track.downhill;
+    const mountain=!!(this.track.downhill||this.track.elevated);
     model.root.position.y=mountain?contact.height:0;
     model.body.position.set(0,mountain?0:contact.height,0);
     model.body.rotation.x=contact.roll;model.body.rotation.z=contact.pitch;
@@ -226,7 +228,7 @@ export class DriftView3D{
       if(!data){
         data=new Float32Array(36);let j=0;
         for(const side of [1,2]){const x=a['x'+side],z=a['y'+side],xx=b['x'+side],zz=b['y'+side],d=Math.hypot(xx-x,zz-z)||1,nx=-(zz-z)/d*.1,nz=(xx-x)/d*.1;
-          for(const p of [[x+nx,z+nz],[xx+nx,zz+nz],[x-nx,z-nz],[x-nx,z-nz],[xx+nx,zz+nz],[xx-nx,zz-nz]]){data[j++]=p[0];data[j++]=(this.track.downhill?this.track.surfaceHeight(p[0],p[1]):0)+.065;data[j++]=p[1];}
+          for(const p of [[x+nx,z+nz],[xx+nx,zz+nz],[x-nx,z-nz],[x-nx,z-nz],[xx+nx,zz+nz],[xx-nx,zz-nz]]){data[j++]=p[0];data[j++]=((this.track.downhill||this.track.elevated)?this.track.surfaceHeight(p[0],p[1]):0)+.065;data[j++]=p[1];}
         }
         this.trailCache.set(b,data);
       }
@@ -281,12 +283,13 @@ export class DriftView3D{
     else{const d=12.5+Math.min(speed,45)*.075;desired.set(p.x-f.x*d,6.5,p.y-f.z*d);target.set(p.x+f.x*7,.6,p.y+f.z*7);this.camera.fov=58+(motion==='reduced'?0:Math.min(speed*.12,7));}
     if(startIntro!==null){const opening=startShot([player,...rivals],motion==='reduced'?5.99:startIntro);desired.copy(opening.position);target.copy(opening.target);this.camera.fov=opening.fov;}
     else if(!mounted){if(shot?.kind==='trackside')this.camera.fov=clamp(this.camera.fov*Math.sqrt(this.distance),30,100);else desired.sub(target).multiplyScalar(this.distance).add(target);}
-    if(this.track.downhill&&!inMenu){
+    if((this.track.downhill||this.track.elevated)&&!inMenu){
       const elevation=falling?descent.y:ride.height;
       if(!onboard&&!cinematic&&startIntro===null){desired.y+=elevation;target.y+=elevation;}
       if(falling&&!cinematic){desired.set(p.x-f.x*16,elevation+10,p.y-f.z*16);target.set(p.x,elevation,p.y);this.car.root.visible=true;}
-      desired.y=Math.max(desired.y,this.track.terrainHeight(desired.x,desired.z)+(mounted?.18:1.8));
+      desired.y=Math.max(desired.y,(this.track.cameraFloor||this.track.terrainHeight)(desired.x,desired.z)+(mounted?.18:1.8));
     }
+    if(track.elevated&&!inMenu)DriftTouring.constrainCamera(track,player,desired,target,mounted);
     if(inMenu&&!shot?.mounted){
       const forward=new T.Vector3().subVectors(target,desired).normalize(),screenRight=new T.Vector3().crossVectors(forward,new T.Vector3(0,1,0)).normalize(),halfHeight=desired.distanceTo(target)*Math.tan(this.camera.fov*Math.PI/360);
       if(w>700)target.addScaledVector(screenRight,-halfHeight*this.camera.aspect*.20);
@@ -294,7 +297,8 @@ export class DriftView3D{
     }
     if(!inMenu&&motion!=='reduced')this.camera.fov+=clamp(impulse,0,1)*1.2;
     if(!this.cameraReady||shot?.cut||shot?.kind==='trackside'||mounted||startIntro!==null||motion==='reduced')this.camera.position.copy(desired);else this.camera.position.lerp(desired,alpha);
-    if(track.downhill)this.camera.position.y=Math.max(this.camera.position.y,track.terrainHeight(this.camera.position.x,this.camera.position.z)+(mounted?.18:1.8));
+    if(track.downhill||track.elevated)this.camera.position.y=Math.max(this.camera.position.y,(track.cameraFloor||track.terrainHeight)(this.camera.position.x,this.camera.position.z)+(mounted?.18:1.8));
+    if(track.elevated&&!inMenu)DriftTouring.constrainCamera(track,player,this.camera.position,null,mounted);
     if(!this.look)this.look=target.clone();if(!this.cameraReady||shot?.cut||mounted||startIntro!==null||motion==='reduced')this.look.copy(target);else this.look.lerp(target,alpha);
     this.camera.lookAt(this.look);
     if(!inMenu&&startIntro===null){const feedback=roadFeedback(player,weatherTime,feedbackSettings);this.feedbackRotation.set(feedback.cameraPitch,feedback.cameraYaw,feedback.cameraRoll);this.camera.quaternion.multiply(this.feedbackQuaternion.setFromEuler(this.feedbackRotation));}

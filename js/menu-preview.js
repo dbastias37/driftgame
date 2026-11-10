@@ -1,5 +1,5 @@
 import * as T from '../vendor/three.module.min.js';
-import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.15';
+import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.16';
 import {updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.12';
 
 const material=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.82,...extra});
@@ -72,7 +72,7 @@ export class MenuPreview3D extends DriftView3D{
       if(this.track!==track){this.build(track);this.resetPreview();}
       this.speedVectors.mesh.visible=false;this.lampDust.mesh.visible=false;this.car.root.visible=false;this.ghostCar.root.visible=false;this.smoke.visible=false;this.trails.visible=false;
       if(spinning)this.droneAngle+=Math.min(dt,.1)*.055;
-      const b=track.bounds,cx=b.minX+b.w/2,cz=b.minY+b.h/2,radius=Math.hypot(b.w,b.h,track.maxHeight||0)/2+track.roadHalf+22,centerY=track.downhill?track.maxHeight/2:0;
+      const b=track.bounds,cx=b.minX+b.w/2,cz=b.minY+b.h/2,radius=Math.hypot(b.w,b.h,track.maxHeight||0)/2+track.roadHalf+22,centerY=track.elevated?(track.maxHeight+track.minHeight)/2:track.downhill?track.maxHeight/2:0;
       this.previewRadius=radius;this.camera.fov=43;
       const fov=2*Math.atan(Math.tan(this.camera.fov*Math.PI/360)*Math.min(1,this.camera.aspect)),distance=radius/Math.sin(fov/2)*1.06*this.previewZoom;
       this.camera.near=.2;this.camera.far=distance+radius*4+900;this.scene.fog=new T.Fog(0x9fb4b6,distance+radius*1.5,distance+radius*6);

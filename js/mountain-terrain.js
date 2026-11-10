@@ -8,14 +8,16 @@ export function roadFootprint(track){
 // Terrain is cut out underneath the shoulder instead of trying to hide a
 // coarse heightfield by lowering selected vertices. Both boundaries coincide.
 export function buildMountainTerrain(track,world,material){
-  const b=track.bounds,tile=64,step=8,footprint=roadFootprint(track),cache=new Map(),palette=[new T.Color(0x526253),new T.Color(0x728a84)];
-  const sample=(x,z)=>{const key=x+','+z;if(!cache.has(key)){const q=track.sampleNearby(x,z);let h=track.baseHeight(x,z);if(q){const t=Math.max(0,Math.min(1,(q.distance-track.roadHalf-1.3)/30));h=q.h+(h-q.h)*t*t*(3-2*t);}cache.set(key,{q,h});}return cache.get(key);};
+  const b=track.bounds,tile=64,step=track.terrainStep||8,cutHalf=track.cutHalf||track.roadHalf+1.3,footprint=roadFootprint(track),cache=new Map(),palette=[new T.Color(0x526253),new T.Color(0x728a84)];
+  const sample=(x,z)=>{const key=x+','+z;if(!cache.has(key)){const q=track.sampleNearby(x,z);let h=track.elevated?track.terrainHeight(x,z):track.baseHeight(x,z);if(q&&!track.elevated){const t=Math.max(0,Math.min(1,(q.distance-track.roadHalf-1.3)/30));h=q.h+(h-q.h)*t*t*(3-2*t);}cache.set(key,{q,h});}return cache.get(key);};
+  const footprints=[];
+  if(track.elevated){const offset=new C.ClipperOffset(2,.05*SCALE);offset.AddPath(track.points.map(p=>({X:Math.round(p.x*SCALE),Y:Math.round(p.y*SCALE)})),C.JoinType.jtRound,C.EndType.etClosedLine);offset.Execute(footprints,cutHalf*SCALE);}else footprints.push(footprint);
   for(let x=Math.floor((b.minX-160)/tile)*tile;x<b.maxX+160;x+=tile)for(let z=Math.floor((b.minY-180)/tile)*tile;z<b.maxY+180;z+=tile){
     const vertices=[],colors=[],indices=[],shared=new Map();let localFootprint;
     const clippingPaths=()=>{
       if(localFootprint)return localFootprint;
       const clip=new C.Clipper(),tree=new C.PolyTree();
-      clip.AddPath(footprint,C.PolyType.ptSubject,true);
+      clip.AddPaths(footprints,C.PolyType.ptSubject,true);
       clip.AddPath([[x,z],[x+tile,z],[x+tile,z+tile],[x,z+tile]].map(([px,pz])=>({X:px*SCALE,Y:pz*SCALE})),C.PolyType.ptClip,true);
       clip.Execute(C.ClipType.ctIntersection,tree,C.PolyFillType.pftNonZero,C.PolyFillType.pftNonZero);
       return localFootprint=C.Clipper.PolyTreeToPaths(tree);
@@ -40,7 +42,7 @@ export function buildMountainTerrain(track,world,material){
     for(let j=0;j<tile;j+=step)for(let i=0;i<tile;i+=step){
       const xx=x+i,zz=z+j,ring=[[xx,zz],[xx+step,zz],[xx+step,zz+step],[xx,zz+step]].map(([x,z])=>({X:Math.round(x*SCALE),Y:Math.round(z*SCALE)}));
       const {q}=sample(xx+step/2,zz+step/2);
-      if(!q||q.distance>track.roadHalf+1.3+step*Math.SQRT2){for(const n of [0,2,1,0,3,2])vertex(ring[n]);continue;}
+      if(!q||q.distance>cutHalf+step*Math.SQRT2){for(const n of [0,2,1,0,3,2])vertex(ring[n]);continue;}
       const clip=new C.Clipper(),tree=new C.PolyTree();clip.AddPath(ring,C.PolyType.ptSubject,true);clip.AddPaths(clippingPaths(),C.PolyType.ptClip,true);clip.Execute(C.ClipType.ctDifference,tree,C.PolyFillType.pftNonZero,C.PolyFillType.pftNonZero);triangulate(tree);
     }
     // Derivative flat shading preserves the original per-triangle normals

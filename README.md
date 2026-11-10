@@ -1,3 +1,11 @@
+## 1.0.0-prealpha.16 — Circuitos 2.0
+
+Cinco circuitos originales de 6,4 a 8,4 km con ascensos, descensos, curvas amplias y peraltes progresivos. Cada ruta incluye túneles y un viaducto con estructura modelada. Carrera permite elegir 4 o 5 vueltas; también están disponibles en contrarreloj. Acceso: **Jugar → Carrera rápida → primeras cinco tarjetas «2.0»**.
+
+La carretera renderizada, las cuatro ruedas, las barreras y los efectos comparten la misma superficie. Las pendientes centrales máximas son de 3,1–5,3 % y los peraltes máximos de 5–9°. Se conserva el comportamiento de los circuitos anteriores y del descenso.
+
+[Diseño, referencias, validación y límites](docs/touring-circuits.md). Revisión visual realizada con el renderizador de compatibilidad; rendimiento WebGL y tacto en teléfono físico pendientes.
+
 ## 1.0.0-prealpha.12 — Banda sonora completa
 
 22 MP3 registrados con los títulos y artistas proporcionados. La música comienza al entrar al menú y cambia al seleccionar pista, entrar al garaje y comenzar carrera. Fundidos de 200/260 ms coordinados con el cambio visual a negro; ajustes y pausa no saltan de tema, y la pausa musical manual se conserva.

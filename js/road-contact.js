@@ -12,7 +12,7 @@ globalThis.DriftRoadContact ||= (()=>{
   }
   function terrain(track){
     if(track.training)return {height:()=>0};
-    if(track.downhill)return {height:track.surfaceHeight};
+    if(track.downhill||track.elevated)return {height:track.surfaceHeight};
     const previous=terrainCache.get(track);if(previous?.half===track.roadHalf)return previous;
     const grid=new Map(),longSegments=[],pad=track.roadHalf+curb.start+curb.width;
     track.points.forEach((p,i)=>{
@@ -51,8 +51,8 @@ globalThis.DriftRoadContact ||= (()=>{
     const c=Math.cos(pose.angle),s=Math.sin(pose.angle),ground=terrain(track);let count=0;
     for(const p of wheelOffsets(skin)){
       const x=pose.pos.x+c*p.x-s*p.z,y=pose.pos.y+s*p.x+c*p.z;
-      const q=track.downhill?track.sampleNearby(x,y):null;
-      const raised=track.downhill?(q?profile(q.distance-track.roadHalf):0):ground.height(x,y);
+      const q=(track.downhill||track.elevated)?track.sampleNearby(x,y):null;
+      const raised=(track.downhill||track.elevated)?(q?profile(q.distance-track.roadHalf):0):ground.height(x,y);
       if(raised>.005)count++;
     }
     return count;
@@ -68,7 +68,7 @@ globalThis.DriftRoadContact ||= (()=>{
   function reset(track,car,skin){
     const pose=contacts(track,car,skin);
     globalThis.DriftDynamics?.reset(car);
-    car.ride={...pose,vy:0,vr:0,vp:0,lastX:car.pos.x,lastY:car.pos.y,lastAngle:car.angle,skin};
+    car.ride={...pose,groundHeight:pose.height,vy:0,vr:0,vp:0,lastX:car.pos.x,lastY:car.pos.y,lastAngle:car.angle,skin};
     return car.ride;
   }
   function update(track,car,dt,skin){
@@ -76,10 +76,14 @@ globalThis.DriftRoadContact ||= (()=>{
     let r=car.ride;
     const moved=r?Math.hypot(car.pos.x-r.lastX,car.pos.y-r.lastY):Infinity;
     if(!r||r.skin!==skin||moved>20)return reset(track,car,skin);
+    if(track.elevated){const groundHeight=contacts(track,car,skin).height;r.height+=groundHeight-(r.groundHeight??groundHeight);r.groundHeight=groundHeight;}
     const da=Math.atan2(Math.sin(car.angle-r.lastAngle),Math.cos(car.angle-r.lastAngle));
     // Sweep the tire path so even a fast transverse crossing cannot skip a
     // narrow curb between 60 Hz simulation ticks. Springs run at <= 1/120 s.
-    const count=Math.min(64,Math.max(1,Math.ceil(dt*120),Math.ceil((moved+Math.abs(da)*1.7)/.10))),h=dt/count;
+    // Smooth touring asphalt needs only the suspension integration rate. Keep
+    // the fine tyre sweep whenever any wheel can reach a kerb this tick.
+    const clearRibbon=track.elevated&&track.sample(car.pos.x,car.pos.y).distance+2.6+moved<track.roadHalf;
+    const count=Math.min(64,Math.max(1,Math.ceil(dt*120),clearRibbon?1:Math.ceil((moved+Math.abs(da)*1.7)/.10))),h=dt/count;
     let target;
     for(let i=1;i<=count;i++){
       const t=i/count;

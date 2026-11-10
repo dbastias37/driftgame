@@ -5,7 +5,7 @@ globalThis.DriftTrackProps=(()=>{
   const ground=(track,x,y)=>track.downhill?track.terrainHeight(x,y):0;
   const height=p=>material.height+.60*Math.abs(Math.sin(Math.hypot(p.tiltX,p.tiltY)));
   function spawns(track){
-    if(!track.layout&&!track.downhill)return [];
+    if(track.elevated||!track.layout&&!track.downhill)return [];
     const points=track.points,L=points.length,candidates=[];
     for(let i=10;i<L-10;i+=3){const a=track.tangentAt(i-5),b=track.tangentAt(i+5),turn=wrap(b-a),p=track.point(i);if(Math.abs(turn)<.045)continue;
       if(Math.hypot(p.x-points[0].x,p.y-points[0].y)<32)continue;

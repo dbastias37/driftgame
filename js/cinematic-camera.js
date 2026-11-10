@@ -37,7 +37,7 @@ export class CinematicDirector{
         const start=track.sample(anchor.pos.x,anchor.pos.y).i,limit=Math.min(track.points.length-1,Math.ceil(75/3));let best=start,bend=0,turn=0;
         for(let j=4;j<=limit;j+=2){const idx=track.open?Math.min(track.points.length-2,start+j):(start+j)%track.points.length,a=track.tangentAt(idx-3),b=track.tangentAt(idx+3),v=Math.atan2(Math.sin(b-a),Math.cos(b-a));if(Math.abs(v)>bend){bend=Math.abs(v);best=idx;turn=v;}}
         const point=track.point(best),normal=track.normalAt(best),side=turn>=0?-1:1,offset=(track.roadHalf+14)*side,x=point.x+normal.x*offset,z=point.y+normal.y*offset;
-        this.fixed={key,position:{x,y:Math.max(point.h||0,track.downhill?track.terrainHeight(x,z):0)+4.8,z}};
+        this.fixed={key,position:{x,y:Math.max(point.h||0,(track.downhill||track.elevated)?track.terrainHeight(x,z):0)+4.8,z}};
       }
       position={...this.fixed.position};const distance=Math.hypot(position.x-p.x,position.z-p.y);fov=clamp(35+distance*.17,38,66);
       // A fixed camera holds its position, then hands off before the car is
@@ -50,7 +50,7 @@ export class CinematicDirector{
       position={x:p.x-f.x*back*Math.cos(arc)+n.x*side,y:h+21+Math.sin(time*.15)*4+Math.min(5,speed*.1),z:p.y-f.z*back*Math.cos(arc)+n.z*side};
       target={x:p.x+f.x*(6+speed*.12),y:h+1,z:p.y+f.z*(6+speed*.12)};fov=49;
     }
-    if(track.downhill)position.y=Math.max(position.y,track.terrainHeight(position.x,position.z)+(mounted?.18:3));
+    if(track.downhill||track.elevated)position.y=Math.max(position.y,(track.cameraFloor||track.terrainHeight)(position.x,position.z)+(mounted?.18:3));
     const cut=this.key!==null&&key!==this.key;this.key=key;
     return {position,target,fov,kind,key,cut,mounted,hideBody:kind==='hood'||kind==='bumper',label:labels[kind]||''};
   }

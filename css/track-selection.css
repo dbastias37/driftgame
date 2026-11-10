@@ -67,3 +67,8 @@
 #circuitMenu .challenge-item:has(b) button{position:absolute;inset:0;width:100%;height:100%;font-size:0!important}
 #circuitMenu .challenge-item>div{grid-column:2;min-width:0}
 #circuitMenu .challenge-item b{font:700 14px/1.4 Arial,sans-serif!important;white-space:normal;margin:0}
+
+#circuitMenu .touring-item small{display:block;color:#ffbc7d;font:11px/1.5 Arial,sans-serif!important;margin-top:5px}
+.touring-laps{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0;font:13px Arial,sans-serif;color:#e0e9ed}
+.touring-laps select{background:#263941;border:1px solid #637780;border-radius:4px;padding:8px;color:#fff;min-height:36px}
+.touring-laps span{flex-basis:100%;color:#ffbc7d;font-size:12px}

@@ -232,7 +232,7 @@
 <link rel="stylesheet" href="css/display-font.css?v=1.0.0-prealpha.12">
 <link rel="stylesheet" href="css/psx.css?v=1.0.0-prealpha.12">
 <link rel="stylesheet" href="css/music.css?v=1.0.0-prealpha.12">
-<link rel="stylesheet" href="css/track-selection.css?v=1">
+<link rel="stylesheet" href="css/track-selection.css?v=1.0.0-prealpha.16">
 </head>
 <body>
   <div id="ui">
@@ -362,7 +362,7 @@
   <div id="circuitMenu" class="modal hidden preparation">
     <div class="preparation-shell track-shell">
       <header class="preparation-header"><div><p class="eyebrow">01 / RECONOCIMIENTO</p><h2 id="circuitTitle">Selecciona circuito</h2></div><span class="preparation-step"><b>PISTA</b> AUTO CARRERA</span></header>
-      <div class="track-workspace"><div id="circuitList" class="challenge-list track-picker"></div><div class="track-showcase"><div id="circuitStage" class="preview-stage"><span class="preview-status">Preparando vista aérea 3D…</span></div><div class="track-preview-caption"><div><h3 id="circuitPreviewName">—</h3><p id="circuitPreviewDetails">—</p><p id="circuitPreviewGoal"></p><label class="daytime-control">Día / noche <output data-daytime-label>Día</output><input type="range" min="0" max="100" value="0" step="1" data-daytime aria-label="Ambiente: día, atardecer o noche"><span class="daytime-ends"><span>Día</span><span>Atardecer</span><span>Noche</span></span></label></div><button class="text-button" data-preview-reset>Centrar</button><button class="text-button spin-button" data-preview-spin>Ⅱ Pausar giro</button></div></div></div>
+      <div class="track-workspace"><div id="circuitList" class="challenge-list track-picker"></div><div class="track-showcase"><div id="circuitStage" class="preview-stage"><span class="preview-status">Preparando vista aérea 3D…</span></div><div class="track-preview-caption"><div><h3 id="circuitPreviewName">—</h3><p id="circuitPreviewDetails">—</p><p id="circuitPreviewGoal"></p><label id="touringLapControl" class="touring-laps hidden">Vueltas <select id="touringLaps" aria-label="Vueltas del circuito largo"><option value="4">4 vueltas</option><option value="5">5 vueltas</option></select><span id="touringRaceDistance"></span></label><label class="daytime-control">Día / noche <output data-daytime-label>Día</output><input type="range" min="0" max="100" value="0" step="1" data-daytime aria-label="Ambiente: día, atardecer o noche"><span class="daytime-ends"><span>Día</span><span>Atardecer</span><span>Noche</span></span></label></div><button class="text-button" data-preview-reset>Centrar</button><button class="text-button spin-button" data-preview-spin>Ⅱ Pausar giro</button></div></div></div>
       <footer class="preparation-footer"><button id="btnCircuitBack" class="gray">← Menú principal</button><button id="btnCircuitContinue">ELEGIR AUTO ↗</button></footer>
     </div>
   </div>
@@ -519,8 +519,9 @@
 <script src="js/drift-effects.js?v=1.0.0-prealpha.12"></script>
 <script src="js/attract-demo.js?v=1.0.0-prealpha.12"></script>
 <script src="js/circuit-layouts.js?v=1.0.0-prealpha.12"></script>
+<script src="js/touring-circuits.js?v=1.0.0-prealpha.16"></script>
 <script src="js/vehicle-fit.js?v=1.0.0-prealpha.12"></script>
-<script src="js/road-contact.js?v=1.0.0-prealpha.12"></script>
+<script src="js/road-contact.js?v=1.0.0-prealpha.16"></script>
 <script src="js/downhill.js?v=1.0.0-prealpha.12"></script>
 <script src="js/yugo-physics.js?v=1.0.0-prealpha.12"></script>
 <script src="js/frame-presentation.js?v=1"></script>
@@ -528,8 +529,8 @@
 <script src="js/instruments.js?v=1.0.0-prealpha.12"></script>
 <script src="js/game-options.js?v=1.0.0-prealpha.12"></script>
 <script src="js/training.js?v=1.0.0-prealpha.12"></script>
-<script src="js/track-props.js?v=1.0.0-prealpha.12"></script>
-<script src="js/ai-race.js?v=1.0.0-prealpha.12"></script>
+<script src="js/track-props.js?v=1.0.0-prealpha.16"></script>
+<script src="js/ai-race.js?v=1.0.0-prealpha.16"></script>
 <script src="js/vehicle-dynamics.js?v=1.0.0-prealpha.12-reverse1"></script>
 <script src="js/engine-audio.js?v=1.0.0-prealpha.13"></script>
 <script src="js/tire-smoke.js?v=1.0.0-prealpha.12"></script>
@@ -813,7 +814,7 @@ function updateTrackIdUI(tr){
   const row = document.getElementById('trackIdRow');
   const input = document.getElementById('trackId');
   if(!row || !input) return;
-  if(!tr||tr.downhill){ row.style.display='none'; return; }
+  if(!tr||tr.downhill||tr.elevated){ row.style.display='none'; return; }
   const code = encodeSharedTrack(tr);
   input.value = code;
   row.style.display = 'flex';
@@ -976,7 +977,9 @@ class Car{
     const thr=clamp(Number(input.accel)||0,0,1), br=clamp(Number(input.brake)||0,0,1); this.handbrake=!!input.handbrake;
     this.reverseRequested=!!input.reverse;
     this.braking=!!br;this._effectTrack=track;
+    if(track.elevated)DriftTouring.beforeStep(track,this,dt,input);
     this._physStep(dt,steer,thr,br);
+    if(track.elevated)DriftTouring.afterStep(track,this);
     const f={x:C(this.angle),y:S(this.angle)}, r={x:-S(this.angle),y:C(this.angle)};
     const vlong=this.vel.x*f.x+this.vel.y*f.y, vlat=this.vel.x*r.x+this.vel.y*r.y, kmh=this.worldSpeed()*3.6;
     { const red=this.gearMax[this.gear-1]||9999; if(thr>0 && kmh>=red-0.2){ const sp=this.worldSpeed(); if(sp>0.001){ const target=red/3.6; const sc=clamp(target/sp,0.94,1); this.vel.x*=sc; this.vel.y*=sc; } this.redBlink=true; } else this.redBlink=false; }
@@ -1217,7 +1220,7 @@ function startWithTrack(tr, m='race',conditions=null){
   if(!tr){ alert('Pista inválida.'); return; }
   if(replayUI?.active)replayUI.close();
   mode = tr.training?'training':tr.downhill?'downhill':m;
-  TOTAL_LAPS=mode==='challenge'?1:5;careerRun=new DriftCareer.Run(mode,mode==='challenge'?activeChallengeLevel:tr.routeLevel||1);
+  TOTAL_LAPS=mode==='challenge'?1:tr.elevated?(tr.raceLaps===5?5:4):5;careerRun=new DriftCareer.Run(mode,mode==='challenge'?activeChallengeLevel:tr.routeLevel||1);
   track = tr;
   player = new Car(track,'#2b72ff');
   try{ applyChosen?.(); }catch(_){ }
@@ -1252,7 +1255,7 @@ function startWithTrack(tr, m='race',conditions=null){
   if(lapList) lapList.innerHTML='';
   camera.s=camera.targetS=(view.width<700||view.height<500)?Math.max(10,Math.min(18,view.height/30)):22;
   camera.tx=-player.pos.x*camera.s+view.width*.5;camera.ty=-player.pos.y*camera.s+view.height*.6;
-  currentTrackId = (track.downhill?'DOWNHILL.v2.'+track.routeLevel:encodeTrack(track.points))+':physics-v3'+(track.trackProps?.props.length?':tyres-v2':'')+DriftOptions.recordKey(raceConditions);
+  currentTrackId = (track.elevated?'TOURING.v1.'+track.touringId:track.downhill?'DOWNHILL.v2.'+track.routeLevel:encodeTrack(track.points))+':physics-v3'+(track.trackProps?.props.length?':tyres-v2':'')+DriftOptions.recordKey(raceConditions);
   if(mode==='tt'&&player.upgradeSignature?.replace(/0/g,''))currentTrackId+=':tuned:'+chosen.sprite+':'+player.upgradeSignature;
   replayUI?.reset();
   unlockControls();syncTouchHUD(); // Nueva sesión, mismos autos y datos guardados.
@@ -1877,7 +1880,7 @@ function checkChallengeProgress(){
 }
 
 </script>
-<script src="js/experience.js?v=1.0.0-prealpha.15"></script>
+<script src="js/experience.js?v=1.0.0-prealpha.16"></script>
 <script src="js/gamepad-ui.js?v=1.0.0-prealpha.12-reverse1"></script>
 <script src="js/career-ui.js?v=1.0.0-prealpha.12"></script>
 <script src="js/replay-ui.js?v=1.0.0-prealpha.12"></script>

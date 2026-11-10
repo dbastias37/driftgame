@@ -1,3 +1,11 @@
+## 1.0.0-prealpha.16 — Circuitos 2.0
+
+Cinco circuitos originales de 6,4 a 8,4 km con ascensos, descensos, curvas amplias y peraltes progresivos. Cada ruta incluye túneles y un viaducto con estructura modelada. Carrera permite elegir 4 o 5 vueltas; también están disponibles en contrarreloj. Acceso: **Jugar → Carrera rápida → primeras cinco tarjetas «2.0»**.
+
+La carretera renderizada, las cuatro ruedas, las barreras y los efectos comparten la misma superficie. Las pendientes centrales máximas son de 3,1–5,3 % y los peraltes máximos de 5–9°. Se conserva el comportamiento de los circuitos anteriores y del descenso.
+
+[Diseño, referencias, validación y límites](docs/touring-circuits.md). Revisión visual realizada con el renderizador de compatibilidad; rendimiento WebGL y tacto en teléfono físico pendientes.
+
 ## 1.0.0-prealpha.3 — 2026-11-09
 
 - Retira el C’Maro y migra sus mejoras al Nova sin perder niveles. Guarda la selección por ID estable.
