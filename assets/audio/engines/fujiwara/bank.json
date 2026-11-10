@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "vehicle": "fujiwara",
+  "status": "pending",
+  "provenance": null,
+  "layers": {
+    "on": [],
+    "off": []
+  }
+}

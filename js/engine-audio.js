@@ -1,103 +1,152 @@
-/* DriftGame engine audio v1 — original Web Audio synthesis, not copied Engine Simulator assets.
- * Read-only consumer of driving state; does not mutate physics or transmission. */
+/* Engine Audio V2. Sample playback only; driving state is strictly read-only.
+ * No recordings ship yet. Missing/unverified banks stay silent (see getStatus).
+ * Captures from Engine Simulator are simulated audio, not real-car recordings. */
 globalThis.DriftEngineAudio = (() => {
   'use strict';
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-  const profiles=Object.freeze({
-    blue:    {label:'RB26 · I6 turbo',cyl:6,idle:850,redline:8000,base:0.61,body:1.0,rasp:.50,turbo:.8},
-    yellow:  {label:'13B · rotary',cyl:6,idle:1000,redline:8500,base:1.10,body:.60,rasp:.95,turbo:.9,rotary:true},
-    gray:    {label:'V8 · Nova',cyl:8,idle:700,redline:6200,base:.50,body:1.38,rasp:.30,turbo:0},
-    yugo:    {label:'I4 · Yugo',cyl:4,idle:850,redline:6200,base:.84,body:.72,rasp:.65,turbo:0},
-    fujiwara:{label:'4A-GE · AE86',cyl:4,idle:900,redline:7800,base:1.02,body:.78,rasp:.86,turbo:0}
-  });
-  let ctx=null, master=null, bass=null, main=null, harmonics=null, rasp=null, intake=null, turboNode=null;
-  let noise=null, noiseGain=null, turboGain=null, rpm=0, lastGear=null, shiftDip=0, volume=0.60, initialized=false;
-  let lastTime=0, startAttempts=0;
-  try { const v=Number(localStorage.getItem('drift:engine-volume:v1')); if(Number.isFinite(v)&&v>=0&&v<=1)volume=v; } catch {}
-  function tone(type){
-    const osc=ctx.createOscillator();osc.type=type;
-    const gain=ctx.createGain();gain.gain.value=0;
-    osc.connect(gain);gain.connect(master);osc.start();
-    return {osc,gain};
+  const finite=(v,f=0)=>Number.isFinite(Number(v))?Number(v):f;
+  const profiles=Object.freeze(Object.fromEntries(Object.entries({
+    fujiwara:{label:'4A-GE · AE86',idle:900,redline:7800},
+    blue:{label:'RB26 · Skyline R34',idle:850,redline:8000},
+    yellow:{label:'13B · RX-7',idle:1000,redline:8500},
+    gray:{label:'V8 · Nova',idle:700,redline:6200},
+    yugo:{label:'I4 · Yugo',idle:850,redline:6200}
+  }).map(([key,p])=>[key,Object.freeze(p)])));
+  // Audio-only RPM observer. Never writes gear, velocity, throttle or torque.
+  class RPMModel {
+    constructor(){this.reset();}
+    reset(){this.rpm=0;this.gear=null;this.shift=0;this.skin=null;}
+    update({car,skin,dt=1/60,active=true,paused=false}={}){
+      const p=profiles[skin]||profiles.fujiwara;
+      const seconds=clamp(finite(dt,1/60),0,.1);
+      const gear=Math.max(1,Math.round(finite(car?.gear,1)));
+      if(this.skin!==skin){this.reset();this.skin=skin;this.rpm=p.idle;}
+      if(!active||paused||!car){this.rpm=p.idle;this.gear=null;this.shift=0;return this.rpm;}
+      const throttle=clamp(finite(car.throttleSm),0,1);
+      const speed=Math.abs(finite(car.worldSpeed?.()))*3.6;
+      const maxSpeed=Math.max(1,finite(car.gearMax?.[gear-1],198));
+      const coupled=p.idle+clamp(speed/maxSpeed,0,1)*(p.redline-p.idle);
+      // Stationary clutch slip/free rev fades out by 12 km/h. In gear, speed
+      // controls revs even on closed throttle or braking (engine braking).
+      const slip=(1-clamp(speed/12,0,1))*(car.braking?0:1);
+      const free=p.idle+throttle*(p.redline*.75-p.idle);
+      let target=coupled+(Math.max(coupled,free)-coupled)*slip;
+      if(this.gear!==null&&gear!==this.gear)this.shift=.16;
+      this.gear=gear;this.shift=Math.max(0,this.shift-seconds);
+      // New gearMax already supplies the RPM drop/blip; no second pitch dip.
+      const response=this.shift>0?22:target>this.rpm?8:11;
+      this.rpm=clamp(this.rpm+(target-this.rpm)*(1-Math.exp(-seconds*response)),p.idle,p.redline);
+      return this.rpm;
+    }
   }
-  function initialize(){
-    if(initialized)return true;
-    const AC=globalThis.AudioContext||globalThis.webkitAudioContext;
-    if(!AC)return false;
-    try{
-      ctx=new AC({latencyHint:'interactive'});
-      master=ctx.createGain();master.gain.value=0;master.connect(ctx.destination);
-      bass=tone('sawtooth');main=tone('sawtooth');harmonics=tone('triangle');rasp=tone('square');
-      const buffer=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*2),ctx.sampleRate);
-      const pcm=buffer.getChannelData(0);for(let i=0;i<pcm.length;i++)pcm[i]=Math.random()*2-1;
-      noise=ctx.createBufferSource();noise.buffer=buffer;noise.loop=true;
-      const filter=ctx.createBiquadFilter();filter.type='bandpass';filter.frequency.value=700;filter.Q.value=.6;
-      noiseGain=ctx.createGain();noiseGain.gain.value=0;noise.connect(filter);filter.connect(noiseGain);noiseGain.connect(master);noise.start();
-      intake=filter;
-      turboNode=ctx.createBiquadFilter();turboNode.type='highpass';turboNode.frequency.value=2200;
-      turboGain=ctx.createGain();turboGain.gain.value=0;
-      noise.connect(turboNode);turboNode.connect(turboGain);turboGain.connect(master);
-      initialized=true;
-      return true;
-    }catch(err){console.warn('Engine audio unavailable',err);try{ctx?.close()}catch{};ctx=null;return false;}
+  function weights(samples,rpm){
+    if(rpm<=samples[0].rpm)return [[0,1]];
+    const last=samples.length-1;
+    if(rpm>=samples[last].rpm)return [[last,1]];
+    const hi=samples.findIndex(s=>s.rpm>=rpm),lo=hi-1;
+    const t=(rpm-samples[lo].rpm)/(samples[hi].rpm-samples[lo].rpm);
+    return [[lo,Math.cos(t*Math.PI/2)],[hi,Math.sin(t*Math.PI/2)]];
   }
-  function unlock(){
-    if(!initialize())return;
-    if(ctx.state!=='running'&&startAttempts++<30)ctx.resume().catch(()=>{});
+  function validateBank(bank,skin){
+    const p=profiles[skin];
+    if(!p||bank?.version!==2||bank.vehicle!==skin)throw Error('Invalid bank identity');
+    if(bank.status!=='verified')throw Error('Recordings pending verification');
+    const source=bank.provenance;
+    if(source?.type!=='engine-simulator-capture'||!source.engineDefinition||!source.captureDate||!source.reviewedBy||!source.license||!/^[a-f0-9]{64}$/.test(source.engineDefinitionSha256||''))throw Error('Missing capture provenance');
+    for(const layer of ['on','off']){
+      const samples=bank.layers?.[layer];
+      if(!Array.isArray(samples)||samples.length<3||samples.length>16)throw Error('Invalid RPM layer');
+      let previous=0;
+      for(const s of samples){
+        if(!Number.isFinite(s.rpm)||s.rpm<=previous||!/^assets\/audio\/engines\/[a-z0-9_/-]+\.wav$/.test(s.url)||!Number.isFinite(s.loopStart)||!Number.isFinite(s.loopEnd)||s.loopStart<0||s.loopEnd-s.loopStart<1||!Number.isFinite(s.gain)||s.gain<=0||s.gain>2||!/^[a-f0-9]{64}$/.test(s.sha256||''))throw Error('Invalid sample metadata');
+        if(previous&&s.rpm/previous>2)throw Error('RPM anchors too far apart');
+        previous=s.rpm;
+      }
+      if(samples[0].rpm>p.idle||samples.at(-1).rpm<p.redline)throw Error('RPM coverage incomplete');
+    }
+    return bank;
   }
-  function setVolume(v){
-    volume=clamp(Number(v)||0,0,1);
-    try{localStorage.setItem('drift:engine-volume:v1',String(volume))}catch{}
-    const output=document.getElementById('engineVolumeValue');
-    if(output)output.textContent=Math.round(volume*100)+'%';
+  class Player {
+    constructor({contextFactory,fetcher}={}){
+      this.contextFactory=contextFactory||(()=>{const AC=globalThis.AudioContext||globalThis.webkitAudioContext;return AC?new AC({latencyHint:'interactive'}):null;});
+      this.fetcher=fetcher||((...args)=>fetch(...args));this.model=new RPMModel();
+      this.ctx=null;this.master=null;this.voices=[];this.generation=0;this.skin=null;
+      this.status='idle';this.error=null;this.volume=.6;this.load=0;this.on=false;
+    }
+    unlock(){
+      try{
+        if(!this.ctx){this.ctx=this.contextFactory();if(!this.ctx){this.status='unsupported';return;}
+          this.master=this.ctx.createGain();this.master.gain.value=0;this.master.connect(this.ctx.destination);}
+        if(this.ctx.state!=='running')Promise.resolve(this.ctx.resume()).catch(e=>{this.error=e.message;});
+      }catch(e){this.status='error';this.error=e.message;}
+    }
+    clearVoices(){for(const v of this.voices){try{v.source.stop();v.source.disconnect();v.gain.disconnect();}catch{}}this.voices=[];}
+    async loadBank(skin){
+      const generation=++this.generation,ctx=this.ctx;
+      this.clearVoices();this.skin=skin;this.status='loading';this.error=null;
+      try{
+        const response=await this.fetcher(`assets/audio/engines/${skin}/bank.json`);
+        if(!response.ok)throw Error(`Bank HTTP ${response.status}`);
+        const bank=await response.json();
+        if(generation!==this.generation)return;
+        if(bank.status==='pending'){this.status='pending';return;}
+        validateBank(bank,skin);
+        const decoded=[];
+        // Sequential requests bound decode memory on mobile devices.
+        for(const layer of ['on','off'])for(const sample of bank.layers[layer]){
+          const res=await this.fetcher(sample.url);if(!res.ok)throw Error(`Sample HTTP ${res.status}`);
+          const bytes=await res.arrayBuffer();
+          const hash=Array.from(new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256',bytes)),v=>v.toString(16).padStart(2,'0')).join('');
+          if(hash!==sample.sha256)throw Error('Sample checksum mismatch');
+          const buffer=await ctx.decodeAudioData(bytes);
+          if(generation!==this.generation)return;
+          if(buffer.duration<sample.loopEnd||buffer.duration>30||buffer.numberOfChannels>2)throw Error('Invalid sample duration/channels');
+          let peak=0,energy=0,count=0;
+          for(let c=0;c<buffer.numberOfChannels;c++)for(const value of buffer.getChannelData(c)){if(!Number.isFinite(value))throw Error('Invalid PCM');peak=Math.max(peak,Math.abs(value));energy+=value*value;count++;}
+          if(peak>=.999||Math.sqrt(energy/count)<.0001)throw Error('Clipped or silent recording');
+          decoded.push({layer,sample,buffer});
+        }
+        if(generation!==this.generation)return;
+        const start=ctx.currentTime+.03;
+        for(const entry of decoded){
+          const source=ctx.createBufferSource(),gain=ctx.createGain();
+          source.buffer=entry.buffer;source.loop=true;source.loopStart=entry.sample.loopStart;source.loopEnd=entry.sample.loopEnd;
+          gain.gain.value=0;source.connect(gain);gain.connect(this.master);
+          const voice={...entry,source,gain};this.voices.push(voice);source.start(start,entry.sample.loopStart);
+        }
+        this.bank=bank;this.status='ready';
+      }catch(e){if(generation===this.generation){this.clearVoices();this.status='error';this.error=e.message;}}
+    }
+    update(input={}){
+      const skin=profiles[input.skin]?input.skin:'fujiwara';
+      const rpm=this.model.update({...input,skin});
+      this.on=!!input.active&&!input.paused&&!globalThis.document?.hidden&&!!input.car;
+      if(!this.ctx)return;
+      if(this.on&&skin!==this.skin)void this.loadBank(skin);
+      const t=this.ctx.currentTime;
+      this.master.gain.setTargetAtTime(this.on&&this.status==='ready'?this.volume*.35:0,t,.03);
+      if(this.status!=='ready')return;
+      const target=clamp(finite(input.car?.throttleSm),0,1)*(this.model.shift>0?.35:1);
+      this.load+=(target-this.load)*(1-Math.exp(-clamp(finite(input.dt,1/60),0,.1)*12));
+      for(const layer of ['on','off']){
+        const mix=new Map(weights(this.bank.layers[layer],rpm));
+        const loadGain=layer==='on'?Math.sin(this.load*Math.PI/2):Math.cos(this.load*Math.PI/2);
+        let i=0;
+        for(const v of this.voices.filter(v=>v.layer===layer)){
+          v.source.playbackRate.setTargetAtTime(clamp(rpm/v.sample.rpm,.5,2),t,.025);
+          v.gain.gain.setTargetAtTime((mix.get(i++)||0)*loadGain*v.sample.gain,t,.025);
+        }
+      }
+    }
+    mute(){this.on=false;if(this.ctx&&this.master){this.master.gain.cancelScheduledValues(this.ctx.currentTime);this.master.gain.setTargetAtTime(0,this.ctx.currentTime,.015);}}
+    setVolume(v){this.volume=clamp(finite(v),0,1);if(!this.volume)this.mute();}
+    dispose(){++this.generation;this.clearVoices();if(this.ctx)Promise.resolve(this.ctx.close()).catch(()=>{});this.ctx=null;this.master=null;this.skin=null;this.bank=null;this.status='idle';this.error=null;this.load=0;this.model.reset();}
+    getStatus(){return {version:2,state:this.status,vehicle:this.skin,recordingsVerified:this.status==='ready',error:this.error};}
   }
-  function update({car,skin,active,paused,dt}={}){
-    if(!ctx||!initialized)return;
-    const t=ctx.currentTime;
-    const on=!!active&&!paused&&!document.hidden&&!!car&&volume>0;
-    const p=profiles[skin]||profiles.blue;
-    const sm=clamp(Number(car?.throttleSm)||0,0,1);
-    const speed=clamp(Number(car?.worldSpeed?.())*3.6||0,0,360);
-    const gear=Math.max(1,Math.round(Number(car?.gear)||1));
-    const maxSpeed=Math.max(15,Number(car?.gearMax?.[gear-1])||180);
-    const brake=clamp(Number(car?.braking)||0,0,1);
-    const rpmFromSpeed=p.idle+clamp(speed/maxSpeed,0,1)*(p.redline-p.idle);
-    // The arcade physics has no crankshaft RPM. Approximate its free-rev response
-    // from throttle, vehicle gear and speed, without touching the vehicle dynamics.
-    const freeRev=p.idle+sm*(p.redline*.72-p.idle);
-    const target=on?clamp(Math.max(rpmFromSpeed,freeRev),p.idle,p.redline):p.idle;
-    const seconds=clamp(Number(dt)||1/60,0,.15),response=1-Math.exp(-seconds*(target>rpm?8:12));
-    rpm+=(target-rpm)*response;
-    if(lastGear!==null&&lastGear!==gear)shiftDip=1;
-    lastGear=gear;shiftDip=Math.max(0,shiftDip-seconds*3.8);
-    const soundRpm=Math.max(p.idle,rpm*(1-.28*shiftDip));
-    // Four-stroke cylinders produce cyl/2 combustion events per crank revolution.
-    // Rotary is approximated acoustically by equivalent combustion pulse density.
-    const fireHz=clamp(soundRpm/60*(p.cyl/2),25,700);
-    const move=(node,value,ramp=.035)=>node.setTargetAtTime(value,t,ramp);
-    move(bass.osc.frequency,fireHz*.5);move(main.osc.frequency,fireHz);
-    move(harmonics.osc.frequency,fireHz*2);move(rasp.osc.frequency,fireHz*3);
-    const load=clamp(.17+sm*.83,0,1);
-    const norm=clamp((soundRpm-p.idle)/(p.redline-p.idle),0,1);
-    const running=on?1:0;
-    move(bass.gain.gain,running*(.025+p.body*.055)*(1-norm*.28)*(.45+load*.55));
-    move(main.gain.gain,running*(.025+.095*p.body)*(.42+load*.58));
-    move(harmonics.gain.gain,running*(.014+.042*p.rasp)*(.20+norm*.8)*(.35+load*.65));
-    move(rasp.gain.gain,running*(.006+.025*p.rasp)*norm*norm*load);
-    move(intake.frequency,250+norm*2400+sm*750,.07);
-    move(noiseGain.gain,running*(.004+sm*.026+brake*.002));
-    move(turboNode.frequency,1800+norm*2400,.10);
-    move(turboGain.gain,running*p.turbo*sm*norm*.022);
-    // Headroom protects against clipping; zero when paused/menus/hidden.
-    move(master.gain,volume*running*.67,.075);
-    lastTime=t;
-  }
-  function dispose(){
-    if(!ctx)return;
-    try{ctx.close()}catch{}
-    ctx=null;initialized=false;lastGear=null;rpm=0;startAttempts=0;
-  }
-  document.addEventListener('visibilitychange',()=>{if(document.hidden&&master&&ctx)master.gain.setTargetAtTime(0,ctx.currentTime,.02)});
-  addEventListener('pagehide',dispose);
-  return Object.freeze({unlock,update,setVolume,dispose,profiles,getVolume:()=>volume,getRPM:()=>rpm});
+  const player=new Player();
+  try{const saved=globalThis.localStorage?.getItem('drift:engine-volume:v1');if(saved!==null&&saved!==undefined&&Number.isFinite(Number(saved)))player.setVolume(saved);}catch{}
+  function setVolume(v){player.setVolume(v);try{globalThis.localStorage?.setItem('drift:engine-volume:v1',String(player.volume));}catch{}const output=globalThis.document?.getElementById('engineVolumeValue');if(output)output.textContent=Math.round(player.volume*100)+'%';}
+  globalThis.document?.addEventListener('visibilitychange',()=>{if(document.hidden)player.mute();});
+  globalThis.addEventListener?.('pagehide',()=>player.dispose());
+  return Object.freeze({unlock:()=>player.unlock(),update:input=>player.update(input),setVolume,dispose:()=>player.dispose(),profiles,getVolume:()=>player.volume,getRPM:()=>player.model.rpm,getStatus:()=>player.getStatus(),RPMModel,Player,weights,validateBank});
 })();

@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "vehicle": "yellow",
+  "status": "pending",
+  "provenance": null,
+  "layers": {
+    "on": [],
+    "off": []
+  }
+}
