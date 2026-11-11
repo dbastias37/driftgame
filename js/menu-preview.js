@@ -1,6 +1,7 @@
 import * as T from '../vendor/three.module.min.js';
-import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.17';
-import {updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.12';
+import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.18';
+import {updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.18';
+import {roadTreeRevision} from './road-trees.js';
 
 const material=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.82,...extra});
 function box(parent,m,x,y,z,w,h,d){const mesh=new T.Mesh(new T.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);parent.add(mesh);return mesh;}
@@ -56,7 +57,7 @@ export class MenuPreview3D extends DriftView3D{
 
     const width=Math.max(1,this.canvas.clientWidth||800),height=Math.max(1,this.canvas.clientHeight||500);
     if(this.width!==width||this.height!==height){this.width=width;this.height=height;this.renderer.setSize(width,height,false);this.camera.aspect=width/height;}
-    const revision=[cosmetics.paint,cosmetics.neon,cosmetics.smokeColor,cosmetics.smokeVolume,kind,track,skin,spinning,this.garageAngle,this.droneAngle,this.previewPan.x,this.previewPan.z,this.previewPitch,this.previewZoom,retro,weather,timeOfDay,width,height,this.car,this.rx7Template,this.yugoTemplate,this.fujiwaraTemplate,this.novaTemplate,this.skylineTemplate,this.quality];
+    const revision=[cosmetics.paint,cosmetics.neon,cosmetics.smokeColor,cosmetics.smokeVolume,kind,track,skin,spinning,this.garageAngle,this.droneAngle,this.previewPan.x,this.previewPan.z,this.previewPitch,this.previewZoom,retro,weather,timeOfDay,width,height,this.car,this.rx7Template,this.yugoTemplate,this.fujiwaraTemplate,this.novaTemplate,this.skylineTemplate,this.quality,roadTreeRevision];
     if(!spinning&&this.previewRevision&&revision.every((v,i)=>v===this.previewRevision[i]))return;
     this.previewRevision=revision;
     this.previewMode=kind;this.camera.near=.1;

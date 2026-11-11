@@ -1,5 +1,5 @@
 import * as T from '../vendor/three.module.min.js';
-import {processRetroPixels} from './retro-renderer.js?v=1.0.0-prealpha.12';
+import {processRetroPixels} from './retro-renderer.js?v=1.0.0-prealpha.18';
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 // A depth-buffered CPU fallback for devices without WebGL. It projects exactly
 // the same scene and camera; it has no access to the driving simulation.

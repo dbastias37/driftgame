@@ -145,17 +145,17 @@ function showCircuitMenu(){
   hidePanels();garageOrigin='circuits';$('#circuitMenu').classList.remove('hidden');$('#circuitList').classList.remove('hidden');
   $('#circuitTitle').textContent=mode==='tt'?'Contrarreloj · Elige circuito':'Carrera · Elige circuito';
   $('#btnCircuitBack').textContent='← Menú principal';
-  const root=$('#circuitList');root.innerHTML=Array.from({length:DriftTouring.count},(_,i)=>{const c=DriftTouring.info(i+1);return `<div class="challenge-item touring-item"><span class="circuit-num">2.0</span><canvas class="track-thumb" data-touring-map="${i+1}" aria-label="${c.name}"></canvas><div><b>${c.name}</b><small>${(c.length/1000).toFixed(1)} km · ${{alpine:"sierra",coast:"costa",forest:"bosque",lake:"embalse",highland:"cumbre"}[c.biome]}</small></div><button data-touring="${i+1}" aria-label="Ver circuito 2.0 ${c.name}">${c.name}</button></div>`;}).join('')+Array.from({length:CircuitLayouts.count},(_,i)=>{
+  const root=$('#circuitList');root.innerHTML=Array.from({length:DriftTouring.count},(_,i)=>{const c=DriftTouring.info(i+1);return `${i%5===0?'<h3 class="road-climate-heading">'+({clear:"Despejado",rain:"Lluvia",fog:"Bruma",snow:"Nieve"}[c.climate])+' · 5 carreteras</h3>':''}<div class="challenge-item touring-item"><span class="circuit-num">${String(i+1).padStart(2,'0')}</span><canvas class="track-thumb" data-touring-map="${i+1}" aria-label="${c.name}"></canvas><div><b>${c.name}</b><small>${(c.length/1000).toFixed(1)} km · ${{alpine:"sierra",coast:"costa",forest:"bosque",lake:"embalse",highland:"cumbre",snow:"nieve"}[c.biome]}</small></div><button data-touring="${i+1}" aria-label="Ver carretera ${c.name}">${c.name}</button></div>`;}).join('')+'<h3 class="road-climate-heading">Circuitos 2.0 · originales</h3>'+Array.from({length:5},(_,i)=>{const c=DriftTouring.info(101+i);return `<div class="challenge-item touring-item"><span class="circuit-num">C${i+1}</span><canvas class="track-thumb" data-touring-map="${101+i}" aria-label="${c.name}"></canvas><div><b>${c.name}</b><small>${(c.length/1000).toFixed(1)} km · clásico</small></div><button data-touring="${101+i}" aria-label="Ver carretera ${c.name}">${c.name}</button></div>`;}).join('')+'<h3 class="road-climate-heading">Circuitos cortos</h3>'+Array.from({length:CircuitLayouts.count},(_,i)=>{
     const c=CircuitLayouts.info(i+1);
     return `<div class="challenge-item"><span class="circuit-num">${String(i+1).padStart(2,'0')}</span><canvas class="track-thumb" data-track="${i+1}" aria-label="${c.name}"></canvas><button data-circuit="${i+1}" aria-label="Ver circuito ${i+1}: ${c.name}">${c.name}</button></div>`;
   }).join('');
   drawTrackThumbnails(root);root.querySelectorAll('[data-circuit]').forEach(btn=>btn.addEventListener('click',()=>previewCircuit(Number(btn.dataset.circuit),false)));
   root.querySelectorAll('[data-touring]').forEach(btn=>btn.addEventListener('click',()=>previewTouring(Number(btn.dataset.touring))));
   root.querySelectorAll('[data-touring-map]').forEach(canvas=>{const t=DriftTouring.createTrack(Track,Number(canvas.dataset.touringMap)),ctx=canvas.getContext('2d'),b=t.bounds;canvas.width=128;canvas.height=108;const scale=Math.min(112/b.w,92/b.h);ctx.strokeStyle='#ffb16c';ctx.lineWidth=2;ctx.beginPath();t.points.forEach((p,i)=>{const x=64+(p.x-b.minX-b.w/2)*scale,y=54+(p.y-b.minY-b.h/2)*scale;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.closePath();ctx.stroke();});
-  if(preparedTrack?.elevated)previewTouring(preparedTrack.touringId,preparedTrack.raceLaps);else previewCircuit(preparedTrack?.layout?.level||1,false);
+  if(preparedTrack?.elevated)previewTouring(preparedTrack.touringId,preparedTrack.raceLaps);else if(preparedTrack)previewCircuit(preparedTrack.layout?.level||1,false);else previewTouring(1);
 }
 function previewTouring(n,laps=4){
-  const circuit=DriftTouring.createTrack(Track,n);circuit.raceLaps=laps===5?5:4;previewSelection={track:circuit,level:0,origin:'circuits',challenge:false};updateTrackPreviewDetails();syncPreparationPreview();
+  const circuit=DriftTouring.createTrack(Track,n);renderPrefs.weather=circuit.climate;syncOptionsUI();circuit.raceLaps=laps===5?5:4;previewSelection={track:circuit,level:0,origin:'circuits',challenge:false};updateTrackPreviewDetails();syncPreparationPreview();
 }
 safeAddListener('touringLaps','change',()=>{if(previewSelection?.track.elevated){previewSelection.track.raceLaps=Number($('#touringLaps').value)===5?5:4;updateTrackPreviewDetails();}});
 function previewCircuit(n,challenge=false){
@@ -296,9 +296,11 @@ $('#btnRecover').addEventListener('click',loseLifeAndRespawn);
 
 
 
-import('./view3d.js?v=1.0.0-prealpha.17').then(async({DriftView3D})=>{
+import('./view3d.js?v=1.0.0-prealpha.18').then(async({DriftView3D})=>{
   await document.fonts?.load('32px DriftDisplay');
   sceneView=new DriftView3D($('#scene3d'),{quality:renderPrefs.quality,onFailure:fail3D,onVehicleFailure:()=>toast('No se pudo cargar un modelo de auto. Recarga para volver a intentarlo.')});
   if(sceneView.software)toast('3D compatible activo · Calidad ligera');
 }).catch(fail3D);
-import('./menu-preview.js?v=1.0.0-prealpha.17').then(async module=>{await document.fonts?.load('32px DriftDisplay');MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});
+import('./menu-preview.js?v=1.0.0-prealpha.18').then(async module=>{await document.fonts?.load('32px DriftDisplay');MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});
+
+safeAddListener('btnSummit','click',()=>{location.href='bonus/summit.html';});

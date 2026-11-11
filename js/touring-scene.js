@@ -1,9 +1,9 @@
 import * as T from '../vendor/three.module.min.js';
-import {mergeGeometries} from '../vendor/BufferGeometryUtils.js';
-import {buildMountainTerrain} from './mountain-terrain.js?v=1.0.0-prealpha.16';
+import {buildMountainTerrain} from './mountain-terrain.js?v=1.0.0-prealpha.18';
+import {addRoadTrees} from './road-trees.js';
 
 const mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.88,...extra});
-const palettes={alpine:[0x526253,0x72847f,0x284b43],forest:[0x465b46,0x697571,0x244438],coast:[0x7b8061,0x9a9783,0x445c45],lake:[0x566c61,0x738582,0x2e554b],highland:[0x777c65,0x8c9185,0x465c48]};
+const palettes={snow:[0xd0dce0,0x8c9ca7,0x59736d],alpine:[0x526253,0x72847f,0x284b43],forest:[0x465b46,0x697571,0x244438],coast:[0x7b8061,0x9a9783,0x445c45],lake:[0x566c61,0x738582,0x2e554b],highland:[0x777c65,0x8c9185,0x465c48]};
 function mesh(parent,g,m,name){const o=new T.Mesh(g,m);o.name=name;parent.add(o);return o;}
 function geometry(pos,indices,uv=null){const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setIndex(indices);if(uv)g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.computeVertexNormals();return g;}
 function asphaltTexture(){
@@ -16,7 +16,8 @@ export function roadRibbon(track,from,to,{start=0,end=track.length,lift=0,filter
   const pieces=[],step=track.length/track.points.length;
   for(let begin=start;begin<end-.001;begin+=chunk){
     const finish=Math.min(end,begin+chunk),count=Math.ceil((finish-begin)/step),pos=[],uv=[],indices=[];
-    for(let i=0;i<=count;i++){const s=begin+(finish-begin)*i/count;for(const offset of [from,to]){const p=track.ribbonPoint(s,offset,typeof lift==='function'?lift(offset,s):lift);pos.push(p.x,p.h,p.y);uv.push(s/9,offset/9);}}
+    for(let i=0;i<=count;i++){const s=begin+(finish-begin)*i/count;for(const offset of [from,to]){const extra=typeof lift==='function'?lift(offset,s):lift,p=track.ribbonPoint(s,offset,extra);
+        const q=track.sample(p.x,p.y);p.h=q.h+q.offset*Math.tan(q.bank)+extra;pos.push(p.x,p.h,p.y);uv.push(s/9,offset/9);}}
     for(let i=0;i<count;i++){if(!filter(begin+(finish-begin)*(i+.5)/count))continue;const k=i*2;indices.push(k,k+1,k+2,k+1,k+3,k+2);}
     if(indices.length)pieces.push(geometry(pos,indices,uv));
   }
@@ -50,11 +51,11 @@ function cap(track,world,material,a,b,s,name){
   mesh(world,geometry(pos,indices),material,name);
 }
 function tunnel(track,world,feature,h,M){
-  const half=track.roadHalf+2.8,cross=[[-half,-.35],[-half,4.3]];
-  for(let j=1;j<12;j++){const angle=Math.PI-j*Math.PI/12;cross.push([Math.cos(angle)*half,4.3+Math.sin(angle)*7.6]);}cross.push([half,4.3],[half,-.35]);
-  const outer=cross.map(([x,y])=>[x*3.2,Math.max(-5,y*3.5)]),rim=cross.map(([x,y])=>[x+Math.sign(x)*1.3,y+1.1]);
+  const half=track.tunnelHalf||22,wall=track.tunnelWall||10,rise=track.tunnelRise||12,cross=[[-half,-.35],[-half,wall]];
+  for(let j=1;j<12;j++){const angle=Math.PI-j*Math.PI/12;cross.push([Math.cos(angle)*half,wall+Math.sin(angle)*rise]);}cross.push([half,wall],[half,-.35]);
+  const outer=cross.map(([x,y])=>[x*1.9,Math.max(-5,y*1.45)]),rim=cross.map(([x,y])=>[x+Math.sign(x)*1.3,y+1.1]);
   shell(track,world,M.lining,cross,feature.start,feature.end,'touring-tunnel-vault');
-  shell(track,world,M.rock,outer,feature.start,feature.end,'touring-tunnel-mountain',16);
+  shell(track,world,M.grass,outer,feature.start,feature.end,'touring-tunnel-mountain',16);
   for(const s of [feature.start,feature.end]){
     cap(track,world,M.rock,rim,outer,s,'touring-mountain-face');
     cap(track,world,M.portal,cross,rim,s+(s===feature.start?-.12:.12),'touring-tunnel-portal');
@@ -69,7 +70,7 @@ function tunnel(track,world,feature,h,M){
   for(let s=feature.start+6;s<feature.end;s+=24){
     const angle=track.tangentAt(track.atDistance(s).i);
     for(const side of [-1,1]){
-      const p=track.ribbonPoint(s,side*(half-2.8),8.1);
+      const p=track.ribbonPoint(s,side*(half-3.8),wall+1.8);
       h.box(M.light,p.x,p.h,p.y,4.8,.12,.35,angle,'touring-tunnel-luminaires');
       const q=track.ribbonPoint(s,side*(half-.16),1.1);
       h.box(M.service,q.x,q.h,q.y,1.1,1.65,.13,angle,'touring-tunnel-service');
@@ -113,13 +114,6 @@ function bridge(track,world,f,h,M){
   }
   for(let s=f.start;s<f.end;s+=12)for(const side of [-1,1])h.beam(M.steel,track.ribbonPoint(s,side*(half-3),-1.2),track.ribbonPoint(Math.min(f.end,s+12),side*(half-3),-1.2),.6,.65,'touring-bridge-girders');
 }
-function treeGeometry(color){
-  const geos=[];
-  for(const [radius,height,y,c] of [[.25,3,1.5,0x675d48],[2.3,6.5,5,color],[1.9,5.6,7,color],[1.2,4.2,9,color]]){
-    const g=radius<.3?new T.CylinderGeometry(.18,.3,height,5):new T.ConeGeometry(radius,height,7);g.translate(0,y,0);const values=new Float32Array(g.attributes.position.count*3),col=new T.Color(c);for(let i=0;i<values.length;i+=3)col.toArray(values,i);g.setAttribute('color',new T.BufferAttribute(values,3));geos.push(g);
-  }
-  const result=mergeGeometries(geos);geos.forEach(g=>g.dispose());return result;
-}
 function landscape(track,world,M,low){
   const b=track.bounds,pose=new T.Object3D(),trees=[],rocks=[];let seed=378+track.touringId;
   const rand=()=>((seed=(seed*1664525+1013904223)>>>0)/4294967296);
@@ -128,6 +122,9 @@ function landscape(track,world,M,low){
     const p=track.atDistance(s),distance=track.roadHalf+13+rand()*50,x=p.x+p.nx*distance*side,y=p.y+p.ny*distance*side;
     if(track.featureAt(s,'bridge')||track.featureAt(s,'tunnel'))continue;
     const q=track.sampleNearby(x,y);if(q&&q.distance<track.roadHalf+9)continue;
+    const sector=track.sectorAt?.(s);
+    const density={meadow:.20,forest:1,slope:.65,pass:.35,valley:.55,open:.12}[sector?.kind]??1;
+    if(rand()>density)continue;
     const scale=.7+rand()*1.3;pose.position.set(x,track.terrainHeight(x,y),y);pose.rotation.set(0,rand()*6.28,0);pose.scale.set(scale,scale*(.85+rand()*.5),scale);pose.updateMatrix();trees.push(pose.matrix.clone());
   }
   for(let i=0;i<(low?250:600);i++){
@@ -135,11 +132,46 @@ function landscape(track,world,M,low){
     if(q&&(q.distance<track.roadHalf+12||track.featureAt(q.s,'tunnel')&&q.distance<65))continue;
     pose.position.set(x,track.terrainHeight(x,y)-1,y);pose.rotation.set(rand()*.6,rand()*6.28,rand()*.4);pose.scale.set(3+rand()*9,3+rand()*9,3+rand()*6);pose.updateMatrix();rocks.push(pose.matrix.clone());
   }
-  for(const [name,g,m,instances] of [['touring-forest',treeGeometry(palettes[track.biome][2]),mat(0xffffff,{vertexColors:true}),trees],['touring-rocks',new T.DodecahedronGeometry(1,0),M.rock,rocks]]){const o=new T.InstancedMesh(g,m,instances.length);o.name=name;instances.forEach((matrix,i)=>o.setMatrixAt(i,matrix));world.add(o);}
+  addRoadTrees(world,trees,{low,snow:track.biome==='snow'});
+  const stones=new T.InstancedMesh(new T.DodecahedronGeometry(1,0),M.rock,rocks.length);stones.name='touring-rocks';rocks.forEach((matrix,i)=>stones.setMatrixAt(i,matrix));world.add(stones);
   // A distant continuous land skirt, lowered below the near terrain boundary.
-  const ground=mesh(world,new T.PlaneGeometry(b.w+6000,b.h+6000),M.grass,'touring-horizon');ground.rotation.x=-Math.PI/2;ground.position.set(b.minX+b.w/2,-30,b.minY+b.h/2);
+  const tile=64,x0=Math.floor((b.minX-160)/tile)*tile,z0=Math.floor((b.minY-180)/tile)*tile,x1=Math.ceil((b.maxX+160)/tile)*tile,z1=Math.ceil((b.maxY+180)/tile)*tile;
+  // Continue the near heightfield using coarse outer tiles with the same exact
+  // boundary heights. No floating rectangular plateau over a flat green plane.
+  const positions=[],indices=[];
+  for(let x=x0-1536;x<x1+1536;x+=tile)for(let z=z0-1536;z<z1+1536;z+=tile){
+    if(x>=x0&&x<x1&&z>=z0&&z<z1)continue;
+    const k=positions.length/3;
+    for(const [px,pz] of [[x,z],[x+tile,z],[x+tile,z+tile],[x,z+tile]])positions.push(px,track.terrainHeight(px,pz),pz);
+    indices.push(k,k+2,k+1,k,k+3,k+2);
+  }
+  mesh(world,geometry(positions,indices),M.grass,'touring-horizon');
   if(track.biome==='coast'||track.biome==='lake'){
     const water=mesh(world,new T.CircleGeometry(Math.min(b.w,b.h)*(track.biome==='lake'?.23:.8),64),M.water,'touring-water');water.rotation.x=-Math.PI/2;water.position.set(track.biome==='coast'?b.maxX+450:b.minX+b.w*.5,4,b.minY+b.h*.5);
+  }
+}
+// Recognizable landmarks outside the driving/camera corridor. Shared hardware
+// stays instanced; no per-frame rebuilding or hundreds of separate tree meshes.
+function landmarks(track,world,h,M){
+  for(const [i,sector] of (track.sectors||[]).entries()){
+    const s=sector.start+(sector.end-sector.start)*.48;
+    if(track.featureAt(s))continue;
+    const p=track.ribbonPoint(s,(i%2?-1:1)*(track.roadHalf+24));p.h=track.terrainHeight(p.x,p.y);
+    const a=track.tangentAt(track.atDistance(s).i);
+    if(i===0||i===5){
+      h.box(M.portal,p.x,p.h+2.2,p.y,9,4.4,6,a,'road-lodge');
+      h.box(M.steel,p.x,p.h+4.7,p.y,10,.7,7,a,'road-lodge-roof');
+      h.box(M.dark,p.x,p.h+1.2,p.y,2,2.4,6.05,a,'road-lodge-door');
+    }else if(i===1){
+      h.box(M.steel,p.x,p.h+5,p.y,.5,10,.5,a,'road-watchtower');
+      h.box(M.portal,p.x,p.h+9.5,p.y,4,1,4,a,'road-watchtower-platform');
+      h.box(M.dark,p.x,p.h+12,p.y,5,.7,5,a,'road-watchtower-roof');
+    }else if(i===2){
+      h.box(M.portal,p.x,p.h+1,p.y,13,2,8,a,'road-overlook');
+      for(const delta of [-5,0,5])h.box(M.steel,p.x+Math.cos(a)*delta,p.h+3,p.y+Math.sin(a)*delta,.2,2,.2,a,'road-overlook-rail');
+    }else{
+      h.box(M.rock,p.x,p.h+6,p.y,6,12,8,a,'road-standing-stone');
+    }
   }
 }
 export function buildTouring(track,world,low=false){
@@ -175,7 +207,7 @@ export function buildTouring(track,world,low=false){
   for(const side of [-1,1]){const p=track.ribbonPoint(0,side*(half+3.8),4.1);h.box(M.steel,p.x,p.h,p.y,.8,8.2,.8,angle,'touring-start-pillars');}
   h.beam(M.dark,track.ribbonPoint(0,-half-4,8.2),track.ribbonPoint(0,half+4,8.2),.8,1.1,'touring-start-gantry');
   for(let j=-12;j<12;j++)for(let row=0;row<2;row++){const p=track.ribbonPoint(row*.7,j+.5,.035);h.box((j+row)%2?M.white:M.dark,p.x,p.h,p.y,.7,.03,1,angle,'touring-finish-checkers');}
-  landscape(track,world,M,low);h.finish();
+  landscape(track,world,M,low);landmarks(track,world,h,M);h.finish();
   world.userData.touring={id:track.touringId,tunnels:track.features.filter(f=>f.kind==='tunnel').length,bridges:track.features.filter(f=>f.kind==='bridge').length};
   return world;
 }

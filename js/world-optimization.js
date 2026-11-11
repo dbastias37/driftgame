@@ -27,9 +27,15 @@ export function batchWorld(world,size=128){
   const instances=world.children.filter(o=>o.isInstancedMesh);
   for(const source of instances){
     const cells=new Map(),m=new T.Matrix4(),p=new T.Vector3();
-    for(let i=0;i<source.count;i++){source.getMatrixAt(i,m);p.setFromMatrixPosition(m);const key=Math.floor(p.x/size)+','+Math.floor(p.z/size);if(!cells.has(key))cells.set(key,[]);cells.get(key).push(m.clone());}
+    const cellSize=source.userData.cellSize||size;
+    for(let i=0;i<source.count;i++){source.getMatrixAt(i,m);p.setFromMatrixPosition(m);const key=Math.floor(p.x/cellSize)+','+Math.floor(p.z/cellSize);if(!cells.has(key))cells.set(key,[]);cells.get(key).push(m.clone());}
     source.removeFromParent();
-    for(const matrices of cells.values()){const target=new T.InstancedMesh(source.geometry,source.material,matrices.length);matrices.forEach((m,i)=>target.setMatrixAt(i,m));target.computeBoundingSphere();target.matrixAutoUpdate=false;world.add(target);}
+    for(const matrices of cells.values()){
+      const target=new T.InstancedMesh(source.geometry,source.material,matrices.length);target.name=source.name;Object.assign(target.userData,source.userData);
+      const center=new T.Vector3();matrices.forEach((m,i)=>{target.setMatrixAt(i,m);center.add(new T.Vector3().setFromMatrixPosition(m));});
+      if(source.userData.lodMax!==undefined)target.userData.lodCenter=center.multiplyScalar(1/matrices.length);
+      target.computeBoundingSphere();target.matrixAutoUpdate=false;world.add(target);
+    }
     source.dispose();
   }
   const chunks=[];world.traverse(o=>{if(!o.isMesh)return;if(o.isInstancedMesh){o.computeBoundingSphere();}else if(!o.geometry.boundingSphere)o.geometry.computeBoundingSphere();chunks.push(o);});
@@ -47,6 +53,10 @@ export function updateWorldVisibility(world,camera,far,overview=false){
     // Cull only after the complete chunk is beyond opaque fog. No timed or
     // speed-dependent loading, so fast driving/reversing cannot reveal a hole.
     o.visible=overview||camera.position.distanceToSquared(sphere.center)<(far+12+sphere.radius)**2;
+    if(o.visible&&o.userData.lodCenter){
+      const d2=camera.position.distanceToSquared(o.userData.lodCenter);
+      o.visible=overview?o.userData.overviewLOD:d2>=o.userData.lodMin**2&&d2<o.userData.lodMax**2;
+    }
     if(o.visible)visible++;
   }
   world.userData.visibleChunks=visible;

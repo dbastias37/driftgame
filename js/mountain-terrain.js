@@ -8,7 +8,7 @@ export function roadFootprint(track){
 // Terrain is cut out underneath the shoulder instead of trying to hide a
 // coarse heightfield by lowering selected vertices. Both boundaries coincide.
 export function buildMountainTerrain(track,world,material){
-  const b=track.bounds,tile=64,step=track.terrainStep||8,cutHalf=track.cutHalf||track.roadHalf+1.3,footprint=roadFootprint(track),cache=new Map(),palette=[new T.Color(0x526253),new T.Color(0x728a84)];
+  const b=track.bounds,tile=64,step=track.terrainStep||8,cutHalf=track.cutHalf||track.roadHalf+1.3,footprint=roadFootprint(track),cache=new Map(),palette=({snow:[0xd0dce0,0x8c9ca7],coast:[0x7b8061,0x9a9783],forest:[0x465b46,0x697571],lake:[0x566c61,0x738582],highland:[0x777c65,0x8c9185],alpine:[0x526253,0x72847f]}[track.biome]||[0x526253,0x728a84]).map(c=>new T.Color(c));
   const sample=(x,z)=>{const key=x+','+z;if(!cache.has(key)){const q=track.sampleNearby(x,z);let h=track.elevated?track.terrainHeight(x,z):track.baseHeight(x,z);if(q&&!track.elevated){const t=Math.max(0,Math.min(1,(q.distance-track.roadHalf-1.3)/30));h=q.h+(h-q.h)*t*t*(3-2*t);}cache.set(key,{q,h});}return cache.get(key);};
   const footprints=[];
   if(track.elevated){const offset=new C.ClipperOffset(2,.05*SCALE);offset.AddPath(track.points.map(p=>({X:Math.round(p.x*SCALE),Y:Math.round(p.y*SCALE)})),C.JoinType.jtRound,C.EndType.etClosedLine);offset.Execute(footprints,cutHalf*SCALE);}else footprints.push(footprint);

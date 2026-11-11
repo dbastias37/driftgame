@@ -6,32 +6,29 @@ globalThis.DriftTouring ||= (()=>{
   'use strict';
   const TAU=Math.PI*2,clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),mix=(a,b,t)=>a+(b-a)*t;
   const wrap=(s,length)=>((s%length)+length)%length,smooth=t=>t*t*(3-2*t);
-  const definitions=[
-    {name:'Sierra del Cóndor',length:6400,relief:76,bank:6,biome:'alpine',bridge:'truss',
-      description:'Ascenso al macizo, túnel iluminado y viaducto de acero sobre el valle.',
-      nodes:[[0,0],[550,0],[1000,-80],[1260,-340],[1120,-650],[780,-720],[550,-530],[270,-590],[140,-940],[-200,-1120],[-600,-930],[-820,-590],[-660,-220],[-300,-40]],tunnels:[[.28,.345]],bridges:[[.69,.755]]},
-    {name:'Costa del Viento',length:6800,relief:58,bank:5,biome:'coast',bridge:'arch',
-      description:'Curvas abiertas junto al mar, dos pasos en roca y un puente de arcos.',
-      nodes:[[0,0],[700,0],[1220,-100],[1550,-400],[1350,-690],[1000,-720],[730,-480],[450,-490],[300,-830],[-50,-1080],[-450,-1020],[-730,-700],[-650,-360],[-380,-130]],tunnels:[[.23,.28],[.51,.565]],bridges:[[.78,.84]]},
-    {name:'Bosque de los Pinos',length:7200,relief:92,bank:6,biome:'forest',bridge:'truss',
-      description:'Bosque profundo, eses de radio largo y una galería excavada en la montaña.',
-      nodes:[[0,0],[650,0],[1080,-240],[1160,-600],[870,-820],[470,-760],[280,-1030],[-80,-1210],[-410,-960],[-340,-650],[-620,-450],[-800,-160],[-560,130],[-240,70]],tunnels:[[.38,.455]],bridges:[[.64,.705]]},
-    {name:'Embalse Alto',length:7800,relief:108,bank:7,biome:'lake',bridge:'arch',
-      description:'Vuelta al embalse, subida panorámica, túnel de cumbre y viaducto de hormigón.',
-      nodes:[[0,0],[850,0],[1400,-240],[1510,-660],[1270,-1000],[850,-1100],[540,-910],[210,-1000],[-80,-1340],[-470,-1280],[-680,-950],[-530,-620],[-850,-430],[-790,-120],[-400,10]],tunnels:[[.32,.40]],bridges:[[.60,.68]]},
-    {name:'Anillo de la Cumbre',length:8400,relief:68,bank:9,biome:'highland',bridge:'truss',
-      description:'Grandes curvas peraltadas, rectas rápidas y un largo túnel bajo la cumbre.',
-      nodes:[[0,0],[900,0],[1500,-220],[1770,-650],[1510,-1120],[900,-1350],[250,-1190],[-280,-1290],[-830,-990],[-1010,-530],[-690,-130]],tunnels:[[.27,.35]],bridges:[[.72,.79]]},
-  ];
+  const definitions=globalThis.DriftRoadExpeditions;
+  if(!definitions?.length)throw new Error("Road expedition catalogue must load before touring");
   const dataBankFactor=d=>d.biome==='highland'?80:38;
   const cache=new Map();
   const definition=n=>definitions[clamp(Math.trunc(n)||1,1,definitions.length)-1];
-  function info(n){const d=definition(n);return {id:definitions.indexOf(d)+1,name:d.name,length:d.length,relief:d.relief,bank:d.bank,description:d.description,stage:'Circuitos 2.0',laps:4,biome:d.biome};}
+  function info(n){if(n>=101&&n<=105)return {...DriftTouringLegacy.info(n-100),id:n,climate:'clear'};const d=definition(n);return {id:definitions.indexOf(d)+1,name:d.name,length:d.length,relief:d.relief,bank:d.bank,description:d.description,stage:'Carreteras · '+({clear:'Despejado',rain:'Lluvia',fog:'Bruma',snow:'Nieve'}[d.climate]),laps:4,biome:d.biome,climate:d.climate,sectors:d.landmarks,sectorBreaks:d.sectorBreaks};}
+  // Monotone periodic cubic Hermite height: independent authored crests/valleys.
+  // Zero derivative at extrema, harmonic derivatives elsewhere; no overshoot.
+  function elevation(d,u){
+    const h=d.heights,N=h.length-1,t=wrap(u,1)*N,i=Math.floor(t),v=t-i;
+    const slope=k=>{const a=h[(k-1+N)%N],b=h[k%N],c=h[(k+1)%N],left=b-a,right=c-b;return left*right<=0?0:2*left*right/(left+right);};
+    const a=h[i],b=h[(i+1)%N],m=slope(i),n=slope(i+1),v2=v*v,v3=v2*v;
+    return (2*v3-3*v2+1)*a+(v3-2*v2+v)*m+(-2*v3+3*v2)*b+(v3-v2)*n;
+  }
   function layout(n){
     const meta=info(n),d=definition(n);if(cache.has(meta.id))return cache.get(meta.id);
     // Periodic cubic B-spline: C2 at every control point, including the seam.
-    // Convex weights prevent the overshoot of a loosely drawn Catmull spline.
-    const nodes=d.nodes,N=nodes.length,dense=[];
+    // The periodic control solve preserves the authored corner positions.
+    const N=d.nodes.length,dense=[];
+    // Periodic interpolating C2 spline: solve B-spline controls so authored
+    // hairpins remain intentional instead of being rounded into generic ovals.
+    let nodes=d.nodes.map(p=>p.slice());
+    for(let iteration=0;iteration<40;iteration++)nodes=nodes.map((p,i)=>[0,1].map(k=>(6*d.nodes[i][k]-nodes[(i-1+N)%N][k]-nodes[(i+1)%N][k])/4));
     for(let i=0;i<N;i++)for(let j=0;j<160;j++){
       const t=j/160,t2=t*t,t3=t2*t,w=[(1-3*t+3*t2-t3)/6,(4-6*t2+3*t3)/6,(1+3*t+3*t2-3*t3)/6,t3/6];
       const p={x:0,y:0};for(let k=0;k<4;k++){p.x+=nodes[(i+k+N-1)%N][0]*w[k];p.y+=nodes[(i+k+N-1)%N][1]*w[k];}dense.push(p);
@@ -41,15 +38,15 @@ globalThis.DriftTouring ||= (()=>{
     for(let i=0;i<count;i++){
       const distance=total*i/count;while(ends[seg]<distance)seg++;
       const t=(distance-ends[seg-1])/(ends[seg]-ends[seg-1]),a=dense[seg-1],b=dense[seg];
-      const phase=i/count*TAU,h=34+d.relief*(.5-.5*Math.cos(phase))+.07*d.relief*Math.sin(phase*2)**2;
+      const h=elevation(d,i/count);
       points.push({x:(mix(a.x,b.x,t)-dense[0].x)*scale,y:(mix(a.y,b.y,t)-dense[0].y)*scale,h,s:i*d.length/count});
     }
     const point=i=>points[(i+count)%count],step=d.length/count;
     const curvature=points.map((p,i)=>{const a=point(i-4),b=point(i+4),ab=Math.hypot(p.x-a.x,p.y-a.y),bc=Math.hypot(b.x-p.x,b.y-p.y),ac=Math.hypot(b.x-a.x,b.y-a.y);return 2*((p.x-a.x)*(b.y-a.y)-(p.y-a.y)*(b.x-a.x))/(ab*bc*ac);});
     const banks=curvature.map(k=>clamp(-k*(dataBankFactor(d)),-d.bank*Math.PI/180,d.bank*Math.PI/180));
-    // Smooth over ~120 m; a bank never changes abruptly at a curve entry.
+    // Smooth over ~320 m; a bank never changes abruptly at a curve entry.
     for(let i=0;i<count;i++){
-      let bank=0,weight=0;for(let k=-15;k<=15;k++){const w=16-Math.abs(k);bank+=banks[(i+k+count)%count]*w;weight+=w;}
+      let bank=0,weight=0;for(let k=-40;k<=40;k++){const w=41-Math.abs(k);bank+=banks[(i+k+count)%count]*w;weight+=w;}
       const a=point(i-1),b=point(i+1),len=Math.hypot(b.x-a.x,b.y-a.y);Object.assign(points[i],{bank:bank/weight,nx:-(b.y-a.y)/len,ny:(b.x-a.x)/len,curvature:curvature[i]});
     }
     const features=[];
@@ -57,9 +54,12 @@ globalThis.DriftTouring ||= (()=>{
     const result={...meta,points,count,step,features,minRadius:1/Math.max(...curvature.map(Math.abs))};cache.set(meta.id,result);return result;
   }
   function createTrack(Track,n=1){
+    if(n>=101&&n<=105){const tr=DriftTouringLegacy.createTrack(Track,n-100);Object.assign(tr,{legacyId:n-100,touringId:n,climate:'clear',roadVersion:2,tunnelHalf:22,tunnelWall:10,tunnelRise:12});tr.layout=info(n);return tr;}
     const data=layout(n),points=data.points.map(p=>({...p})),tr=new Track(points),count=points.length;
-    Object.assign(tr,{elevated:true,touringId:data.id,roadHalf:12,length:data.length,totalLength:data.length,maxHeight:Math.max(...points.map(p=>p.h)),minHeight:Math.min(...points.map(p=>p.h)),raceLaps:4,features:data.features.map(f=>({...f})),biome:data.biome,terrainStep:16,cutHalf:15.8});
-    tr.layout={...info(n),level:0,elevated:true};tr.normalAt=i=>{const p=tr.point(i);return {x:p.nx,y:p.ny};};
+    Object.assign(tr,{elevated:true,touringId:data.id,roadHalf:12,length:data.length,totalLength:data.length,maxHeight:Math.max(...points.map(p=>p.h)),minHeight:Math.min(...points.map(p=>p.h)),raceLaps:4,features:data.features.map(f=>({...f})),biome:data.biome,climate:data.climate,roadVersion:3,terrainStep:16,cutHalf:15.8,tunnelHalf:22,tunnelWall:10,tunnelRise:12});
+    tr.layout={...info(n),level:0,elevated:true};
+    tr.sectors=data.sectors.map((name,i)=>({name,start:(data.sectorBreaks?.[i]??i/data.sectors.length)*tr.length,end:(data.sectorBreaks?.[i+1]??(i+1)/data.sectors.length)*tr.length,kind:["meadow","forest","slope","pass","valley","open"][i]}));
+    tr.sectorAt=s=>tr.sectors.find(f=>wrap(s,tr.length)>=f.start&&wrap(s,tr.length)<f.end)||tr.sectors[0];tr.normalAt=i=>{const p=tr.point(i);return {x:p.nx,y:p.ny};};
     tr.featureAt=(s,kind)=>tr.features.find(f=>(!kind||f.kind===kind)&&s>=f.start&&s<=f.end)||null;
     tr.atDistance=s=>{s=wrap(s,tr.length);const i=Math.min(count-1,Math.floor(s/data.step)),a=points[i],b=points[(i+1)%count],t=(s-a.s)/data.step;return {x:mix(a.x,b.x,t),y:mix(a.y,b.y,t),h:mix(a.h,b.h,t),bank:mix(a.bank,b.bank,t),nx:mix(a.nx,b.nx,t),ny:mix(a.ny,b.ny,t),i,s};};
     const segments=points.map((p,i)=>{const q=points[(i+1)%count],dx=q.x-p.x,dy=q.y-p.y,len=Math.hypot(dx,dy);return{p,q,i,dx,dy,len,l2:len*len,tang:Math.atan2(dy,dx),grade:(q.h-p.h)/len};}),grid=new Map(),roadGrid=new Map(),cell=48,pad=90;
@@ -76,9 +76,11 @@ globalThis.DriftTouring ||= (()=>{
     tr.ribbonPoint=(s,offset=0,lift=0)=>{const p=tr.atDistance(s);return {x:p.x+p.nx*offset,y:p.y+p.ny*offset,h:p.h+Math.tan(p.bank)*offset+lift};};
     const b=tr.bounds,cx=b.minX+b.w/2,cy=b.minY+b.h/2;
     const hills=Array.from({length:24},(_,i)=>tr.atDistance(i*tr.length/24));
+    const ridges=[.14,.31,.47,.68,.86].map((u,i)=>{const p=tr.atDistance(u*tr.length),offset=(i%2?1:-1)*(160+i*32);return {x:p.x+p.nx*offset,y:p.y+p.ny*offset,r:220+i*34,height:55+(tr.maxHeight-tr.minHeight)*.45+i*7};});
     tr.baseHeight=(x,y)=>{
       let sum=0,weight=0;for(const p of hills){const d=(x-p.x)**2+(y-p.y)**2+180**2,w=1/(d*Math.sqrt(d));sum+=p.h*w;weight+=w;}
       let h=sum/weight-5+9*Math.sin((x-cx)*.0023)*Math.cos((y-cy)*.0031);
+      for(const ridge of ridges)h+=ridge.height*Math.exp(-((x-ridge.x)**2+(y-ridge.y)**2)/(ridge.r*ridge.r));
       if(tr.biome==='lake')h-=110*Math.exp(-((x-cx)**2+(y-cy)**2)/(Math.min(b.w,b.h)*.24)**2);
       if(tr.biome==='coast')h-=130*smooth(clamp((x-b.maxX+80)/240,0,1));
       return h;
@@ -115,16 +117,25 @@ globalThis.DriftTouring ||= (()=>{
     }
   }
   function constrainCamera(track,car,position,target,mounted=false){
-    const q=track.sample(car.pos.x,car.pos.y),near=track.features.find(f=>f.kind==='tunnel'&&q.s>f.start-22&&q.s<f.end+22);
-    if(!near)return false;
-    // Exterior aerial shots automatically follow from inside the tunnel. Keep
-    // the player's selected camera; restore its framing when the car emerges.
-    if(!mounted){position.x=car.pos.x-Math.cos(car.angle)*11;position.z=car.pos.y-Math.sin(car.angle)*11;position.y=track.surfaceHeight(position.x,position.z)+4.2;}
-    const sample=track.sample(position.x,position.z),side=clamp(sample.offset,-track.roadHalf+1,track.roadHalf-1);
-    position.x=sample.cx-Math.sin(sample.tang)*side;position.z=sample.cy+Math.cos(sample.tang)*side;
-    const road=track.surfaceHeight(position.x,position.z);position.y=clamp(position.y,road+.2,road+6.3);
-    if(target&&!mounted){target.x=car.pos.x+Math.cos(car.angle)*10;target.z=car.pos.y+Math.sin(car.angle)*10;target.y=track.surfaceHeight(target.x,target.z)+1;}
+    const q=track.sample(position.x,position.z),feature=track.features.find(f=>f.kind==='tunnel'&&q.s>=f.start-12&&q.s<=f.end+12);
+    if(!feature)return false;
+    // Preserve yaw, look target, FOV and tracking spring. Only project an unsafe
+    // eye into the enlarged vault. Ordinary chase/onboard poses are unchanged.
+    const half=track.tunnelHalf||22,margin=.9,side=clamp(q.offset,-half+margin,half-margin);
+    if(side!==q.offset){position.x=q.cx-Math.sin(q.tang)*side;position.z=q.cy+Math.cos(q.tang)*side;}
+    const p=track.atDistance(q.s),road=p.h+Math.tan(p.bank)*side;
+    const ceiling=(track.tunnelWall||10)+(track.tunnelRise||12)*Math.sqrt(Math.max(0,1-(side/half)**2))-margin;
+    // Begin lowering tall aerial views before the portal, without a hard cut.
+    const inside=q.s>=feature.start&&q.s<=feature.end;
+    const blend=inside?1:smooth(clamp(Math.min(q.s-feature.start+12,feature.end+12-q.s)/12,0,1));
+    const safe=clamp(position.y,road+.2,road+ceiling);
+    position.y=mix(position.y,safe,blend);
     return true;
   }
-  return Object.freeze({count:definitions.length,info,layout,createTrack,gravity,beforeStep,afterStep,constrainCamera});
+  function cameraDistanceScale(track,s){
+    let proximity=0;
+    for(const f of track.features||[])if(f.kind==='tunnel')proximity=Math.max(proximity,smooth(clamp(Math.min(s-f.start+28,f.end+28-s)/28,0,1)));
+    return 1-.2*proximity;
+  }
+  return Object.freeze({count:definitions.length,info,layout,createTrack,gravity,beforeStep,afterStep,constrainCamera,cameraDistanceScale});
 })();
