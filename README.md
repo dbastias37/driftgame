@@ -1,3 +1,9 @@
+## 1.0.0-prealpha.18 — 20 carreteras, cuatro climas y Summit
+
+Veinte rutas de 7,9–11 km, cinco por clima, árboles del FBX original con detalle por distancia, cámara de túnel más cercana y adelantamientos con carril estable. Se conservan los cinco Circuitos 2.0 y su historial. Summit está disponible como visor 3D con su atlas original desde el menú principal.
+
+**ZIP:** abre `INICIAR_WINDOWS.bat` o ejecuta `npm run preview`. Lee [LEEME_PRIMERO.txt](LEEME_PRIMERO.txt) y [el informe de entrega](docs/roads-release.md). 230 pruebas de núcleo aprobadas; comprobación de navegador/GPU pendiente por restricciones del entorno. Esta entrega no se publicó en Render.
+
 ## 1.0.0-prealpha.17 — Gravilla y agua en las ruedas
 
 Piedras con rebote y polvo al pisar la franja de gravilla; gotas y bruma fina sobre asfalto mojado. Cada rueda responde a su superficie, velocidad, derrape y frenado. Incluye pendientes, rivales y repeticiones, con partículas reutilizadas y límites de cantidad y distancia.

@@ -1,0 +1,24 @@
+DR1FT — 1.0.0-prealpha.18
+20 carreteras / cuatro climas / árboles originales / Summit visual
+
+PARA JUGAR LOCALMENTE
+1. Extrae el ZIP completo.
+2. En Windows abre INICIAR_WINDOWS.bat. Requiere Node.js 22 o posterior.
+3. Mantén abierta la ventana del iniciador. El juego abre en http://127.0.0.1:8787
+   Alternativa: ejecuta npm run preview dentro de esta carpeta.
+
+PARA ACTUALIZAR EL REPOSITORIO
+Copia el contenido de la carpeta DriftGame a la raíz de tu copia local del
+repositorio. Conserva la carpeta .git que ya tienes. Este ZIP incluye el código
+y todos los recursos; no incluye node_modules. Revisa los cambios y súbelos.
+No se ha publicado esta entrega en GitHub ni en Render.
+
+RESULTADO Y LÍMITES
+230 pruebas de núcleo aprobadas; 20 vueltas individuales y cuatro carreras
+con tráfico comprobadas. La validación Playwright/WebGL y en móvil físico
+sigue pendiente porque el entorno impidió arrancar Chromium.
+Summit es un visor 3D del archivo recibido, sin conducción ni garantía de
+identidad visual del 100 % respecto al juego original.
+
+Lee docs/roads-release.md y abre docs/roads-review.html para el detalle,
+las mediciones y las vistas aéreas.
