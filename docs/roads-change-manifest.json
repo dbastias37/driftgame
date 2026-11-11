@@ -1,0 +1,317 @@
+{
+  "version": "1.0.0-prealpha.18",
+  "base": "Driftgame.rar / driftgame-roads, prealpha.17",
+  "published": false,
+  "modified": [
+    {
+      "path": "index.html",
+      "sha256": "c47ea0f73736641a6cfc066d918c7cd44ddfc2886edc13c211a4bd9b9416a36c"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "f6261f56011f1d9e8c1add3681efa232cb1f97ed259c6c8af74afc5414e6731f"
+    },
+    {
+      "path": "package.json",
+      "sha256": "bcf5be5170be51fa848f76968e462b27f2c5f77c04db8255630e6db927a7fd31"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "7afbd1b7566dbef985c0b291c553ef2e4877da2fe4c05c7d6de7484635961405"
+    },
+    {
+      "path": "README.md",
+      "sha256": "11d542b4429a211d0c02e58f0b3e7e1042b6b9aedb2113a189ea1be5db5639dc"
+    },
+    {
+      "path": "js/mountain-scene.js",
+      "sha256": "2ea205c7f3bf9580790f5365719cbafdc346da069a0ee44aba57e8da625417ab"
+    },
+    {
+      "path": "js/menu-preview.js",
+      "sha256": "88a6153ab3f20aced044449211e58e23d3b1135c715c543b8e3727c79e10b25f"
+    },
+    {
+      "path": "js/atmosphere.js",
+      "sha256": "ee913c3c327bc35af1447b97dd790d2ad97f42804d60e96f09f401c22859e11c"
+    },
+    {
+      "path": "js/track-surface.js",
+      "sha256": "3d28b1d05c3ab4280bf87216f0c6370fd746a36ebaf8713691d9e86fc46767ee"
+    },
+    {
+      "path": "js/music-ui.js",
+      "sha256": "4ec8e9ae78be66640f796284df85e7eacbfc653a9fdb8e68f19e90f46aa8eb33"
+    },
+    {
+      "path": "js/world-optimization.js",
+      "sha256": "26c9c3ec6b903d823237dbd26087e7b95ad3b921a849549d7f84fcd8d8f9317f"
+    },
+    {
+      "path": "js/ai-race.js",
+      "sha256": "5bf2a8d009113bfe6ec2a628f85212ce5b0604371e478e8123bfc857e7363acb"
+    },
+    {
+      "path": "js/retro-renderer.js",
+      "sha256": "45746701c4691317b0dbec44193ba20b2db5cb99f1a6f561f76811232c25de84"
+    },
+    {
+      "path": "js/weather.js",
+      "sha256": "24e750598df6944cca68be829c70ad122f3c7fed8078b333bc63e16b69595c3d"
+    },
+    {
+      "path": "js/view3d.js",
+      "sha256": "203ad8af473ec22e0d7502b192ce7b3745d1cbe6b71e7f55001557dcd47f3399"
+    },
+    {
+      "path": "js/training-scene.js",
+      "sha256": "9d64ef632c16f5197279e7504f84a8801beb3d9056032e4f4ef4db0a8d5bccd7"
+    },
+    {
+      "path": "js/wheel-particles-renderer.js",
+      "sha256": "882f652db866b42550c4db4a810ce561a6c9280ccd4c5e4a3ee742d921fb46bd"
+    },
+    {
+      "path": "js/replacement-model.js",
+      "sha256": "02f94f174b0a78f2c08cdd8dbe00ff2e01a798603062288583a0e4614b1e459f"
+    },
+    {
+      "path": "js/software-renderer.js",
+      "sha256": "079e43acbf8024a5af20b2012483310af2bda4488916d37c780a580885c2a4ee"
+    },
+    {
+      "path": "js/touring-circuits.js",
+      "sha256": "98753f0c0b6f9a28eb324f1dc62aa97a8df87688d8880f47b75f25091d477a9b"
+    },
+    {
+      "path": "js/experience.js",
+      "sha256": "1053f99708ce84e5cee9ed4b323d400368dd3b27be98f0b6eb35712289c9e5e2"
+    },
+    {
+      "path": "js/cinematic-camera.js",
+      "sha256": "be00b28c742e00be41fba957ce5204a783612e0050979461a6b47e31e2429775"
+    },
+    {
+      "path": "js/touring-scene.js",
+      "sha256": "a3ac1243ed9417ba45c02dc9c807397005d45d8a1549610e0260ace16866f0de"
+    },
+    {
+      "path": "docs/roads-pilot-geometry.json",
+      "sha256": "a6f59f52bc00c66773000dedcc5463a7cfffc2f1e89370582a3f435ebb311d66"
+    },
+    {
+      "path": "docs/roads-lap-08.json",
+      "sha256": "bfb03976474fe7fe9383261413211b80924c5f991d665501723ab3f2f9ffb81c"
+    },
+    {
+      "path": "docs/roads-lap-14.json",
+      "sha256": "aab4bea88ad0dae7b4e5a394739ce5afbb9b4651e490443b84086dff6d115d1c"
+    },
+    {
+      "path": "docs/roads-layouts.json",
+      "sha256": "79824a037e86b5400d48f72b3dc636acca262c88e68b1efcf6e1e063343fa9f8"
+    },
+    {
+      "path": "docs/roads-lap-10.json",
+      "sha256": "26a267626d825f3b8e6ea5ff17f03de5b421736a509a2dd507954181c30a91b3"
+    },
+    {
+      "path": "docs/roads-lap-19.json",
+      "sha256": "28425ccef86f19ad1cc2ecc6d4f026741cb9dc3b939c56de67125c496a4c1548"
+    },
+    {
+      "path": "docs/roads-all-laps.json",
+      "sha256": "e8987de8fa79fb25db848deb65880e991d4250dc64d3dfdd79ef5bd08edef315"
+    },
+    {
+      "path": "docs/roads-lap-11.json",
+      "sha256": "a64d9d37d3222592479d00f5a806ce53ce6141f41af2b7b5a01944f189e3416e"
+    },
+    {
+      "path": "docs/roads-touring-validation.json",
+      "sha256": "54f91d09d15060b59e9b3a28e2154288d7de275f4f4d51b1b77158ca6f24750b"
+    },
+    {
+      "path": "docs/roads-pilot-aerial.png",
+      "sha256": "04a14c3ef02a0321ec13ab618e0b0af6686966654f46efdc698aa8042285bdf1"
+    },
+    {
+      "path": "docs/roads-lap-09.json",
+      "sha256": "c2ffbc91625476943d18411bb6723dfc60d2fdcac9ca7d3a0c8c11e38798e760"
+    },
+    {
+      "path": "docs/roads-core-validation.json",
+      "sha256": "12bd669b179b248f00ebe7dc9cc34eb4a4f362f48241071a40fe3b948a95a000"
+    },
+    {
+      "path": "docs/roads-lap-04.json",
+      "sha256": "3cffbe087ae3f902e6bfa57d494a4f254a3392c97e5508dc421fc3216e5a0e10"
+    },
+    {
+      "path": "docs/roads-lap-20.json",
+      "sha256": "7f51555dc315640b762ce4be92ebcdfca5b35d3cbce7f78401346d93c849b31a"
+    },
+    {
+      "path": "docs/roads-lap-01.json",
+      "sha256": "16ba571a5ca1e9ac07a857c5bda781bfa85fbb44ec18b1ce4a85e41c14ea1caa"
+    },
+    {
+      "path": "docs/roads-lap-13.json",
+      "sha256": "edead5ac4295c04db8d06634d8c4a61a72adfcf3276291c9d1fdc514a1e2039c"
+    },
+    {
+      "path": "docs/roads-lap-18.json",
+      "sha256": "b00261218e939b3d1e5ecd5903110f6490819d41adb9cccd9d67b8539b3baeb8"
+    },
+    {
+      "path": "docs/roads-lap-16.json",
+      "sha256": "93e0b37c845da7d14e1271e68f035416074e54693dd6fb546f789a32700a82a4"
+    },
+    {
+      "path": "docs/roads-lap-12.json",
+      "sha256": "2774c77b122c256baf313e7aa049c48cf16585debd2afb22b8c612f9fb4d4552"
+    },
+    {
+      "path": "docs/roads-lap-17.json",
+      "sha256": "e4a7ef737514a977d006a3f57bb62349efb16b10ff6f1eab1394d820f35c7872"
+    },
+    {
+      "path": "docs/roads-lap-06.json",
+      "sha256": "ebbeb1028b1b5a24dfca57b759d3c59eff9e9eb42977f874cc67e5e9d10fbcb9"
+    },
+    {
+      "path": "docs/roads-lap-05.json",
+      "sha256": "87b9493fbeab1e325054e6e782894a4a76cd47c97b0ead753cc161ddad7fb5e3"
+    },
+    {
+      "path": "docs/touring-circuits.md",
+      "sha256": "cc371bacdd05ce383e557b6f3b5d6e0e4c833212103ea3c2cd1c3270afd18c2a"
+    },
+    {
+      "path": "docs/roads-lap-03.json",
+      "sha256": "3b1464563a5823a18d5f54042d799eab553db5946135b69d8af215f44f18318d"
+    },
+    {
+      "path": "docs/roads-continuation.json",
+      "sha256": "0e8f1f9e084f30d952a3bd77fbf8e6e552963f524e5432d6f58ee8a931e26215"
+    },
+    {
+      "path": "docs/roads-lap-15.json",
+      "sha256": "3edcf15f60db43c02ecabffe15bb398b687f6baeb5007cc019be2f34dc4f0e83"
+    },
+    {
+      "path": "docs/roads-lap-02.json",
+      "sha256": "24d12acffc32ab7d1e2089b9f7dee2042ad34d591600978ca1cfd7bcde2c682b"
+    },
+    {
+      "path": "docs/roads-traffic-validation.json",
+      "sha256": "081903ddb6d2c410078f03a808056690cccac1fbbb2b0e9d1049ad62bc2aefee"
+    },
+    {
+      "path": "docs/roads-review.html",
+      "sha256": "52a3c8a1447ab5f8e926cab4d76795f674472e0dd556eaa9735295019f1fac4c"
+    },
+    {
+      "path": "docs/roads-lap-07.json",
+      "sha256": "3395010170a3e3d4280e26b59c32c4cf6eed10575ef0a1ef6c365924c4407a27"
+    },
+    {
+      "path": "scripts/render-roads-overview.mjs",
+      "sha256": "b6419b8517621ebb0814c636cb7bdbdc398e02e4ba8d303274cafed38778f877"
+    },
+    {
+      "path": "scripts/validate-roads-traffic.cjs",
+      "sha256": "8d2ffa8210dccb561e17238329ae95d8d863eee98b774217797617bdfc108d3b"
+    },
+    {
+      "path": "tests/harness.cjs",
+      "sha256": "c2bbb73ddbdadf90d1a191700c13067f1860878f922b11bf501dc1498ff0147a"
+    },
+    {
+      "path": "tests/wheel-particles.cjs",
+      "sha256": "923c5b6b649bfac4e0378e47514982df570a55a97e6c7959ca9c691daa700f8c"
+    },
+    {
+      "path": "tests/regression.cjs",
+      "sha256": "9f09a764ef94687982f5b92e83a4709c389fc420a6b6f6779adba9c2b0b0cfa5"
+    },
+    {
+      "path": "tests/touring-scene.cjs",
+      "sha256": "122a7e6eeb569506b280a0a18f72cce6ecee3097f451828265022e27a89c77a2"
+    },
+    {
+      "path": "server/engine.js",
+      "sha256": "309a559944cf7d4c46416d6f01e4b590c750c2ace3d73f7b62796c370731df82"
+    },
+    {
+      "path": ".github/workflows/core.yml",
+      "sha256": "52a7678f8bc00981655e1db5153cc86f9b66e99d2def861e48deb61cc3d4aec3"
+    }
+  ],
+  "added": [
+    {
+      "path": "INICIAR_WINDOWS.bat",
+      "sha256": "5e3278a0907daef3f0d58d51aaf54af827bff078863febff93aa75984a147467"
+    },
+    {
+      "path": "LEEME_PRIMERO.txt",
+      "sha256": "1ab2e71a147a072a3bff3851bec6be63fdde812644b83e57fe90a8d1ceccb6f9"
+    },
+    {
+      "path": "js/road-trees.js",
+      "sha256": "926411685be0096971d799bf3492093160ba7d8dab7872ecc9000f1787ad32ea"
+    },
+    {
+      "path": "js/summit-viewer.js",
+      "sha256": "f9636be7debfab4f7dfd76e8f705f9cb9ab8e07fb19e71ab0ad90b314cd4b5e3"
+    },
+    {
+      "path": "docs/summit-validation.json",
+      "sha256": "b798e553c2fc6ccdec1e255a428bb48c732bc868348dcc06b6bc2d1d90ccba0c"
+    },
+    {
+      "path": "docs/summit-preview.png",
+      "sha256": "f3c6cc7e9cb414b9125b5a4d3fe395672474f6b0fca183c2c9ba1e0de80a2f97"
+    },
+    {
+      "path": "docs/roads-release.md",
+      "sha256": "b6669d52a44f93a5d49efbe9df0423c2e423b42d53cabbee5f256c9f8972f5a6"
+    },
+    {
+      "path": "docs/roads-core-tests.txt",
+      "sha256": "fb793214837f093f39e7aa6dedb3ddd78932988011407271f81a98edb25b894e"
+    },
+    {
+      "path": "scripts/preview.mjs",
+      "sha256": "e7af0ad114df42e1b9466a61f3fa169c529c99163d1c95401037bb1a7dedac11"
+    },
+    {
+      "path": "tests/road-assets.cjs",
+      "sha256": "0c022864bd1a7807063ed5a15c8eb4123491324f027f34de9ede3765c7336065"
+    },
+    {
+      "path": "bonus/summit.html",
+      "sha256": "8f0a34caa195c900e0f3bb81629912dd93f2790134f3a6bbda9e225153b6a206"
+    },
+    {
+      "path": "assets/SCENERY-CREDITS.md",
+      "sha256": "3e153960e6c45f64ade64d844cb01ab30e01f1755d4f631c3f8e1ced950aef38"
+    },
+    {
+      "path": "assets/scenery/tree-bark.png",
+      "sha256": "2c25840ef6ab3f9661ec35443521c5dcd35b93666ada9091ad88b3f292b1d60b"
+    },
+    {
+      "path": "assets/scenery/tree-leaves.png",
+      "sha256": "9823464d5710a548b2e2eaf155f90a48e5f6e5fec6ebbfef76c9cc5d7605006f"
+    },
+    {
+      "path": "assets/scenery/trees-data.js",
+      "sha256": "04eded34207297f3b67df57a40404331d5bd26a5b029c6c18adf2ca1d981c493"
+    },
+    {
+      "path": "assets/bonus/summit.glb",
+      "sha256": "f310644254c0f3c92622a573a8817eb616776c87eb2d902202a73617d3e56c7d"
+    }
+  ]
+}

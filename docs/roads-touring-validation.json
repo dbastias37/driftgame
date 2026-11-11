@@ -1,0 +1,142 @@
+[
+  {
+    "id": 1,
+    "triangles": 1266202,
+    "maxVisibleTriangles": 138439,
+    "maxError": 0.014140887511530309,
+    "buildAndChecksMs": 3368
+  },
+  {
+    "id": 2,
+    "triangles": 1552063,
+    "maxVisibleTriangles": 140854,
+    "maxError": 0.017421449641688014,
+    "buildAndChecksMs": 2639
+  },
+  {
+    "id": 3,
+    "triangles": 1739121,
+    "maxVisibleTriangles": 134130,
+    "maxError": 0.013271994271462972,
+    "buildAndChecksMs": 2198
+  },
+  {
+    "id": 4,
+    "triangles": 1436765,
+    "maxVisibleTriangles": 106244,
+    "maxError": 0.007242728643007013,
+    "buildAndChecksMs": 2059
+  },
+  {
+    "id": 5,
+    "triangles": 1857162,
+    "maxVisibleTriangles": 137331,
+    "maxError": 0.014560339250976995,
+    "buildAndChecksMs": 2381
+  },
+  {
+    "id": 6,
+    "triangles": 1401189,
+    "maxVisibleTriangles": 124916,
+    "maxError": 0.01379891101664299,
+    "buildAndChecksMs": 1593
+  },
+  {
+    "id": 7,
+    "triangles": 1557447,
+    "maxVisibleTriangles": 124335,
+    "maxError": 0.009819986147476811,
+    "buildAndChecksMs": 1994
+  },
+  {
+    "id": 8,
+    "triangles": 1292174,
+    "maxVisibleTriangles": 132826,
+    "maxError": 0.015570410035309123,
+    "buildAndChecksMs": 1255
+  },
+  {
+    "id": 9,
+    "triangles": 1741572,
+    "maxVisibleTriangles": 133494,
+    "maxError": 0.009414670754694043,
+    "buildAndChecksMs": 1847
+  },
+  {
+    "id": 10,
+    "triangles": 1725211,
+    "maxVisibleTriangles": 115137,
+    "maxError": 0.008019321305482663,
+    "buildAndChecksMs": 2326
+  },
+  {
+    "id": 11,
+    "triangles": 1423159,
+    "maxVisibleTriangles": 114867,
+    "maxError": 0.007093896541462641,
+    "buildAndChecksMs": 1959
+  },
+  {
+    "id": 12,
+    "triangles": 1642803,
+    "maxVisibleTriangles": 126157,
+    "maxError": 0.014224099727499606,
+    "buildAndChecksMs": 1928
+  },
+  {
+    "id": 13,
+    "triangles": 1720433,
+    "maxVisibleTriangles": 125704,
+    "maxError": 0.01548842162688402,
+    "buildAndChecksMs": 2312
+  },
+  {
+    "id": 14,
+    "triangles": 1442412,
+    "maxVisibleTriangles": 137215,
+    "maxError": 0.009828840521535653,
+    "buildAndChecksMs": 2038
+  },
+  {
+    "id": 15,
+    "triangles": 1780752,
+    "maxVisibleTriangles": 119310,
+    "maxError": 0.006752357983145885,
+    "buildAndChecksMs": 2344
+  },
+  {
+    "id": 16,
+    "triangles": 1529812,
+    "maxVisibleTriangles": 132330,
+    "maxError": 0.00963927831568867,
+    "buildAndChecksMs": 1710
+  },
+  {
+    "id": 17,
+    "triangles": 1564853,
+    "maxVisibleTriangles": 127404,
+    "maxError": 0.009797702754156035,
+    "buildAndChecksMs": 2187
+  },
+  {
+    "id": 18,
+    "triangles": 1832424,
+    "maxVisibleTriangles": 119974,
+    "maxError": 0.009481846930412985,
+    "buildAndChecksMs": 2578
+  },
+  {
+    "id": 19,
+    "triangles": 1482107,
+    "maxVisibleTriangles": 144040,
+    "maxError": 0.009023377418600376,
+    "buildAndChecksMs": 1671
+  },
+  {
+    "id": 20,
+    "triangles": 1689453,
+    "maxVisibleTriangles": 141266,
+    "maxError": 0.012913832755941712,
+    "buildAndChecksMs": 2457
+  }
+]

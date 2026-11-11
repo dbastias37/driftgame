@@ -1,0 +1,16 @@
+{
+  "id": 1,
+  "meshes": 3252,
+  "batchedMeshes": 2583,
+  "triangles": 2051606,
+  "audit": {
+    "samples": 525,
+    "gaps": 0,
+    "intrusions": 0,
+    "maxError": 0.033268847889090125,
+    "clearance": 20.464013944824075
+  },
+  "length": 8200,
+  "relief": 140.9997656450643,
+  "softwareRender": true
+}

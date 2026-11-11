@@ -1,3 +1,5 @@
+> Documento histórico de los cinco Circuitos 2.0. Siguen disponibles en el grupo de clásicos. La entrega actual de 20 carreteras está descrita en [roads-release.md](roads-release.md).
+
 # Circuitos 2.0 — prealpha.16
 
 Cinco trazados cerrados originales, creados para carreras largas por paisajes de montaña, costa y bosque. Se seleccionan en Carrera rápida o Contrarreloj, antes de los veinte circuitos existentes. Carrera permite cuatro o cinco vueltas; el selector muestra la distancia total. Volver desde el garaje o reiniciar conserva ruta y vueltas.

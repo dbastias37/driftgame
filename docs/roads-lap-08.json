@@ -1,0 +1,12 @@
+{
+  "id": 8,
+  "skin": "gray",
+  "climate": "rain",
+  "distance": 7920.235593794585,
+  "length": 7900,
+  "off": 0,
+  "hit": 0,
+  "maxError": 0.01521520214014771,
+  "seconds": 230.65,
+  "complete": true
+}

@@ -1,0 +1,9 @@
+{
+  "outside": {
+    "visible": true,
+    "vertices": 1836,
+    "finite": true,
+    "name": "snow-flakes"
+  },
+  "inside": false
+}

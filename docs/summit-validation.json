@@ -1,0 +1,15 @@
+{
+  "width": 1200,
+  "height": 800,
+  "bounds": [
+    2024.0780797583284,
+    334.0886207536235,
+    1908.6210845137998
+  ],
+  "radius": 1401.0122879302178,
+  "meshes": 84,
+  "originalMeshes": 1205,
+  "textureDecoded": true,
+  "renderer": "software",
+  "geometryPreserved": true
+}

@@ -1,0 +1,8 @@
+{
+  "date": "2026-11-11",
+  "version": "1.0.0-prealpha.18",
+  "passed": 230,
+  "failed": 0,
+  "browserTests": "blocked by local Chromium socket permissions",
+  "softwareVisuals": true
+}

@@ -1,0 +1,174 @@
+[
+  {
+    "id": 1,
+    "climate": "clear",
+    "steps": 17196,
+    "offFrames": 0,
+    "cars": [
+      {
+        "skin": "fujiwara",
+        "lap": 1,
+        "finished": 243.3500000000858,
+        "impacts": 0,
+        "speed": 41.16295864164925
+      },
+      {
+        "skin": "blue",
+        "lap": 1,
+        "finished": 247.13333333342214,
+        "impacts": 0,
+        "speed": 30.38029156248787
+      },
+      {
+        "skin": "yellow",
+        "lap": 1,
+        "finished": 250.05000000009113,
+        "impacts": 0,
+        "speed": 28.761193640514374
+      },
+      {
+        "skin": "gray",
+        "lap": 1,
+        "finished": 264.3333333334216,
+        "impacts": 0,
+        "speed": 39.80069135314583
+      },
+      {
+        "skin": "yugo",
+        "lap": 1,
+        "finished": 286.600000000068,
+        "impacts": 0,
+        "speed": 38.67991189300298
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "climate": "rain",
+    "steps": 17545,
+    "offFrames": 0,
+    "cars": [
+      {
+        "skin": "blue",
+        "lap": 1,
+        "finished": 252.38333333342632,
+        "impacts": 0,
+        "speed": 40.97786969090645
+      },
+      {
+        "skin": "fujiwara",
+        "lap": 1,
+        "finished": 252.61666666675984,
+        "impacts": 0,
+        "speed": 40.80307131419494
+      },
+      {
+        "skin": "yellow",
+        "lap": 1,
+        "finished": 258.1500000000939,
+        "impacts": 0,
+        "speed": 29.58098216051934
+      },
+      {
+        "skin": "gray",
+        "lap": 1,
+        "finished": 269.76666666675,
+        "impacts": 0,
+        "speed": 39.51992707107955
+      },
+      {
+        "skin": "yugo",
+        "lap": 1,
+        "finished": 292.4166666667294,
+        "impacts": 0,
+        "speed": 39.60621525478964
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "climate": "fog",
+    "steps": 15332,
+    "offFrames": 0,
+    "cars": [
+      {
+        "skin": "fujiwara",
+        "lap": 1,
+        "finished": 217.56666666673195,
+        "impacts": 0,
+        "speed": 41.980504096957596
+      },
+      {
+        "skin": "blue",
+        "lap": 1,
+        "finished": 219.58333333340022,
+        "impacts": 0,
+        "speed": 41.26761294040034
+      },
+      {
+        "skin": "yellow",
+        "lap": 1,
+        "finished": 224.8333333334044,
+        "impacts": 0,
+        "speed": 39.06354442857589
+      },
+      {
+        "skin": "gray",
+        "lap": 1,
+        "finished": 234.06666666674508,
+        "impacts": 0,
+        "speed": 39.611555842562645
+      },
+      {
+        "skin": "yugo",
+        "lap": 1,
+        "finished": 255.53333333342883,
+        "impacts": 0,
+        "speed": 33.15331145998463
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "climate": "snow",
+    "steps": 16896,
+    "offFrames": 0,
+    "cars": [
+      {
+        "skin": "fujiwara",
+        "lap": 1,
+        "finished": 240.96666666675057,
+        "impacts": 0,
+        "speed": 41.88827018231081
+      },
+      {
+        "skin": "blue",
+        "lap": 1,
+        "finished": 243.05000000008556,
+        "impacts": 0,
+        "speed": 41.22973119307921
+      },
+      {
+        "skin": "yellow",
+        "lap": 1,
+        "finished": 248.81666666675682,
+        "impacts": 0,
+        "speed": 39.0920503664889
+      },
+      {
+        "skin": "gray",
+        "lap": 1,
+        "finished": 258.383333333427,
+        "impacts": 0,
+        "speed": 39.61997831683872
+      },
+      {
+        "skin": "yugo",
+        "lap": 1,
+        "finished": 281.60000000007255,
+        "impacts": 0,
+        "speed": 36.809379276007725
+      }
+    ]
+  }
+]

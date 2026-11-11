@@ -1,0 +1,19 @@
+{
+  "status": "zip-delivered",
+  "version": "1.0.0-prealpha.18",
+  "implemented": [
+    "20 roads in 4 climates",
+    "original FBX trees with distance LOD",
+    "smooth closer tunnel chase camera",
+    "five original touring tracks restored",
+    "traffic lane discipline",
+    "original Summit GLB and texture viewer"
+  ],
+  "remainingValidation": [
+    "WebGL desktop rendering and FPS",
+    "phone performance and physical touch input",
+    "Playwright browser suite; CI job included"
+  ],
+  "summit": "visual model viewer, not a drivable circuit",
+  "published": false
+}
