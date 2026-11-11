@@ -51,7 +51,7 @@ test('recovery, new track and falling clear emitters without spraying across a t
   delete c.descent;run(c);DriftWheelParticles.update(c,1/60,{...road,roadHalf:20});assert.equal(c.wheelParticles.length,0);
 });
 test('banked touring roads support particles, bridges are paved, and tunnel interiors stay dry',async()=>{
-  await ready;const {Track}=await import('../server/engine.js');await import('../js/touring-circuits.js');
+  await ready;const {Track}=await import('../server/engine.js');await import('../js/road-expeditions.js');await import('../js/touring-circuits.js');
   const track=DriftTouring.createTrack(Track,1),tunnel=track.features.find(f=>f.kind==='tunnel'),bridge=track.features.find(f=>f.kind==='bridge');
   for(const [feature,wet] of [[tunnel,0],[bridge,1]]){const p=track.ribbonPoint((feature.start+feature.end)/2,track.roadHalf+1.1),surface=DriftRoadContact.surface(track,p.x,p.y,1);assert.equal(surface.kind,'concrete');assert.equal(surface.wetness,wet);assert(Math.abs(surface.height-p.h)<.015);}
   const p=track.ribbonPoint((tunnel.start+tunnel.end)/2,0),c=car();c.pos={x:p.x,y:p.y};c.angle=track.tangentAt(p.i||track.sample(p.x,p.y).i);c.vel={x:20*Math.cos(c.angle),y:20*Math.sin(c.angle)};c.conditions.weather='storm';

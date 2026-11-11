@@ -22,7 +22,7 @@ async function fixture(options={}){
   await context.addInitScript(()=>{const raf=window.requestAnimationFrame;window.requestAnimationFrame=fn=>fn.name==='loop'?0:raf.call(window,fn);});
   await context.route('https://**/*',r=>r.abort());
   const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(url);return {page,context,errors};
+  await page.goto(url);await page.click('#btnPlayNow');await page.locator('#mainMenu').waitFor({state:'visible'});return {page,context,errors};
 }
 test('arranque, cuatro autos, menú de 20 desafíos y marcha manual',async()=>{
   const {page:p,context:c,errors}=await fixture();
@@ -101,7 +101,7 @@ test('pizarra visible, cierre obligatorio, generar y compartir pista',async()=>{
 test('récord y fantasma persistentes, ocultar no detiene el reloj',async()=>{
   const {page:p,context:c}=await fixture();
   await p.evaluate(()=>{startWithTrack(presetTrack(1),'tt');lapTime=20;ghostSamples=Array.from({length:600},()=>({x:player.pos.x,y:player.pos.y,angle:player.angle}));onLap()});
-  await p.reload();await p.click('#btnModeTT');await p.click('#btnCircuitContinue');await p.click('#btnChooseStart');
+  await p.reload();await p.click('#btnPlayNow');await p.click('#btnModeTT');await p.click('[data-circuit="1"]');await p.click('#btnCircuitContinue');await p.click('#btnChooseStart');
   const r=await p.evaluate(()=>{for(let i=0;i<182;i++)simulate(SIM_DT);const before=ghost.t;ghost.visible=false;ghost.update(1);return {best:document.getElementById('bestTT').textContent,time:ghost.data.time,advanced:ghost.t-before,samples:ghost.data.samples.length}});
   assert.equal(r.best,'0:20.000');assert.equal(r.time,20);assert.equal(r.samples,600);assert.ok(r.advanced>.99);await c.close();
 });
@@ -145,7 +145,7 @@ test('bucle real: cuenta atrás, acelerar, frenar, pausar y reanudar',async()=>{
   const p=await c.newPage(),errors=[];
   p.on('pageerror',e=>errors.push(e.message));
   p.on('console',m=>{if(m.type()==='error' && /Error in game loop|Error detected/.test(m.text()))errors.push(m.text());});
-  await p.goto(url);await p.click('#btnModeTT');await p.click('#btnCircuitContinue');await p.click('#btnChooseStart');
+  await p.goto(url);await p.click('#btnPlayNow');await p.click('#btnModeTT');await p.click('#btnCircuitContinue');await p.click('#btnChooseStart');
   await p.waitForFunction(()=>state==='running',null,{timeout:12000});
   await p.keyboard.down('w');await p.waitForFunction(()=>player.worldSpeed()>3);
   await p.keyboard.up('w');const speed=await p.evaluate(()=>player.worldSpeed());

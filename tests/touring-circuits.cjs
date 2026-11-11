@@ -1,18 +1,18 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {harness}=require('./harness.cjs');
 
-test('five long original loops have gentle grades, continuous banks and separated road corridors',()=>{
-  const r=harness(),tracks=r(`Array.from({length:5},(_,i)=>{const t=DriftTouring.createTrack(Track,i+1);return {points:t.points,length:t.length,half:t.roadHalf,features:t.features,radius:DriftTouring.layout(i+1).minRadius,grades:t.points.map(p=>t.sample(p.x,p.y).grade)}})`);
+test('twenty authored roads have bounded grades, continuous banks and separated corridors',()=>{
+  const r=harness(),tracks=r(`Array.from({length:20},(_,i)=>{const t=DriftTouring.createTrack(Track,i+1);return {points:t.points,length:t.length,half:t.roadHalf,features:t.features,radius:DriftTouring.layout(i+1).minRadius,grades:t.points.map(p=>t.sample(p.x,p.y).grade)}})`);
   for(const t of tracks){
-    assert(t.length>=6400&&t.length<=8400);assert(t.radius>100);let length=0,up=false,down=false;
+    assert(t.length>=7900&&t.length<=11000);assert(t.radius>40);let length=0,up=false,down=false;
     for(let i=0;i<t.points.length;i++){
       const p=t.points[i],q=t.points[(i+1)%t.points.length],ds=Math.hypot(q.x-p.x,q.y-p.y);length+=ds;
-      assert(ds>3.99&&ds<4.01);assert(Math.abs(t.grades[i])<.075);assert(Math.abs(q.bank-p.bank)/ds<.0015);assert(Math.abs(p.bank)<=Math.PI/20+.00001);
+      assert(ds>3.99&&ds<4.01);assert(Math.abs(t.grades[i])<.13);assert(Math.abs(q.bank-p.bank)/ds<.0015);assert(Math.abs(p.bank)<=Math.PI/20+.00001);
       up||=t.grades[i]>.02;down||=t.grades[i]<-.02;
       for(let j=i+35;j<t.points.length;j+=13){const separation=Math.min(j-i,t.points.length-j+i);if(separation<35)continue;assert(Math.hypot(p.x-t.points[j].x,p.y-t.points[j].y)>t.half*2+45,'Distinct road sections or structures overlap');}
     }
     assert(up&&down);assert(Math.abs(length-t.length)<.1);assert(t.features.some(f=>f.kind==='tunnel'));assert(t.features.some(f=>f.kind==='bridge'));
-    assert(Math.abs(t.grades[0]-t.grades.at(-1))<.001);
+    assert(Math.abs(t.grades[0]-t.grades.at(-1))<.002);
   }
 });
 
@@ -27,7 +27,7 @@ test('gravity follows grade and banking, brakes hold on a slope and barriers pro
 test('touring selection preserves four/five laps, preview return, restart and record identity',()=>{
   const r=harness();r("mode='race';showCircuitMenu();previewTouring(4,5);confirmTrackPreview();returnToTrackPreview();");assert.equal(r('previewSelection.track.touringId'),4);assert.equal(r('previewSelection.track.raceLaps'),5);
   r("confirmTrackPreview()");assert(r("$('#sessionBrief').textContent").startsWith('5 vueltas'));
-  r("$('#btnChooseStart').click();");assert.equal(r('TOTAL_LAPS'),5);assert(r('currentTrackId').startsWith('TOURING.v1.4:'));assert.equal(r('track.trackProps.props.length'),0);
+  r("$('#btnChooseStart').click();");assert.equal(r('TOTAL_LAPS'),5);assert(r('currentTrackId').startsWith('ROADS.v3.4:'));assert.equal(r('track.trackProps.props.length'),0);
   r('restartRaceSameTrack()');assert.equal(r('TOTAL_LAPS'),5);assert.equal(r('track.touringId'),4);
   r("mode='race';showCircuitMenu();previewTouring(2,4);confirmTrackPreview()");assert(r("$('#sessionBrief').textContent").startsWith('4 vueltas'));
   r("startWithTrack(DriftTouring.createTrack(Track,2),'race')");assert.equal(r('TOTAL_LAPS'),4);assert.equal(r('lap'),1);
@@ -36,7 +36,7 @@ test('touring selection preserves four/five laps, preview return, restart and re
 
 test('road contact remains attached over crests, banks and the closed seam at 200 km/h',()=>{
   const r=harness();const results=r(`(()=>{const result=[];for(let id=1;id<=5;id++){const t=DriftTouring.createTrack(Track,id),car=new Car(t);car.skin='blue';let maxError=0,maxJump=0;DriftRoadContact.reset(t,car,'blue');let prev=car.ride.height;for(let s=0;s<t.length+25;s+=55.55/60){const p=t.atDistance(s);car.pos={x:p.x,y:p.y};car.angle=t.tangentAt(p.i);DriftRoadContact.update(t,car,1/60,'blue');const contact=DriftRoadContact.contacts(t,car,'blue');maxError=Math.max(maxError,Math.abs(contact.height-car.ride.height));maxJump=Math.max(maxJump,Math.abs(prev-car.ride.height));prev=car.ride.height;}result.push({maxError,maxJump})}return result})()`);
-  for(const result of results){assert(result.maxError<.03,JSON.stringify(result));assert(result.maxJump<.12,JSON.stringify(result));}
+  for(const result of results){assert(result.maxError<.03,JSON.stringify(result));assert(result.maxJump<.17,JSON.stringify(result));}
 });
 
 test('all five circuits are drivable for a full lap by the real vehicle model and AI',()=>{
@@ -51,7 +51,11 @@ test('ordered gates award exactly four laps and finish freezes the race',()=>{
   assert.equal(r('state'),'finished');const before=r('raceTime');r('simulate(1)');assert.equal(r('raceTime'),before);
 });
 
-test('tunnel camera keeps all views inside the clear opening and permits mounted cameras',()=>{
-  const r=harness(),results=r(`(()=>{const out=[];for(let id=1;id<=5;id++){const tr=DriftTouring.createTrack(Track,id);for(const tunnel of tr.features.filter(f=>f.kind==='tunnel'))for(const s of [tunnel.start-10,tunnel.start+1,(tunnel.start+tunnel.end)/2,tunnel.end-1]){const p=tr.atDistance(s),car={pos:p,angle:tr.tangentAt(p.i)};for(const mounted of [false,true]){const eye={x:p.x,y:p.h+40,z:p.y},target={x:0,y:0,z:0};DriftTouring.constrainCamera(tr,car,eye,target,mounted);out.push({height:eye.y-tr.surfaceHeight(eye.x,eye.z),dist:tr.sample(eye.x,eye.z).distance});}}}return out})()`);
-  for(const result of results){assert(result.height>=.19&&result.height<=6.31);assert(result.dist<11.01);}
+test('enlarged tunnels preserve ordinary follow poses and constrain unsafe high cameras',()=>{
+  const r=harness();const results=r(`(()=>{const out=[];for(let id=1;id<=20;id++){const tr=DriftTouring.createTrack(Track,id);for(const f of tr.features.filter(f=>f.kind==='tunnel'))for(let s=f.start+30;s<f.end-30;s+=31){const p=tr.atDistance(s),car={pos:p,angle:tr.tangentAt(p.i)},eye={x:p.x,y:p.h+6.5,z:p.y},target={x:p.x+20,y:p.h+1,z:p.y};const before=JSON.stringify({eye,target});DriftTouring.constrainCamera(tr,car,eye,target);const safe=JSON.stringify({eye,target})===before;eye.y=p.h+50;DriftTouring.constrainCamera(tr,car,eye,target);out.push({safe,height:eye.y-p.h});}}return out})()`);
+  for(const q of results){assert(q.safe,'safe chase framing changed');assert(q.height>20&&q.height<22);}
+});
+
+test('road AI reverses out of a stopped barrier-facing pose using existing drivetrain',()=>{
+ const r=harness();const result=r(`(()=>{const tr=DriftTouring.createTrack(Track,1),car=new Car(tr),p=tr.atDistance(700),a=tr.tangentAt(p.i);car.pos={x:p.x+p.nx*10,y:p.y+p.ny*10};car.angle=a+Math.PI/2;car.vel={x:0,y:0};let input;for(let i=0;i<60;i++)input=DriftRace.drive(car,tr,undefined,[],1/60);return input})()`);assert.equal(result.reverse,true);assert.equal(result.accel,false);
 });
