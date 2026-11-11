@@ -145,7 +145,7 @@ function showCircuitMenu(){
   hidePanels();garageOrigin='circuits';$('#circuitMenu').classList.remove('hidden');$('#circuitList').classList.remove('hidden');
   $('#circuitTitle').textContent=mode==='tt'?'Contrarreloj · Elige circuito':'Carrera · Elige circuito';
   $('#btnCircuitBack').textContent='← Menú principal';
-  const root=$('#circuitList');root.innerHTML=Array.from({length:DriftTouring.count},(_,i)=>{const c=DriftTouring.info(i+1);return `${i%5===0?'<h3 class="road-climate-heading">'+({clear:"Despejado",rain:"Lluvia",fog:"Bruma",snow:"Nieve"}[c.climate])+' · 5 carreteras</h3>':''}<div class="challenge-item touring-item"><span class="circuit-num">${String(i+1).padStart(2,'0')}</span><canvas class="track-thumb" data-touring-map="${i+1}" aria-label="${c.name}"></canvas><div><b>${c.name}</b><small>${(c.length/1000).toFixed(1)} km · ${{alpine:"sierra",coast:"costa",forest:"bosque",lake:"embalse",highland:"cumbre",snow:"nieve"}[c.biome]}</small></div><button data-touring="${i+1}" aria-label="Ver carretera ${c.name}">${c.name}</button></div>`;}).join('')+'<h3 class="road-climate-heading">Circuitos 2.0 · originales</h3>'+Array.from({length:5},(_,i)=>{const c=DriftTouring.info(101+i);return `<div class="challenge-item touring-item"><span class="circuit-num">C${i+1}</span><canvas class="track-thumb" data-touring-map="${101+i}" aria-label="${c.name}"></canvas><div><b>${c.name}</b><small>${(c.length/1000).toFixed(1)} km · clásico</small></div><button data-touring="${101+i}" aria-label="Ver carretera ${c.name}">${c.name}</button></div>`;}).join('')+'<h3 class="road-climate-heading">Circuitos cortos</h3>'+Array.from({length:CircuitLayouts.count},(_,i)=>{
+  const root=$('#circuitList');root.innerHTML='<h3 class="road-climate-heading">Summit · especial</h3><div class="challenge-item touring-item"><span class="circuit-num">S</span><canvas class="track-thumb" data-touring-map="201" aria-label="Summit"></canvas><div><b>Summit</b><small>10,3 km · bosque, pueblo y túneles</small></div><button data-touring="201">Summit</button></div>'+Array.from({length:DriftTouring.count},(_,i)=>{const c=DriftTouring.info(i+1);return `${i%5===0?'<h3 class="road-climate-heading">'+({clear:"Despejado",rain:"Lluvia",fog:"Bruma",snow:"Nieve"}[c.climate])+' · 5 carreteras</h3>':''}<div class="challenge-item touring-item"><span class="circuit-num">${String(i+1).padStart(2,'0')}</span><canvas class="track-thumb" data-touring-map="${i+1}" aria-label="${c.name}"></canvas><div><b>${c.name}</b><small>${(c.length/1000).toFixed(1)} km · ${{alpine:"sierra",coast:"costa",forest:"bosque",lake:"embalse",highland:"cumbre",snow:"nieve"}[c.biome]}</small></div><button data-touring="${i+1}" aria-label="Ver carretera ${c.name}">${c.name}</button></div>`;}).join('')+'<h3 class="road-climate-heading">Circuitos 2.0 · originales</h3>'+Array.from({length:5},(_,i)=>{const c=DriftTouring.info(101+i);return `<div class="challenge-item touring-item"><span class="circuit-num">C${i+1}</span><canvas class="track-thumb" data-touring-map="${101+i}" aria-label="${c.name}"></canvas><div><b>${c.name}</b><small>${(c.length/1000).toFixed(1)} km · clásico</small></div><button data-touring="${101+i}" aria-label="Ver carretera ${c.name}">${c.name}</button></div>`;}).join('')+'<h3 class="road-climate-heading">Circuitos cortos</h3>'+Array.from({length:CircuitLayouts.count},(_,i)=>{
     const c=CircuitLayouts.info(i+1);
     return `<div class="challenge-item"><span class="circuit-num">${String(i+1).padStart(2,'0')}</span><canvas class="track-thumb" data-track="${i+1}" aria-label="${c.name}"></canvas><button data-circuit="${i+1}" aria-label="Ver circuito ${i+1}: ${c.name}">${c.name}</button></div>`;
   }).join('');
@@ -230,7 +230,7 @@ function renderPreparationPreview(dt,time){
     if(time-previewLastFrame<1/(menuPreview.software?18:60))return true;
     const elapsed=previewLastFrame?Math.min(.1,time-previewLastFrame):dt;previewLastFrame=time;
     menuPreview.renderPreview({...preview,skin:chosen.sprite,dt:elapsed,spinning:previewSpinning,timeOfDay:renderPrefs.timeOfDay,cosmetics:garageCosmetics,retro:renderPrefs.retro,weather:renderPrefs.weather,player:demoFrame.player,time:demoFrame.time,camera:renderPrefs.camera,vibration:{vehicle:renderPrefs.vehicleVibration,camera:renderPrefs.cameraVibration},motion:renderPrefs.motion,speedLines:{mode:renderPrefs.speedLines,intensity:renderPrefs.speedLinesIntensity,amount:Math.max(0,(demoFrame.player.worldSpeed()*3.6-22)/100),time:demoFrame.time}});
-    status?.classList.add('hidden');
+    if(status){const loading=preview.track?.summit&&preview.kind==='track'&&menuPreview.world.userData.summitLoad!=='ready';status.classList.toggle('hidden',!loading);if(loading)status.textContent=menuPreview.world.userData.summitError||'Cargando el paisaje de Summit…';}
   }catch(error){console.warn('Preview unavailable',error);previewFailed=true;}
   return true;
 }
@@ -296,11 +296,11 @@ $('#btnRecover').addEventListener('click',loseLifeAndRespawn);
 
 
 
-import('./view3d.js?v=1.0.0-prealpha.18').then(async({DriftView3D})=>{
+import('./view3d.js?v=1.0.0-prealpha.20').then(async({DriftView3D})=>{
   await document.fonts?.load('32px DriftDisplay');
   sceneView=new DriftView3D($('#scene3d'),{quality:renderPrefs.quality,onFailure:fail3D,onVehicleFailure:()=>toast('No se pudo cargar un modelo de auto. Recarga para volver a intentarlo.')});
   if(sceneView.software)toast('3D compatible activo · Calidad ligera');
 }).catch(fail3D);
-import('./menu-preview.js?v=1.0.0-prealpha.18').then(async module=>{await document.fonts?.load('32px DriftDisplay');MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});
+import('./menu-preview.js?v=1.0.0-prealpha.20').then(async module=>{await document.fonts?.load('32px DriftDisplay');MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});
 
-safeAddListener('btnSummit','click',()=>{location.href='bonus/summit.html';});
+safeAddListener('btnSummit','click',()=>{mode='race';showCircuitMenu();previewTouring(201);});

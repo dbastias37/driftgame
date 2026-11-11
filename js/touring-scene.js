@@ -1,5 +1,5 @@
 import * as T from '../vendor/three.module.min.js';
-import {buildMountainTerrain} from './mountain-terrain.js?v=1.0.0-prealpha.18';
+import {buildMountainTerrain} from './mountain-terrain.js?v=1.0.0-prealpha.20';
 import {addRoadTrees} from './road-trees.js';
 
 const mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.88,...extra});

@@ -1,0 +1,43 @@
+{
+  "steps": 40253,
+  "offFrames": 119,
+  "maxBodyError": 0.023823659535565866,
+  "length": 10296.656713923887,
+  "cars": [
+    {
+      "skin": "fujiwara",
+      "finished": 599.0999999997838,
+      "lap": 1,
+      "impacts": 1,
+      "distance": 1309.5624458774328
+    },
+    {
+      "skin": "yellow",
+      "finished": 604.2166666664458,
+      "lap": 1,
+      "impacts": 0,
+      "distance": 1189.626539724528
+    },
+    {
+      "skin": "blue",
+      "finished": 606.88333333311,
+      "lap": 1,
+      "impacts": 2,
+      "distance": 1150.407516874433
+    },
+    {
+      "skin": "gray",
+      "finished": 637.1166666664159,
+      "lap": 1,
+      "impacts": 0,
+      "distance": 625.9882562300336
+    },
+    {
+      "skin": "yugo",
+      "finished": 670.8833333330518,
+      "lap": 1,
+      "impacts": 0,
+      "distance": 0.07890591295836202
+    }
+  ]
+}

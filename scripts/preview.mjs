@@ -3,7 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
-const root=fileURLToPath(new URL('../',import.meta.url)),port=Number(process.env.PORT||8787);
+const arg=name=>{const i=process.argv.indexOf(name);return i<0?undefined:process.argv[i+1];};
+const root=fileURLToPath(new URL('../',import.meta.url)),port=Number(arg('--port')||process.env.PORT||8787),host=arg('--host')||'127.0.0.1';
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.glb':'model/gltf-binary','.mp3':'audio/mpeg','.woff':'font/woff','.svg':'image/svg+xml'};
 const server=http.createServer((req,res)=>{
   if(!['GET','HEAD'].includes(req.method)){res.writeHead(405);return res.end();}
@@ -27,4 +28,4 @@ const server=http.createServer((req,res)=>{
   });
 });
 server.on('error',error=>{console.error(error.code==='EADDRINUSE'?`El puerto ${port} ya está en uso. Cierra la otra vista de DriftGame.`:error.message);process.exitCode=1;});
-server.listen(port,'127.0.0.1',()=>console.log(`DR1FT listo: http://127.0.0.1:${port}\nMantén esta ventana abierta mientras juegas. Ctrl+C para cerrar.`));
+server.listen(port,host,()=>console.log(`DR1FT listo: http://${host}:${port}\nMantén esta ventana abierta mientras juegas. Ctrl+C para cerrar.`));

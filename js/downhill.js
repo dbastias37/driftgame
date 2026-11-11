@@ -158,6 +158,7 @@ globalThis.DriftDownhill=(()=>{
     const q=track.sample(car.pos.x,car.pos.y),before={...car.pos,s:d.s},score=car.score,g=gravity(q,car.mass),speedBefore=car.worldSpeed();
     if(q.distance>track.roadHalf+.7){const e=.5,gx=(track.terrainHeight(car.pos.x+e,car.pos.y)-track.terrainHeight(car.pos.x-e,car.pos.y))/(2*e),gy=(track.terrainHeight(car.pos.x,car.pos.y+e)-track.terrainHeight(car.pos.x,car.pos.y-e))/(2*e),denom=1+gx*gx+gy*gy;g.x=-G*gx/denom;g.y=-G*gy/denom;}
     const holding=(input.brake||input.handbrake)&&speedBefore<.8&&!input.accel;
+    car.gradeLoad=-car.mass*(g.x*Math.cos(car.angle)+g.y*Math.sin(car.angle));
     if(!holding){car.vel.x+=g.x*dt;car.vel.y+=g.y*dt;}
     const entrySpeed=car.worldSpeed(),lat=car.baseLatFriction;car.baseLatFriction=lat/Math.sqrt(1+q.grade*q.grade);
     car.update(dt,input,track);car.baseLatFriction=lat;

@@ -2,7 +2,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>DR1FT — 1.0 pre-alpha</title>
-<meta name="application-version" content="1.0.0-prealpha.18">
+<meta name="application-version" content="1.0.0-prealpha.20">
 <meta name="theme-color" content="#111719">
 <style>
   :root{--bg:#0b0b0b;--ink:#e6f1ff;}
@@ -225,14 +225,14 @@
 #screenFade.black{opacity:1;}
 
 </style>
-<link rel="stylesheet" href="css/experience.css?v=1.0.0-prealpha.18">
-<link rel="stylesheet" href="css/online.css?v=1.0.0-prealpha.18">
-<link rel="stylesheet" href="css/raw-menu.css?v=1.0.0-prealpha.18">
-<link rel="stylesheet" href="css/career.css?v=1.0.0-prealpha.18">
-<link rel="stylesheet" href="css/display-font.css?v=1.0.0-prealpha.18">
-<link rel="stylesheet" href="css/psx.css?v=1.0.0-prealpha.18">
-<link rel="stylesheet" href="css/music.css?v=1.0.0-prealpha.18">
-<link rel="stylesheet" href="css/track-selection.css?v=1.0.0-prealpha.18">
+<link rel="stylesheet" href="css/experience.css?v=1.0.0-prealpha.20">
+<link rel="stylesheet" href="css/online.css?v=1.0.0-prealpha.20">
+<link rel="stylesheet" href="css/raw-menu.css?v=1.0.0-prealpha.20">
+<link rel="stylesheet" href="css/career.css?v=1.0.0-prealpha.20">
+<link rel="stylesheet" href="css/display-font.css?v=1.0.0-prealpha.20">
+<link rel="stylesheet" href="css/psx.css?v=1.0.0-prealpha.20">
+<link rel="stylesheet" href="css/music.css?v=1.0.0-prealpha.20">
+<link rel="stylesheet" href="css/track-selection.css?v=1.0.0-prealpha.20">
 </head>
 <body>
   <div id="ui">
@@ -354,7 +354,7 @@
         <button id="btnModeTraining"><i>06</i><span>ENTRENAMIENTO <small>MERCADO OCHO · CONOS Y ZONA LIBRE</small></span><b>↗</b></button>
         <button id="btnModeCreative"><i>07</i><span>CREA TU CIRCUITO</span><b>↗</b></button>
       </nav>
-      <footer class="raw-home-footer"><button id="btnSummit" class="text-button">SUMMIT · BONUS</button><button id="btnCredits" class="text-button">CRÉDITOS</button><button id="btnSettings" class="text-button">AJUSTES</button><button id="btnMenuHelp" class="text-button">CONTROLES</button><button id="btnImport" class="text-button">IMPORTAR</button><button id="btnBackTitle" class="text-button">← INICIO</button></footer>
+      <footer class="raw-home-footer"><button id="btnSummit" class="text-button">SUMMIT · CONDUCIR</button><button id="btnCredits" class="text-button">CRÉDITOS</button><button id="btnSettings" class="text-button">AJUSTES</button><button id="btnMenuHelp" class="text-button">CONTROLES</button><button id="btnImport" class="text-button">IMPORTAR</button><button id="btnBackTitle" class="text-button">← INICIO</button></footer>
       <div id="homeWallet" class="home-wallet"></div><div class="raw-demo-label"><span>EXHIBICIÓN / DERRAPE DE ÉLITE</span><b id="homeDemoInfo"></b></div>
     </div>
   </div>
@@ -417,7 +417,7 @@
           <label class="setting">Rendimiento<select id="qualitySetting"><option value="auto">Automático</option><option value="high">Detalle alto</option><option value="low">Ligero</option></select></label>
         </section>
         <section data-settings-pane="weather" role="tabpanel" class="hidden">
-          <label class="setting">Clima<select id="weatherSetting"><option value="clear">Despejado</option><option value="cloudy">Nublado</option><option value="fog">Niebla</option><option value="rain">Lluvia</option><option value="storm">Lluvia intensa</option></select></label>
+          <label class="setting">Clima<select id="weatherSetting"><option value="clear">Despejado</option><option value="cloudy">Nublado</option><option value="fog">Niebla</option><option value="rain">Lluvia</option><option value="storm">Lluvia intensa</option><option value="snow">Nevada</option></select></label>
           <p class="setting-hint">La lluvia reduce el agarre. La niebla acorta la visibilidad.</p>
           <label class="daytime-control">Hora <output data-daytime-label>Día</output><input type="range" min="0" max="100" value="0" step="1" data-daytime aria-label="Hora del día"><span class="daytime-ends"><span>Día</span><span>Tarde</span><span>Noche</span></span></label>
         </section>
@@ -514,30 +514,32 @@
   </aside>
   <aside id="musicNotice" aria-label="Canción actual" role="status" aria-live="polite" aria-atomic="true" aria-hidden="true"><div class="music-emblem">D1<small id="musicNoticeNumber">01</small></div><div class="music-meta"><small id="musicNoticeState">SONANDO AHORA</small><strong id="musicNoticeTitle"></strong><span id="musicNoticeArtist"></span></div><div class="music-stripe">MÚSICA</div></aside>
 
-<script src="js/career.js?v=1.0.0-prealpha.18"></script>
-<script src="js/replay.js?v=1.0.0-prealpha.18"></script>
-<script src="js/drift-effects.js?v=1.0.0-prealpha.18"></script>
-<script src="js/attract-demo.js?v=1.0.0-prealpha.18"></script>
-<script src="js/circuit-layouts.js?v=1.0.0-prealpha.18"></script>
-<script src="js/touring-legacy.js?v=1.0.0-prealpha.18"></script>
-<script src="js/road-expeditions.js?v=1.0.0-prealpha.18"></script>
-<script src="js/touring-circuits.js?v=1.0.0-prealpha.18"></script>
-<script src="js/vehicle-fit.js?v=1.0.0-prealpha.18"></script>
-<script src="js/road-contact.js?v=1.0.0-prealpha.18"></script>
-<script src="js/downhill.js?v=1.0.0-prealpha.18"></script>
-<script src="js/yugo-physics.js?v=1.0.0-prealpha.18"></script>
-<script src="js/frame-presentation.js?v=1.0.0-prealpha.18"></script>
-<script src="js/gamepad.js?v=1.0.0-prealpha.18"></script>
-<script src="js/instruments.js?v=1.0.0-prealpha.18"></script>
-<script src="js/game-options.js?v=1.0.0-prealpha.18"></script>
-<script src="js/training.js?v=1.0.0-prealpha.18"></script>
-<script src="js/track-props.js?v=1.0.0-prealpha.18"></script>
-<script src="js/ai-race.js?v=1.0.0-prealpha.18"></script>
-<script src="js/vehicle-dynamics.js?v=1.0.0-prealpha.18"></script>
-<script src="js/engine-audio.js?v=1.0.0-prealpha.18"></script>
-<script src="js/tire-smoke.js?v=1.0.0-prealpha.18"></script>
-<script src="js/wheel-particles.js?v=1.0.0-prealpha.18"></script>
-<script src="js/online-rules.js?v=1.0.0-prealpha.18"></script>
+<script src="js/career.js?v=1.0.0-prealpha.20"></script>
+<script src="js/replay.js?v=1.0.0-prealpha.20"></script>
+<script src="js/drift-effects.js?v=1.0.0-prealpha.20"></script>
+<script src="js/attract-demo.js?v=1.0.0-prealpha.20"></script>
+<script src="js/circuit-layouts.js?v=1.0.0-prealpha.20"></script>
+<script src="js/touring-legacy.js?v=1.0.0-prealpha.20"></script>
+<script src="js/road-expeditions.js?v=1.0.0-prealpha.20"></script>
+<script src="js/summit-data.js?v=1.0.0-prealpha.20"></script>
+<script src="js/summit-track.js?v=1.0.0-prealpha.20"></script>
+<script src="js/touring-circuits.js?v=1.0.0-prealpha.20"></script>
+<script src="js/vehicle-fit.js?v=1.0.0-prealpha.20"></script>
+<script src="js/road-contact.js?v=1.0.0-prealpha.20"></script>
+<script src="js/downhill.js?v=1.0.0-prealpha.20"></script>
+<script src="js/yugo-physics.js?v=1.0.0-prealpha.20"></script>
+<script src="js/frame-presentation.js?v=1.0.0-prealpha.20"></script>
+<script src="js/gamepad.js?v=1.0.0-prealpha.20"></script>
+<script src="js/instruments.js?v=1.0.0-prealpha.20"></script>
+<script src="js/game-options.js?v=1.0.0-prealpha.20"></script>
+<script src="js/training.js?v=1.0.0-prealpha.20"></script>
+<script src="js/track-props.js?v=1.0.0-prealpha.20"></script>
+<script src="js/ai-race.js?v=1.0.0-prealpha.20"></script>
+<script src="js/vehicle-dynamics.js?v=1.0.0-prealpha.20"></script>
+<script src="js/engine-audio.js?v=1.0.0-prealpha.20"></script>
+<script src="js/tire-smoke.js?v=1.0.0-prealpha.20"></script>
+<script src="js/wheel-particles.js?v=1.0.0-prealpha.20"></script>
+<script src="js/online-rules.js?v=1.0.0-prealpha.20"></script>
 <script>
 "use strict";
 
@@ -937,8 +939,9 @@ class Car{
     const dotFW = f.x*tdir.x + f.y*tdir.y;
     this.wrongWay = !track.training && (kmh > 12 && dotFW < -0.25);
 
-    this.offTrack=!track.training&&Math.abs(s.dist)>track.roadHalf; this.edgeShake=Math.max(0,this.edgeShake-dt);
-    { const pen=track.training?0:Math.abs(s.dist)-(track.roadHalf-1); if(pen>0){ const k=clamp(pen/2,0,1);
+    const roadHalf=track.widthAt?track.widthAt(s.s):track.roadHalf;
+    this.offTrack=!track.training&&Math.abs(s.dist)>roadHalf; this.edgeShake=Math.max(0,this.edgeShake-dt);
+    { const pen=track.training?0:Math.abs(s.dist)-(roadHalf-1); if(pen>0){ const k=clamp(pen/2,0,1);
       const drag = 1 - (0.22 * k) * dt * 4;
       this.vel.x *= drag;
       this.vel.y *= drag;
@@ -981,6 +984,7 @@ class Car{
     this.reverseRequested=!!input.reverse;
     this.braking=!!br;this._effectTrack=track;
     if(track.elevated)DriftTouring.beforeStep(track,this,dt,input);
+    else if(!track.downhill)this.gradeLoad=0;
     this._physStep(dt,steer,thr,br);
     if(track.elevated)DriftTouring.afterStep(track,this);
     const f={x:C(this.angle),y:S(this.angle)}, r={x:-S(this.angle),y:C(this.angle)};
@@ -1259,7 +1263,7 @@ function startWithTrack(tr, m='race',conditions=null){
   if(lapList) lapList.innerHTML='';
   camera.s=camera.targetS=(view.width<700||view.height<500)?Math.max(10,Math.min(18,view.height/30)):22;
   camera.tx=-player.pos.x*camera.s+view.width*.5;camera.ty=-player.pos.y*camera.s+view.height*.6;
-  currentTrackId = (track.elevated?(track.legacyId?'TOURING.v1.'+track.legacyId:'ROADS.v3.'+track.touringId):track.downhill?'DOWNHILL.v2.'+track.routeLevel:encodeTrack(track.points))+':physics-v3'+(track.trackProps?.props.length?':tyres-v2':'')+DriftOptions.recordKey(raceConditions);
+  currentTrackId = (track.elevated?(track.summit?'SUMMIT.v1':track.legacyId?'TOURING.v1.'+track.legacyId:'ROADS.v3.'+track.touringId):track.downhill?'DOWNHILL.v2.'+track.routeLevel:encodeTrack(track.points))+':physics-v3'+(track.trackProps?.props.length?':tyres-v2':'')+DriftOptions.recordKey(raceConditions);
   if(mode==='tt'&&player.upgradeSignature?.replace(/0/g,''))currentTrackId+=':tuned:'+chosen.sprite+':'+player.upgradeSignature;
   replayUI?.reset();
   unlockControls();syncTouchHUD(); // Nueva sesión, mismos autos y datos guardados.
@@ -1617,7 +1621,7 @@ function loop(ms){
     $('#scene3d').style.visibility=draw3D?'visible':'hidden';
     driftEffect.step(dt,{pressed:!!shown?.handbrake,speed:shown?.worldSpeed()||0,active:state==='running'||!!(replayFrame&&replayUI.playing),reduced:renderPrefs.motion==='reduced',impulse:renderPrefs.impulse!=='off',lines:renderPrefs.speedLines});
     if(draw3D){
-      const revision=[state,inSession,track,player,chosen.sprite,replayFrame?.revision,replayFrame?.camera,renderPrefs.camera,renderPrefs.motion,renderPrefs.timeOfDay,renderPrefs.quality,renderPrefs.retro,renderPrefs.weather,renderPrefs.vehicleVibration,renderPrefs.cameraVibration,renderPrefs.speedLines,renderPrefs.speedLinesIntensity,innerWidth,innerHeight,sceneView.distance,sceneView.car,sceneView.rx7Template,sceneView.yugoTemplate,sceneView.fujiwaraTemplate,sceneView.novaTemplate,sceneView.skylineTemplate,attractDemo.paused];
+      const revision=[state,inSession,track,player,chosen.sprite,replayFrame?.revision,replayFrame?.camera,renderPrefs.camera,renderPrefs.motion,renderPrefs.timeOfDay,renderPrefs.quality,renderPrefs.retro,renderPrefs.weather,renderPrefs.vehicleVibration,renderPrefs.cameraVibration,renderPrefs.speedLines,renderPrefs.speedLinesIntensity,innerWidth,innerHeight,sceneView.distance,sceneView.car,sceneView.rx7Template,sceneView.yugoTemplate,sceneView.fujiwaraTemplate,sceneView.novaTemplate,sceneView.skylineTemplate,sceneView.summitRevision,attractDemo.paused];
       const changed=!lastScenePresentation||revision.some((v,i)=>v!==lastScenePresentation[i]),active=['running','countdown'].includes(state)||(mode==='online'&&online?.racing)||!!(replayFrame&&replayUI.playing);
       const shouldRender=inSession?(active||changed):(changed||(demoVisible&&!attractDemo.paused&&!document.hidden&&now-lastSceneFrame>=1/(sceneView.software?18:60)));
       if(shouldRender){
@@ -1884,13 +1888,13 @@ function checkChallengeProgress(){
 }
 
 </script>
-<script src="js/experience.js?v=1.0.0-prealpha.18"></script>
-<script src="js/gamepad-ui.js?v=1.0.0-prealpha.18"></script>
-<script src="js/career-ui.js?v=1.0.0-prealpha.18"></script>
-<script src="js/replay-ui.js?v=1.0.0-prealpha.18"></script>
-<script src="js/online-config.js?v=1.0.0-prealpha.18"></script>
-<script src="js/online-client.js?v=1.0.0-prealpha.18"></script>
-<script src="js/menu-feedback.js?v=1.0.0-prealpha.18"></script>
-<script src="js/menu-ux.js?v=1.0.0-prealpha.18"></script>
-<script type="module" src="js/music-ui.js?v=1.0.0-prealpha.18"></script>
+<script src="js/experience.js?v=1.0.0-prealpha.20"></script>
+<script src="js/gamepad-ui.js?v=1.0.0-prealpha.20"></script>
+<script src="js/career-ui.js?v=1.0.0-prealpha.20"></script>
+<script src="js/replay-ui.js?v=1.0.0-prealpha.20"></script>
+<script src="js/online-config.js?v=1.0.0-prealpha.20"></script>
+<script src="js/online-client.js?v=1.0.0-prealpha.20"></script>
+<script src="js/menu-feedback.js?v=1.0.0-prealpha.20"></script>
+<script src="js/menu-ux.js?v=1.0.0-prealpha.20"></script>
+<script type="module" src="js/music-ui.js?v=1.0.0-prealpha.20"></script>
 </body></html>

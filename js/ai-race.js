@@ -8,7 +8,7 @@ globalThis.DriftRace=(()=>{
     const weather=DriftOptions.weathers[car.conditions?.weather]||DriftOptions.weathers.clear;
     const key=[car.skin,car.conditions?.difficulty,weather.grip,car.pace||1].join(':');let cache=plans.get(track);if(!cache)plans.set(track,cache=new Map());if(cache.has(key))return cache.get(key);
     const n=track.points.length,spacing=track.totalLength/n||4,span=Math.max(2,Math.round(8/spacing)),speeds=new Float32Array(n),distances=new Float32Array(n),grip=weather.grip*(DriftOptions.difficulties[car.conditions?.difficulty]?.grip||1);
-    for(let i=0;i<n;i++){const a=track.point(i-span),b=track.point(i),c=track.point(i+span),ab=Math.hypot(b.x-a.x,b.y-a.y),bc=Math.hypot(c.x-b.x,c.y-b.y),ac=Math.hypot(c.x-a.x,c.y-a.y),curvature=2*Math.abs((b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x))/Math.max(.01,ab*bc*ac);speeds[i]=clamp(Math.sqrt((track.elevated?5.2:7.8)*({blue:.91,gray:.86,yugo:.82,fujiwara:.95}[car.skin]||1)*grip/Math.max(.0001,curvature)),12,46)*(car.pace||1);const next=track.point(i+1);distances[i]=Math.hypot(next.x-b.x,next.y-b.y);}
+    for(let i=0;i<n;i++){const a=track.point(i-span),b=track.point(i),c=track.point(i+span),ab=Math.hypot(b.x-a.x,b.y-a.y),bc=Math.hypot(c.x-b.x,c.y-b.y),ac=Math.hypot(c.x-a.x,c.y-a.y),curvature=2*Math.abs((b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x))/Math.max(.01,ab*bc*ac);speeds[i]=clamp(Math.sqrt((track.summit?3.2:track.elevated?5.2:7.8)*({blue:.91,gray:.86,yugo:.82,fujiwara:.95}[car.skin]||1)*grip/Math.max(.0001,curvature)),track.summit?7:12,track.summit?42:46)*(car.pace||1);const next=track.point(i+1);distances[i]=Math.hypot(next.x-b.x,next.y-b.y);}
     const decel=5.2*grip;
     for(let pass=0;pass<3;pass++)for(let i=n-1;i>=0;i--)speeds[i]=Math.min(speeds[i],Math.sqrt(speeds[(i+1)%n]**2+2*(track.elevated?Math.max(2,decel+9.81*track.sample(track.points[i].x,track.points[i].y).grade):decel)*distances[i]));
     const plan={speeds,spacing};cache.set(key,plan);return plan;
@@ -24,7 +24,8 @@ globalThis.DriftRace=(()=>{
       if((car._aiReverseTime||0)>0){car._aiReverseTime-=dt;return {steerAxis:-Math.sign(headingError)*.8,accel:false,reverse:true,brake:false,handbrake:false};}
     }
     let offset=0,trafficLimit=Infinity,nearest=Infinity;
-    const laneLimit=track.roadVersion===3?track.roadHalf-5:track.roadHalf-3;
+    const localHalf=track.widthAt?track.widthAt(track.points[index].s):track.roadHalf;
+    const laneLimit=track.summit?Math.max(1,localHalf-1.8):track.roadVersion===3?track.roadHalf-5:track.roadHalf-3;
     for(const other of traffic){if(other===car)continue;const dx=other.pos.x-car.pos.x,dy=other.pos.y-car.pos.y,gap=dx*f.x+dy*f.y,side=dx*right.x+dy*right.y,width=((car.bodyDimensions?.width||1.8)+(other.bodyDimensions?.width||1.8))/2;
       if(gap>-5&&gap<Math.max(18,speed*.95)&&Math.abs(side)<width+1&&gap<nearest){nearest=gap;const otherLane=lateral+side,pass=car._aiPassSide||(otherLane<=0?1:-1);car._aiPassSide=pass;offset=clamp(otherLane+pass*(width+1.4),-laneLimit,laneLimit);if(gap>0&&gap<(track.roadVersion===3?Math.max(12,speed*.7):12))trafficLimit=Math.max(2,other.worldSpeed()+Math.max(0,gap-5)*(track.roadVersion===3?.8:1.5));}}
     if(nearest===Infinity)car._aiPassSide=0;
@@ -32,8 +33,9 @@ globalThis.DriftRace=(()=>{
       // Keep a stable lane while cars are side by side. The old controller
       // aimed both starting columns at the centre and could scrape barriers
       // after contact, especially on wet, banked bends.
-      const lane=3.2;
+      const lane=track.summit?Math.min(2.7,laneLimit):3.2;
       car._aiCruiseLane??=lateral<0?-lane:lane;
+      if(track.summit)car._aiCruiseLane=clamp(car._aiCruiseLane,-lane,lane);
       const neighbours=traffic.filter(other=>other!==car).map(other=>{
         const dx=other.pos.x-car.pos.x,dy=other.pos.y-car.pos.y;
         return {other,gap:dx*f.x+dy*f.y,lane:lateral+dx*right.x+dy*right.y};
@@ -88,7 +90,7 @@ globalThis.DriftRace=(()=>{
   }
   const INTRO=Object.freeze({roll:4,settle:2,count:3});
   function rev(car,pressure,dt){car.launchHold=true;car.launchThrottle=(car.launchThrottle||0)+clamp((Number(pressure)||0)-(car.launchThrottle||0),-dt*2.5,dt*1.8);}
-  function presentation(cars,elapsed){const progress=clamp(elapsed/INTRO.roll,0,1),remaining=8*(1-progress)**2;return cars.map(car=>({...car,pos:{x:car.pos.x-Math.cos(car.angle)*remaining,y:car.pos.y-Math.sin(car.angle)*remaining},wheelTravel:8-remaining,worldSpeed(){return 0;}}));}
+  function presentation(cars,elapsed){const progress=clamp(elapsed/INTRO.roll,0,1),remaining=8*(1-progress)**2;return cars.map(car=>({...car,pos:{x:car.pos.x-Math.cos(car.angle)*remaining,y:car.pos.y-Math.sin(car.angle)*remaining},ride:null,wheelTravel:8-remaining,worldSpeed(){return 0;}}));}
   class Race{
     constructor(track,player,cars,{collisions=false,laps=5}={}){this.track=track;this.player=player;this.cars=cars;this.collisions=collisions;this.laps=laps;this.clock=0;this.total=track.points.length;this.entries=new Map();[player,...cars].forEach((car,slot)=>{grid(car,track,slot);this.entries.set(car,{index:track.nearestIndex(car.pos.x,car.pos.y),distance:-Math.floor(slot/2)*1.5,gate:1,lap:0,finished:0});});}
     step(dt){

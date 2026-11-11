@@ -1,26 +1,27 @@
 import * as T from '../vendor/three.module.min.js';
-import {SoftwareRenderer} from './software-renderer.js?v=1.0.0-prealpha.18';
-import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles,groundGeometry} from './track-surface.js?v=1.0.0-prealpha.18';
-import {buildTouring} from './touring-scene.js?v=1.0.0-prealpha.18';
-import {buildMountain} from './mountain-scene.js?v=1.0.0-prealpha.18';
-import {loadRX7,createRX7} from './rx7-model.js?v=1.0.0-prealpha.18';
-import {loadYugo,createYugo} from './yugo-model.js?v=1.0.0-prealpha.18';
-import {loadFujiwara,createFujiwara} from './fujiwara-model.js?v=1.0.0-prealpha.18';
-import {batchWorld,updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.18';
-import {Atmosphere,buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.18';
-import {CinematicDirector} from './cinematic-camera.js?v=1.0.0-prealpha.18';
-import {loadNova,loadSkyline,createReplacement,updateVehicleLights} from './replacement-model.js?v=1.0.0-prealpha.18';
-import {applyVehiclePaint,disposePaint} from './vehicle-paint.js?v=1.0.0-prealpha.18';
-import {cloudTexture,TireSmokeRenderer} from './smoke-renderer.js?v=1.0.0-prealpha.18';
-import {WheelParticleRenderer} from './wheel-particles-renderer.js?v=1.0.0-prealpha.18';
-import {RetroRenderer} from './retro-renderer.js?v=1.0.0-prealpha.18';
-import {WeatherEffects} from './weather.js?v=1.0.0-prealpha.18';
-import {buildTraining} from './training-scene.js?v=1.0.0-prealpha.18';
-import {onboardCameras,onboardShot,startShot} from './driving-cameras.js?v=1.0.0-prealpha.18';
-import {applyRoadFeedback,roadFeedback} from './road-feedback.js?v=1.0.0-prealpha.18';
-import {SceneSpeedLines} from './scene-speed-lines.js?v=1.0.0-prealpha.18';
-import {LampDust} from './lamp-dust.js?v=1.0.0-prealpha.18';
-import {buildTrackProps} from './track-props-scene.js?v=1.0.0-prealpha.18';
+import {SoftwareRenderer} from './software-renderer.js?v=1.0.0-prealpha.20';
+import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles,groundGeometry} from './track-surface.js?v=1.0.0-prealpha.20';
+import {buildSummit} from './summit-scene.js?v=1.0.0-prealpha.20';
+import {buildTouring} from './touring-scene.js?v=1.0.0-prealpha.20';
+import {buildMountain} from './mountain-scene.js?v=1.0.0-prealpha.20';
+import {loadRX7,createRX7} from './rx7-model.js?v=1.0.0-prealpha.20';
+import {loadYugo,createYugo} from './yugo-model.js?v=1.0.0-prealpha.20';
+import {loadFujiwara,createFujiwara} from './fujiwara-model.js?v=1.0.0-prealpha.20';
+import {batchWorld,updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.20';
+import {Atmosphere,buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.20';
+import {CinematicDirector} from './cinematic-camera.js?v=1.0.0-prealpha.20';
+import {loadNova,loadSkyline,createReplacement,updateVehicleLights} from './replacement-model.js?v=1.0.0-prealpha.20';
+import {applyVehiclePaint,disposePaint} from './vehicle-paint.js?v=1.0.0-prealpha.20';
+import {cloudTexture,TireSmokeRenderer} from './smoke-renderer.js?v=1.0.0-prealpha.20';
+import {WheelParticleRenderer} from './wheel-particles-renderer.js?v=1.0.0-prealpha.20';
+import {RetroRenderer} from './retro-renderer.js?v=1.0.0-prealpha.20';
+import {WeatherEffects} from './weather.js?v=1.0.0-prealpha.20';
+import {buildTraining} from './training-scene.js?v=1.0.0-prealpha.20';
+import {onboardCameras,onboardShot,startShot} from './driving-cameras.js?v=1.0.0-prealpha.20';
+import {applyRoadFeedback,roadFeedback} from './road-feedback.js?v=1.0.0-prealpha.20';
+import {SceneSpeedLines} from './scene-speed-lines.js?v=1.0.0-prealpha.20';
+import {LampDust} from './lamp-dust.js?v=1.0.0-prealpha.20';
+import {buildTrackProps} from './track-props-scene.js?v=1.0.0-prealpha.20';
 const TAU=Math.PI*2;
 const SKINS={fujiwara:{color:0xe8e8da,roof:1.335,length:4.215},yugo:{color:0xce362b,roof:1.335,length:3.49},blue:{color:0x2955b8,roof:1.35,length:4.6,spoiler:true},yellow:{color:0xe6b52b,roof:.95,length:4.45,spoiler:true},gray:{color:0x16171a,roof:1.36,length:4.81}};
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -128,9 +129,10 @@ export class DriftView3D{
   resetCamera(){this.cameraReady=false;this.director??=new CinematicDirector();this.director.reset();}
   zoomBy(m){const key=this.cameraMode||'chase';this.cameraZoom[key]=this.distance=clamp((this.cameraZoom[key]||1)*m,.55,2.2);this.cameraReady=false;}
   build(track){
-    disposeGroup(this.world);this.trailCache=new WeakMap();this.track=track;const r=rng(),b=track.bounds,cx=b.minX+b.w/2,cz=b.minY+b.h/2,half=track.roadHalf;
+    this.summitScene?.cancel();this.summitScene=null;disposeGroup(this.world);this.trailCache=new WeakMap();this.track=track;const r=rng(),b=track.bounds,cx=b.minX+b.w/2,cz=b.minY+b.h/2,half=track.roadHalf;
     this.trainingScene=null;this.trackPropsScene=null;
     if(track.training){this.trainingScene=buildTraining(track,this.world);this.streetLights=this.trainingScene.street;this.trackPropsScene=buildTrackProps(track,this.world);return;}
+    if(track.summit){this.streetLights=null;this.summitScene=buildSummit(track,this.world,()=>{this.summitRevision=(this.summitRevision||0)+1;});return;}
     if(track.elevated){buildTouring(track,this.world,this.low);this.streetLights=buildStreetLights(track,this.world);batchWorld(this.world);return;}
     if(track.downhill){buildMountain(track,this.world,this.low);this.streetLights=buildStreetLights(track,this.world);batchWorld(this.world);this.trackPropsScene=buildTrackProps(track,this.world);return;}
     const asphaltTexture=noiseTexture(),kerbTexture=curbTexture();
@@ -322,10 +324,11 @@ export class DriftView3D{
     this.wheelParticles.update([player,...rivals],this.camera,track,this.low);
     this.trainingScene?.update();
     this.trackPropsScene?.update(props);
-    this.weatherEffects.update({track,world:this.world,camera:this.camera,time:weatherTime,weather,night:this.atmosphere.state?.night||0,low:this.low});
+    this.weatherEffects.update({track,world:this.world,camera:this.camera,player,dt,reset:!!shot?.cut||this.weatherTrack!==track||this.weatherCamera!==camera,time:weatherTime,weather,reduced:motion==='reduced',night:this.atmosphere.state?.night||0,low:this.low});
+    this.weatherTrack=track;this.weatherCamera=camera;
     this.lampDust.update(this.camera,this.streetLights,weatherTime,{night:this.atmosphere.state?.night||0,low:this.low,weather});
     this.speedVectors.update(this.camera,{...speedLines,mode:inMenu?'off':speedLines.mode,focus:{x:this.screenFocus.x/w*2-1,y:1-this.screenFocus.y/h*2},night:this.atmosphere.state?.night||0,low:this.low,reduced:motion==='reduced'});
     const renderStart=performance.now();this.retro.render(this.scene,this.camera,w,h);this.lastRenderMs=performance.now()-renderStart;
   }
-  dispose(){this.disposed=true;this.canvas.removeEventListener('webglcontextlost',this.contextLost);this.atmosphere.dispose();this.weatherEffects.dispose();this.retro.dispose();disposePaint(this.car);for(const model of this.rivalModels.values())disposePaint(model);disposeGroup(this.scene);this.renderer.dispose();}
+  dispose(){this.summitScene?.cancel();this.disposed=true;this.canvas.removeEventListener('webglcontextlost',this.contextLost);this.atmosphere.dispose();this.weatherEffects.dispose();this.retro.dispose();disposePaint(this.car);for(const model of this.rivalModels.values())disposePaint(model);disposeGroup(this.scene);this.renderer.dispose();}
 }

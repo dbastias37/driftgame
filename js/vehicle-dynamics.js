@@ -27,7 +27,7 @@ globalThis.DriftDynamics=(()=>{
     }
     reset(car);return car;
   }
-  function reset(car){car.handbrakeMix=0;car.accelLong=car.accelLat=car.frontSlip=car.rearSlip=car.driveSlip=0;car.frontLoad=car.mass*G*(car.handling?.front||.54);car.rearLoad=car.mass*G-car.frontLoad;}
+  function reset(car){car.gradeLoad=0;car.handbrakeMix=0;car.accelLong=car.accelLat=car.frontSlip=car.rearSlip=car.driveSlip=0;car.frontLoad=car.mass*G*(car.handling?.front||.54);car.rearLoad=car.mass*G-car.frontLoad;}
   function step(car,dt,steer,thr,br){
     if(!(dt>0))return;
     const count=Math.max(1,Math.ceil(Math.min(dt,.1)*120)),h=Math.min(dt,.1)/count;
@@ -53,7 +53,11 @@ globalThis.DriftDynamics=(()=>{
     const kmh=speed*3.6,gear=c.gear-1,maxK=c.gearMax[gear]||9999;
     const shift=c.shiftTimer>0?.45+.55*(1-c.shiftTimer/c.shiftDur):1,bog=c.gear>1&&kmh<maxK*.38?clamp(kmh/(maxK*.38),0,1):1;
     const traction=clamp(kmh/(c.tractionRamp[gear]||40),c.tractionMin[gear]||.85,1);
-    let engine=c.throttleSm*c.engineForce*(c.gearPower[gear]||1)*shift*bog*traction;
+    const available=c.engineForce*(c.gearPower[gear]||1)*shift*bog;
+    // The launch ramp models a gently engaging clutch. On an incline it must
+    // engage enough to carry the grade load, within the same engine/tyre limits.
+    // Otherwise first gear can never escape its 22% launch cap from a hill stop.
+    let engine=c.throttleSm*Math.min(available,available*traction+Math.max(0,c.gradeLoad||0));
     const roadLoad=Math.max(0,vx*c.dragLinear+vx*Math.abs(vx)*c.dragQuad);
     engine=Math.min(engine,Math.max(0,roadLoad+m*(maxK/3.6-vx)/dt));
     if(reversing){

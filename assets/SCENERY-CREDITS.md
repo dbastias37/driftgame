@@ -12,7 +12,7 @@ Procedencia: `nfs_iii_hot_pursuit_-_summit.glb` proporcionado por el usuario.
 Archivo original, sin recomprimir ni modificar geometría, atlas o UV.
 Metadatos incrustados: **amogusstrikesback2**, licencia declarada **CC BY 4.0**.
 [Fuente indicada en el modelo](https://sketchfab.com/3d-models/nfs-iii-hot-pursuit-summit-8c7f99b6b86a44cebfc52b9beacc6c1d).
-El visor utiliza el atlas con material sin iluminación adicional y recorte alfa; agrupa las mallas estáticas por cercanía. No incorpora física, tráfico ni conducción en Summit.
+El visor utiliza el atlas con material sin iluminación adicional y recorte alfa; agrupa las mallas estáticas por cercanía. La versión prealpha.19 añade la pista jugable: conducción, rivales, contacto de neumáticos, barreras, vueltas y cámaras propios de DR1FT. El trazado y la superficie de apoyo se derivan del modelo suministrado; la malla visual, UV y atlas se conservan. `scripts/build-summit-route.py` documenta el proceso reproducible. No se certifica un porcentaje de fidelidad al juego original.
 
 ## White Mountain
 

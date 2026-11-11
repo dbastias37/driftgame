@@ -74,14 +74,14 @@ globalThis.DriftRoadContact ||= (()=>{
     if(track.training)return {kind:'asphalt',height:0,wetness,gx:0,gy:0};
     const q=(track.downhill||track.elevated)?track.sampleNearby(x,y):null;
     const distance=q?.distance??((track.downhill||track.elevated)?Infinity:flatSurface(track,x,y));
-    const edge=distance-track.roadHalf,outer=track.downhill?1.3:track.elevated?track.cutHalf-track.roadHalf:4;
+    const edge=distance-(q&&track.widthAt?track.widthAt(q.s):track.roadHalf),outer=track.downhill?1.3:track.elevated?track.cutHalf-track.roadHalf:4;
     const feature=q&&track.featureAt?.(q.s),sheltered=feature?.kind==='tunnel';
-    const kind=edge<=curb.start?'asphalt':edge<=curb.start+curb.width?'curb':edge<=outer?(feature?'concrete':'gravel'):'grass';
+    const kind=edge<=curb.start?'asphalt':track.curbs!==false&&edge<=curb.start+curb.width?'curb':edge<=outer?(feature?'concrete':'gravel'):'grass';
     const grade=q?(track.downhill?-q.grade:q.grade):0,bank=q?.bank?Math.tan(q.bank):0,c=Math.cos(q?.tang||0),s=Math.sin(q?.tang||0);
     return {kind,distance,height:q?track.surfaceHeight(x,y):(track.downhill||track.elevated)?track.terrainHeight(x,y):profile(edge),wetness:sheltered?0:clamp(wetness,0,1),gx:grade*c-bank*s,gy:grade*s+bank*c};
   }
   function curbWheels(track,pose,skin){
-    if(!track?.points?.length||pose.descent?.motion==='falling')return 0;
+    if(track.curbs===false||!track?.points?.length||pose.descent?.motion==='falling')return 0;
     const c=Math.cos(pose.angle),s=Math.sin(pose.angle),ground=terrain(track);let count=0;
     for(const p of wheelOffsets(skin)){
       const x=pose.pos.x+c*p.x-s*p.z,y=pose.pos.y+s*p.x+c*p.z;
@@ -130,7 +130,9 @@ globalThis.DriftRoadContact ||= (()=>{
         r[velocity]+=(k*(car.suspensionTune?.stiffness||1)*(target[axis]-r[axis])-damping*(car.suspensionTune?.damping||1)*r[velocity])*h;
         r[axis]+=r[velocity]*h;
       }
-      if(r.height<0){r.height=0;r.vy=Math.max(0,r.vy);}
+      // Zero is the floor only on flat circuits. Mountain assets use signed
+      // world elevations; clamping them separates the body from its wheels.
+      if(!track.elevated&&!track.downhill&&r.height<0){r.height=0;r.vy=Math.max(0,r.vy);}
     }
     r.wheels=target.wheels;r.lastX=car.pos.x;r.lastY=car.pos.y;r.lastAngle=car.angle;
   }

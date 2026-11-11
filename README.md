@@ -1,3 +1,11 @@
+## 1.0.0-prealpha.20 — Summit conducible y suspensión corregida
+
+Summit se juega desde **SUMMIT · CONDUCIR** o la selección de circuitos: 10,30 km, cinco autos, rivales, cuatro o cinco vueltas y contrarreloj. El paisaje y el atlas proceden del modelo recibido; la carretera, el contacto, las barreras y la carrera usan las mecánicas de DR1FT.
+
+Corregidos la carrocería flotante en alturas negativas, el apoyo durante la animación de salida y el arranque en pendientes. La nieve ahora cambia longitud, anchura y dirección según velocidad, aceleración, frenado, derrape y reversa.
+
+Ejecutar: `npm ci` y `npm run preview` (Windows: `INICIAR_WINDOWS.bat`). Probar: `npm run test:core`, `npm run test:summit` y `node scripts/validate-summit.cjs`. [Detalles y alcance de la validación](docs/summit-release.md).
+
 ## 1.0.0-prealpha.18 — 20 carreteras, cuatro climas y Summit
 
 Veinte rutas de 7,9–11 km, cinco por clima, árboles del FBX original con detalle por distancia, cámara de túnel más cercana y adelantamientos con carril estable. Se conservan los cinco Circuitos 2.0 y su historial. Summit está disponible como visor 3D con su atlas original desde el menú principal.

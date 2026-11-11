@@ -6,7 +6,7 @@ const root=new URL('../',import.meta.url),html=fs.readFileSync(new URL('index.ht
 function between(start,end){const a=html.indexOf(start),b=html.indexOf(end,a);if(a<0||b<a)throw new Error('Game engine markers changed');return html.slice(a,b);}
 const scope={Math,console,camera:{shake(){}},PH2:[''],PH3:[''],isTouchDevice:false};scope.window=scope;
 const context=vm.createContext(scope);
-for(const name of ['game-options','road-expeditions','touring-legacy','touring-circuits','circuit-layouts','vehicle-fit','road-contact','yugo-physics','vehicle-dynamics','tire-smoke','wheel-particles','online-rules'])vm.runInContext(fs.readFileSync(new URL(`js/${name}.js`,root),'utf8'),context);
+for(const name of ['game-options','road-expeditions','touring-legacy','summit-data','summit-track','touring-circuits','circuit-layouts','vehicle-fit','road-contact','yugo-physics','vehicle-dynamics','tire-smoke','wheel-particles','online-rules'])vm.runInContext(fs.readFileSync(new URL(`js/${name}.js`,root),'utf8'),context);
 vm.runInContext(`const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t,S=Math.sin,C=Math.cos,A=Math.atan2,H=Math.hypot,PI=Math.PI;\n${between('class Track{','/* ===== Share')}${between('class Car{','class GhostCar{')}${between('const CAR_DATA = [','let carIdx=')}\nglobalThis.engine={Track,Car,CAR_DATA};`,context);
 export const {Track,Car,CAR_DATA}=scope.engine;
 export const Net=scope.DriftNet;
