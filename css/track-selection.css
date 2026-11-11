@@ -72,3 +72,5 @@
 .touring-laps{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0;font:13px Arial,sans-serif;color:#e0e9ed}
 .touring-laps select{background:#263941;border:1px solid #637780;border-radius:4px;padding:8px;color:#fff;min-height:36px}
 .touring-laps span{flex-basis:100%;color:#ffbc7d;font-size:12px}
+
+.road-climate-heading{grid-column:1/-1;margin:18px 0 6px;padding:8px 4px;border-bottom:1px solid #ffffff30;font-size:14px;letter-spacing:.04em}
