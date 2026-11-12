@@ -225,14 +225,15 @@
 #screenFade.black{opacity:1;}
 
 </style>
-<link rel="stylesheet" href="css/experience.css?v=1.0.0-prealpha.22">
-<link rel="stylesheet" href="css/online.css?v=1.0.0-prealpha.22">
-<link rel="stylesheet" href="css/raw-menu.css?v=1.0.0-prealpha.22">
-<link rel="stylesheet" href="css/career.css?v=1.0.0-prealpha.22">
-<link rel="stylesheet" href="css/display-font.css?v=1.0.0-prealpha.22">
-<link rel="stylesheet" href="css/psx.css?v=1.0.0-prealpha.22">
-<link rel="stylesheet" href="css/music.css?v=1.0.0-prealpha.22">
-<link rel="stylesheet" href="css/track-selection.css?v=1.0.0-prealpha.22">
+<link rel="stylesheet" href="css/experience.css?v=1.0.0-prealpha.23">
+<link rel="stylesheet" href="css/online.css?v=1.0.0-prealpha.23">
+<link rel="stylesheet" href="css/raw-menu.css?v=1.0.0-prealpha.23">
+<link rel="stylesheet" href="css/career.css?v=1.0.0-prealpha.23">
+<link rel="stylesheet" href="css/display-font.css?v=1.0.0-prealpha.23">
+<link rel="stylesheet" href="css/psx.css?v=1.0.0-prealpha.23">
+<link rel="stylesheet" href="css/music.css?v=1.0.0-prealpha.23">
+<link rel="stylesheet" href="css/track-selection.css?v=1.0.0-prealpha.23">
+<link rel="stylesheet" href="css/menu-refresh.css?v=1.0.0-prealpha.23">
 </head>
 <body>
   <div id="ui">
@@ -362,6 +363,7 @@
   <div id="circuitMenu" class="modal hidden preparation">
     <div class="preparation-shell track-shell">
       <header class="preparation-header"><div><p class="eyebrow">01 / RECONOCIMIENTO</p><h2 id="circuitTitle">Selecciona circuito</h2></div><span class="preparation-step"><b>PISTA</b> AUTO CARRERA</span></header>
+      <nav id="circuitCategories" class="circuit-categories" aria-label="Colecciones de circuitos"><button data-circuit-category="roads" aria-pressed="true">CARRETERAS</button><button data-circuit-category="nfs" aria-pressed="false">NFS III ESPECIAL</button><button data-circuit-category="gt" aria-pressed="false">GT RACING 2</button><button data-circuit-category="classic" aria-pressed="false">CLÁSICOS</button></nav>
       <div class="track-workspace"><div id="circuitList" class="challenge-list track-picker"></div><div class="track-showcase"><div id="circuitStage" class="preview-stage"><span class="preview-status">Preparando vista aérea 3D…</span></div><div class="track-preview-caption"><div><h3 id="circuitPreviewName">—</h3><p id="circuitPreviewDetails">—</p><p id="circuitPreviewGoal"></p><label id="touringLapControl" class="touring-laps hidden">Vueltas <select id="touringLaps" aria-label="Vueltas del circuito largo"><option value="4">4 vueltas</option><option value="5">5 vueltas</option></select><span id="touringRaceDistance"></span></label><label class="daytime-control">Día / noche <output data-daytime-label>Día</output><input type="range" min="0" max="100" value="0" step="1" data-daytime aria-label="Ambiente: día, atardecer o noche"><span class="daytime-ends"><span>Día</span><span>Atardecer</span><span>Noche</span></span></label></div><button class="text-button" data-preview-reset>Centrar</button><button class="text-button spin-button" data-preview-spin>Ⅱ Pausar giro</button></div></div></div>
       <footer class="preparation-footer"><button id="btnCircuitBack" class="gray">← Menú principal</button><button id="btnCircuitContinue">ELEGIR AUTO ↗</button></footer>
     </div>
@@ -514,35 +516,36 @@
   </aside>
   <aside id="musicNotice" aria-label="Canción actual" role="status" aria-live="polite" aria-atomic="true" aria-hidden="true"><div class="music-emblem">D1<small id="musicNoticeNumber">01</small></div><div class="music-meta"><small id="musicNoticeState">SONANDO AHORA</small><strong id="musicNoticeTitle"></strong><span id="musicNoticeArtist"></span></div><div class="music-stripe">MÚSICA</div></aside>
 
-<script src="js/career.js?v=1.0.0-prealpha.22"></script>
-<script src="js/replay.js?v=1.0.0-prealpha.22"></script>
-<script src="js/drift-effects.js?v=1.0.0-prealpha.22"></script>
-<script src="js/attract-demo.js?v=1.0.0-prealpha.22"></script>
-<script src="js/circuit-layouts.js?v=1.0.0-prealpha.22"></script>
-<script src="js/touring-legacy.js?v=1.0.0-prealpha.22"></script>
-<script src="js/road-expeditions.js?v=1.0.0-prealpha.22"></script>
-<script src="js/nfs-summit-data.js?v=1.0.0-prealpha.22"></script>
-<script src="js/nfs-rocky-data.js?v=1.0.0-prealpha.22"></script>
-<script src="js/nfs-redrock-data.js?v=1.0.0-prealpha.22"></script>
-<script src="js/nfs-track.js?v=1.0.0-prealpha.22"></script>
-<script src="js/summit-track.js?v=1.0.0-prealpha.22"></script>
-<script src="js/touring-circuits.js?v=1.0.0-prealpha.22"></script>
-<script src="js/vehicle-fit.js?v=1.0.0-prealpha.22"></script>
-<script src="js/road-contact.js?v=1.0.0-prealpha.22"></script>
-<script src="js/downhill.js?v=1.0.0-prealpha.22"></script>
-<script src="js/yugo-physics.js?v=1.0.0-prealpha.22"></script>
-<script src="js/frame-presentation.js?v=1.0.0-prealpha.22"></script>
-<script src="js/gamepad.js?v=1.0.0-prealpha.22"></script>
-<script src="js/instruments.js?v=1.0.0-prealpha.22"></script>
-<script src="js/game-options.js?v=1.0.0-prealpha.22"></script>
-<script src="js/training.js?v=1.0.0-prealpha.22"></script>
-<script src="js/track-props.js?v=1.0.0-prealpha.22"></script>
-<script src="js/ai-race.js?v=1.0.0-prealpha.22"></script>
-<script src="js/vehicle-dynamics.js?v=1.0.0-prealpha.22"></script>
-<script src="js/engine-audio.js?v=1.0.0-prealpha.22"></script>
-<script src="js/tire-smoke.js?v=1.0.0-prealpha.22"></script>
-<script src="js/wheel-particles.js?v=1.0.0-prealpha.22"></script>
-<script src="js/online-rules.js?v=1.0.0-prealpha.22"></script>
+<script src="js/career.js?v=1.0.0-prealpha.23"></script>
+<script src="js/replay.js?v=1.0.0-prealpha.23"></script>
+<script src="js/drift-effects.js?v=1.0.0-prealpha.23"></script>
+<script src="js/attract-demo.js?v=1.0.0-prealpha.23"></script>
+<script src="js/circuit-layouts.js?v=1.0.0-prealpha.23"></script>
+<script src="js/touring-legacy.js?v=1.0.0-prealpha.23"></script>
+<script src="js/road-expeditions.js?v=1.0.0-prealpha.23"></script>
+<script src="js/nfs-summit-data.js?v=1.0.0-prealpha.23"></script>
+<script src="js/nfs-rocky-data.js?v=1.0.0-prealpha.23"></script>
+<script src="js/nfs-redrock-data.js?v=1.0.0-prealpha.23"></script>
+<script src="js/glen-data.js?v=1.0.0-prealpha.23"></script>
+<script src="js/nfs-track.js?v=1.0.0-prealpha.23"></script>
+<script src="js/summit-track.js?v=1.0.0-prealpha.23"></script>
+<script src="js/touring-circuits.js?v=1.0.0-prealpha.23"></script>
+<script src="js/vehicle-fit.js?v=1.0.0-prealpha.23"></script>
+<script src="js/road-contact.js?v=1.0.0-prealpha.23"></script>
+<script src="js/downhill.js?v=1.0.0-prealpha.23"></script>
+<script src="js/yugo-physics.js?v=1.0.0-prealpha.23"></script>
+<script src="js/frame-presentation.js?v=1.0.0-prealpha.23"></script>
+<script src="js/gamepad.js?v=1.0.0-prealpha.23"></script>
+<script src="js/instruments.js?v=1.0.0-prealpha.23"></script>
+<script src="js/game-options.js?v=1.0.0-prealpha.23"></script>
+<script src="js/training.js?v=1.0.0-prealpha.23"></script>
+<script src="js/track-props.js?v=1.0.0-prealpha.23"></script>
+<script src="js/ai-race.js?v=1.0.0-prealpha.23"></script>
+<script src="js/vehicle-dynamics.js?v=1.0.0-prealpha.23"></script>
+<script src="js/engine-audio.js?v=1.0.0-prealpha.23"></script>
+<script src="js/tire-smoke.js?v=1.0.0-prealpha.23"></script>
+<script src="js/wheel-particles.js?v=1.0.0-prealpha.23"></script>
+<script src="js/online-rules.js?v=1.0.0-prealpha.23"></script>
 <script>
 "use strict";
 
@@ -753,6 +756,7 @@ const CAR_IMG=LEGACY_2D_ENABLED?{
   blue:   mkLocal('assets/cars/blue.png'),
   yellow: mkLocal('assets/cars/yellow.png'),
   gray:   mkLocal('assets/cars/gray.png'),
+  barracuda: mkLocal('assets/cars/barracuda.png'),
   yugo:   mkLocal('assets/cars/yugo.png'),
   fujiwara: mkLocal('assets/cars/fujiwara.png'),
 }:{};
@@ -922,7 +926,7 @@ class Car{
     this.shiftUp=[25,55,90];
     this.gearPower=[1.00,0.85,0.70,0.55];
     this.shiftTimer=0; this.shiftDur=0.28;
-    this.lives=3; this.invuln=0; this.score=0; this.best=0; this.mult=1; this.driftTime=0; this.comboState=0; this.comboFlashTime=0; this.comboPhrase=''; this.comboPoints=0; this.comboBreak=0;
+    this.lives=3; this.invuln=0; this.score=0; this.best=0; this.mult=1; this.driftTime=0; this.comboState=0; this.comboFlashTime=0; this.comboPhrase=''; this.comboPoints=0; this.comboBreak=0; this.comboResult=0; this.comboResultPoints=0;
     this.tireTrails=[]; this._lastTrailOn=false; this.prevAngle=this.angle; this.prevSteerAngle=this.steerAngle; this.yawRate=0; this.steerVel=0; this.omega=0;
     this.trailOn=false; this.trailGrace=0; this.driftBreakTimer=0;
     this.smoke=[]; this.smokeAcc=0;this.smokeLimit=isTouchDevice?480:800; this.offTrack=false; this.offTimer=0; this.edgeShake=0;
@@ -967,9 +971,9 @@ class Car{
     const forward=this.vel.x*f.x+this.vel.y*f.y;
     const broken=this.offTrack||this.wrongWay||kmh<10||forward<0;
     const drifting=!broken&&kmh>16&&slip>(this.driftTime>0?.14:ENTER);
-    if(broken)this.breakFlow();
+    if(broken)this.breakFlow(this.offTrack||this.wrongWay||forward<0);
     else if(drifting){this.driftTime+=dt;this.driftBreakTimer=0;}
-    else {this.driftBreakTimer+=dt;if(this.driftBreakTimer>.45)this.breakFlow();}
+    else {this.driftBreakTimer+=dt;if(this.driftBreakTimer>.45)this.breakFlow(false);}
     const baseM=this.driftTime>=5?3:this.driftTime>=2?2:1;
     const newM=baseM===3&&drifting&&DriftRoadContact.curbWheels(track,this,this.skin)>0?5:baseM;
     if(newM>this.mult){this.comboState=newM;this.comboFlashTime=.5;this.comboPhrase=newM===2?PH2[(Math.random()*PH2.length)|0]:PH3[(Math.random()*PH3.length)|0];}
@@ -1015,12 +1019,14 @@ class Car{
     if(this.trailOn) this.spawnTrails(f,r,dt,Math.min(.9,.35+Math.abs(vlat))); this._lastTrailOn=this.trailOn;
     return {sIndex:s.i, tang:s.tang};
   }
-  breakFlow(){
-    if(this.comboState>=2)this.comboBreak=.8;
+  breakFlow(lost=true){
+    if(this.comboPoints>0){
+      this.comboBreak=.8;this.comboResult=lost?-1:1;this.comboResultPoints=Math.floor(this.comboPoints);
+    }
     this.driftTime=0;this.driftBreakTimer=0;this.mult=1;this.comboState=0;
     this.comboPoints=0;this.comboPhrase='';this.comboFlashTime=0;
   }
-  hit(track,s){ this.impactCount=(this.impactCount||0)+1;this.invuln=1; this.best=Math.max(this.best,this.score|0); this.score=0; this.breakFlow(); this.comboBreak=.8; this.pos.x=s.cx; this.pos.y=s.cy; this.vel.x*=-.25; this.vel.y*=.4; this.gear=Math.max(1,this.gear-1); camera.shake(8,280); }
+  hit(track,s){ this.impactCount=(this.impactCount||0)+1;this.invuln=1; this.best=Math.max(this.best,this.score|0); this.score=0; this.breakFlow(); this.comboResult=-1; this.comboBreak=.8; this.pos.x=s.cx; this.pos.y=s.cy; this.vel.x*=-.25; this.vel.y*=.4; this.gear=Math.max(1,this.gear-1); camera.shake(8,280); }
   spawnTrails(f,r,dt,int){ if(this.ride?.airborne)return; const ro=-this.length*.5, rc={x:this.pos.x+f.x*ro,y:this.pos.y+f.y*ro}, ht=.9, lw={x:rc.x-r.x*ht,y:rc.y-r.y*ht}, rw={x:rc.x+r.x*ht,y:rc.y+r.y*ht}, a=clamp(.18+(int||0)*.1,.18,.9); this.tireTrails.push({x1:lw.x,y1:lw.y,x2:rw.x,y2:rw.y,a,h:this.ride?.groundHeight}); const MAX_TR=isTouchDevice?2500:4000; if(this.tireTrails.length>MAX_TR) this.tireTrails.splice(0,this.tireTrails.length-MAX_TR); }
   updateSmoke(dt,f,r,slip,kmh,vlat){
     DriftTireSmoke.update(this,dt,f,r,slip,kmh,vlat);
@@ -1267,7 +1273,7 @@ function startWithTrack(tr, m='race',conditions=null){
   if(lapList) lapList.innerHTML='';
   camera.s=camera.targetS=(view.width<700||view.height<500)?Math.max(10,Math.min(18,view.height/30)):22;
   camera.tx=-player.pos.x*camera.s+view.width*.5;camera.ty=-player.pos.y*camera.s+view.height*.6;
-  currentTrackId = (track.elevated?(track.nfs?'NFSIII.v2.'+track.nfsSlug:track.legacyId?'TOURING.v1.'+track.legacyId:'ROADS.v3.'+track.touringId):track.downhill?'DOWNHILL.v2.'+track.routeLevel:encodeTrack(track.points))+':physics-v3'+(track.trackProps?.props.length?':tyres-v2':'')+DriftOptions.recordKey(raceConditions);
+  currentTrackId = (track.elevated?(track.nfs?(track.touringId>=300?'GTR2.v1.':'NFSIII.v2.')+track.nfsSlug:track.legacyId?'TOURING.v1.'+track.legacyId:'ROADS.v3.'+track.touringId):track.downhill?'DOWNHILL.v2.'+track.routeLevel:encodeTrack(track.points))+':physics-v3'+(track.trackProps?.props.length?':tyres-v2':'')+DriftOptions.recordKey(raceConditions);
   if(mode==='tt'&&player.upgradeSignature?.replace(/0/g,''))currentTrackId+=':tuned:'+chosen.sprite+':'+player.upgradeSignature;
   replayUI?.reset();
   unlockControls();syncTouchHUD(); // Nueva sesión, mismos autos y datos guardados.
@@ -1419,10 +1425,12 @@ function drawComboOverlay(){
     const t=player.comboBreak, a=clamp(t/.8,0,1);
     ctx.save();
     ctx.globalAlpha=a;
-    ctx.fillStyle='#ff5050';
+    const completed=player.comboResult===1;
+    ctx.fillStyle=completed?'#82ed9b':'#ff5050';
     ctx.font=compact?'bold 22px DriftDisplay, Impact, sans-serif':'bold 64px DriftDisplay, Impact, sans-serif';
     ctx.textAlign='center';
-    ctx.fillText('¡RACHA PERDIDA!',view.width/2,compact?view.height*.33:view.height*.24);
+    ctx.fillText(completed?'DERRAPE COMPLETADO':'¡RACHA PERDIDA!',view.width/2,compact?view.height*.33:view.height*.24);
+    if(completed){ctx.font=compact?'18px DriftDisplay, sans-serif':'30px DriftDisplay, sans-serif';ctx.fillText('+'+player.comboResultPoints.toLocaleString('es-CL')+' PUNTOS',view.width/2,(compact?view.height*.33:view.height*.24)+(compact?26:42));}
     ctx.restore();
     player.comboBreak-=dt;
     return;
@@ -1625,7 +1633,7 @@ function loop(ms){
     $('#scene3d').style.visibility=draw3D?'visible':'hidden';
     driftEffect.step(dt,{pressed:!!shown?.handbrake,speed:shown?.worldSpeed()||0,active:state==='running'||!!(replayFrame&&replayUI.playing),reduced:renderPrefs.motion==='reduced',impulse:renderPrefs.impulse!=='off',lines:renderPrefs.speedLines});
     if(draw3D){
-      const revision=[state,inSession,track,player,chosen.sprite,replayFrame?.revision,replayFrame?.camera,renderPrefs.camera,renderPrefs.motion,renderPrefs.timeOfDay,renderPrefs.quality,renderPrefs.retro,renderPrefs.weather,renderPrefs.vehicleVibration,renderPrefs.cameraVibration,renderPrefs.speedLines,renderPrefs.speedLinesIntensity,innerWidth,innerHeight,sceneView.distance,sceneView.car,sceneView.rx7Template,sceneView.yugoTemplate,sceneView.fujiwaraTemplate,sceneView.novaTemplate,sceneView.skylineTemplate,sceneView.summitRevision,attractDemo.paused];
+      const revision=[state,inSession,track,player,chosen.sprite,replayFrame?.revision,replayFrame?.camera,renderPrefs.camera,renderPrefs.motion,renderPrefs.timeOfDay,renderPrefs.quality,renderPrefs.retro,renderPrefs.weather,renderPrefs.vehicleVibration,renderPrefs.cameraVibration,renderPrefs.speedLines,renderPrefs.speedLinesIntensity,innerWidth,innerHeight,sceneView.distance,sceneView.car,sceneView.rx7Template,sceneView.yugoTemplate,sceneView.fujiwaraTemplate,sceneView.novaTemplate,sceneView.skylineTemplate,sceneView.barracudaTemplate,sceneView.summitRevision,attractDemo.paused];
       const changed=!lastScenePresentation||revision.some((v,i)=>v!==lastScenePresentation[i]),active=['running','countdown'].includes(state)||(mode==='online'&&online?.racing)||!!(replayFrame&&replayUI.playing);
       const shouldRender=inSession?(active||changed):(changed||(demoVisible&&!attractDemo.paused&&!document.hidden&&now-lastSceneFrame>=1/(sceneView.software?18:60)));
       if(shouldRender){
@@ -1712,6 +1720,7 @@ const CAR_DATA = [
 ];
 CAR_DATA.push({name:'Yugo Koral 55',sprite:'yugo',color:'#ce362b',stripes:0,desc:'Ligero, corto y de reacciones ágiles. 55 CV · 790 kg · punta de juego ≈160 km/h en llano. Tracción delantera y freno de mano para iniciar el derrape.',stats:{acc:.42,trq:.35,vmax:145/198,mass:790/1380},tune:{engine:1,lat:1,hand:1,drag:1,mass:1},specs:{power:'55 CV',torque:'77,4 Nm',speed:'≈160 km/h (juego)',mass:'790 kg'}});
 CAR_DATA.push({name:'Toyota AE86 · Fujiwara',sprite:'fujiwara',color:'#e8e8da',stripes:0,desc:'El clásico panda de Fujiwara. Ligero, progresivo y ágil para enlazar las curvas del descenso.',stats:{acc:.76,trq:.62,vmax:.84,mass:.76},tune:{engine:1.08,lat:1.02,hand:.88,drag:1,mass:.82}});
+CAR_DATA.push({name:'Plymouth Barracuda · 1970',sprite:'barracuda',color:'#db6631',stripes:0,desc:'V8 de tracción trasera. Mucho empuje, carrocería pesada y suspensión amplia: frena antes de entrar y dosifica el acelerador al salir.',stats:{acc:.73,trq:.96,vmax:.78,mass:1},tune:{engine:1.18,lat:.96,hand:1,drag:1.06,mass:1.36}});
 let carIdx=0, chosen=CAR_DATA[0];
 
 const carPanel=document.getElementById('carPanel');
@@ -1892,13 +1901,13 @@ function checkChallengeProgress(){
 }
 
 </script>
-<script src="js/experience.js?v=1.0.0-prealpha.22"></script>
-<script src="js/gamepad-ui.js?v=1.0.0-prealpha.22"></script>
-<script src="js/career-ui.js?v=1.0.0-prealpha.22"></script>
-<script src="js/replay-ui.js?v=1.0.0-prealpha.22"></script>
-<script src="js/online-config.js?v=1.0.0-prealpha.22"></script>
-<script src="js/online-client.js?v=1.0.0-prealpha.22"></script>
-<script src="js/menu-feedback.js?v=1.0.0-prealpha.22"></script>
-<script src="js/menu-ux.js?v=1.0.0-prealpha.22"></script>
-<script type="module" src="js/music-ui.js?v=1.0.0-prealpha.22"></script>
+<script src="js/experience.js?v=1.0.0-prealpha.23"></script>
+<script src="js/gamepad-ui.js?v=1.0.0-prealpha.23"></script>
+<script src="js/career-ui.js?v=1.0.0-prealpha.23"></script>
+<script src="js/replay-ui.js?v=1.0.0-prealpha.23"></script>
+<script src="js/online-config.js?v=1.0.0-prealpha.23"></script>
+<script src="js/online-client.js?v=1.0.0-prealpha.23"></script>
+<script src="js/menu-feedback.js?v=1.0.0-prealpha.23"></script>
+<script src="js/menu-ux.js?v=1.0.0-prealpha.23"></script>
+<script type="module" src="js/music-ui.js?v=1.0.0-prealpha.23"></script>
 </body></html>

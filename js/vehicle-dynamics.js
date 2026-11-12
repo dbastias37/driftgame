@@ -4,6 +4,7 @@ globalThis.DriftDynamics=(()=>{
   'use strict';
   const SPEED_SCALE=1.10,G=9.81,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const profiles={
+    barracuda:{front:.55,drive:0,cg:.63,yaw:1.38,steer:.74,roll:.105,pitch:.078,spring:46,damp:8.8},
     blue:{front:.55,drive:.25,cg:.55,yaw:1.10,steer:.92,roll:.075,pitch:.055,spring:62,damp:10},
     gray:{front:.54,drive:0,cg:.64,yaw:1.32,steer:.72,roll:.11,pitch:.075,spring:44,damp:8.4},
     yellow:{front:.50,drive:0,cg:.46,yaw:.96,steer:1,roll:.055,pitch:.045,spring:78,damp:12},

@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.22';
+import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.23';
 
 import {repairNFSGeometry} from './nfs-mesh-repair.js';
 
@@ -36,7 +36,7 @@ export function buildSummit(track,world,onReady=()=>{}){
           map.colorSpace=T.SRGBColorSpace;
           // Atlases have no mip padding: mipmaps mix neighbouring road, rock
           // and transparent tiles. Keep texel boundaries stable at distance.
-          map.generateMipmaps=false;map.minFilter=T.NearestFilter;map.magFilter=T.NearestFilter;map.anisotropy=1;
+          map.generateMipmaps=!!track.gt;map.minFilter=track.gt?T.LinearMipmapLinearFilter:T.NearestFilter;map.magFilter=track.gt?T.LinearFilter:T.NearestFilter;map.anisotropy=track.gt?4:1;
           // The compatibility renderer samples canvas pixels, while WebGL also
           // accepts ImageBitmap. Decode once for both render paths.
           if(map.image&&!map.image.getContext){const c=document.createElement('canvas');c.width=map.image.width;c.height=map.image.height;c.getContext('2d').drawImage(map.image,0,0);map.source=new T.Source(c);}
@@ -51,7 +51,7 @@ export function buildSummit(track,world,onReady=()=>{}){
       }
       o.material=materials.get(original);o.name='summit-original-scenery';
     });
-    world.userData.nfsRepair=repairNFSGeometry(root);
+    world.userData.nfsRepair=track.gt?null:repairNFSGeometry(root);
     dispose(fallback);fallback.removeFromParent();world.add(root);
     batchWorld(world,128);world.userData.summitLoad='ready';summitRevision++;onReady();return true;
   }).catch(error=>{if(!token.cancelled){world.userData.summitLoad='error';world.userData.summitError='El paisaje de '+track.layout.name+' no pudo cargar. Reabre la pista para reintentar.';summitRevision++;onReady();console.warn('Summit scenery:',error.message);}return false;});

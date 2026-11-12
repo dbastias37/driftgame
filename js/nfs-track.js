@@ -3,7 +3,7 @@
  */
 globalThis.DriftNFS = (()=>{
   'use strict';
-  const catalog=[{id:201,slug:'summit',name:'Summit',asset:'summit.glb',climate:'snow',biome:'snow',description:'Bosque nevado, pueblo alpino, desfiladeros y túneles.'},{id:202,slug:'rocky',name:'Rocky Pass',asset:'rocky-pass.glb',climate:'clear',biome:'alpine',description:'Paso de montaña, bosque, barrancos y túneles de roca.'},{id:203,slug:'redrock',name:'Redrock Ridge',asset:'redrock-ridge.glb',climate:'clear',biome:'highland',description:'Cañones de roca roja, pueblo del desierto, puentes y galerías.'}];
+  const catalog=[{id:201,slug:'summit',name:'Summit',asset:'summit.glb',climate:'snow',biome:'snow',description:'Bosque nevado, pueblo alpino, desfiladeros y túneles.'},{id:202,slug:'rocky',name:'Rocky Pass',asset:'rocky-pass.glb',climate:'clear',biome:'alpine',description:'Paso de montaña, bosque, barrancos y túneles de roca.'},{id:203,slug:'redrock',name:'Redrock Ridge',asset:'redrock-ridge.glb',climate:'clear',biome:'highland',description:'Cañones de roca roja, pueblo del desierto, puentes y galerías.'},{id:301,slug:'glen',name:'Glen Canyon Dam',asset:'glen-canyon-dam.glb',stage:'GT Racing 2',climate:'clear',biome:'highland',description:'Represa, cañón y curvas de servicio. Circuito cerrado sobre las carreteras originales.'}];
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),mix=(a,b,t)=>a+(b-a)*t;
   const wrap=(v,n)=>((v%n)+n)%n;
   const cache=new Map();
@@ -35,10 +35,10 @@ globalThis.DriftNFS = (()=>{
     const wallGrid=grid(walls,bounds,4),ceilingGrid=grid(ceilings,bounds);
     const prepared={...source,support,raw,points,segments,roadGrid,supportGrid,walls,wallGrid,ceilingGrid,length,step,at};cache.set(id,prepared);return prepared;
   }
-  function info(id=201){const d=data(id),m=meta(id);return {...m,length:d.length,stage:'NFS III Especial',laps:4,relief:Math.max(...d.raw.map(p=>p.h))-Math.min(...d.raw.map(p=>p.h))};}
+  function info(id=201){const d=data(id),m=meta(id);return {...m,length:d.length,stage:m.stage||'NFS III Especial',laps:4,relief:Math.max(...d.raw.map(p=>p.h))-Math.min(...d.raw.map(p=>p.h))};}
   function createTrack(Track,id=201){
     const d=data(id),m=meta(id),tr=new Track(d.points.map(p=>({...p})));
-    Object.assign(tr,{nfs:true,summit:id===201,asset:m.asset,nfsSlug:m.slug,elevated:true,touringId:id,roadVersion:3,roadHalf:Math.min(...d.raw.map(p=>Math.min(p.left,p.right))),cutHalf:Math.max(...d.raw.map(p=>Math.max(p.left,p.right))),length:d.length,totalLength:d.length,raceLaps:4,biome:m.biome,climate:m.climate,maxHeight:Math.max(...d.raw.map(p=>p.h)),minHeight:Math.min(...d.raw.map(p=>p.h)),features:d.features.map(f=>({...f})),tunnelHalf:7,tunnelWall:3,tunnelRise:3,curbs:false,layout:{...info(id),level:0,elevated:true}});
+    Object.assign(tr,{nfs:true,gt:id===301,summit:id===201,asset:m.asset,nfsSlug:m.slug,elevated:true,touringId:id,roadVersion:3,roadHalf:Math.min(...d.raw.map(p=>Math.min(p.left,p.right))),cutHalf:Math.max(...d.raw.map(p=>Math.max(p.left,p.right))),length:d.length,totalLength:d.length,raceLaps:4,biome:m.biome,climate:m.climate,maxHeight:Math.max(...d.raw.map(p=>p.h)),minHeight:Math.min(...d.raw.map(p=>p.h)),features:d.features.map(f=>({...f})),tunnelHalf:7,tunnelWall:3,tunnelRise:3,curbs:false,layout:{...info(id),level:0,elevated:true}});
     tr.atDistance=d.at;
     // Redrock's imported guide follows the rock/asphalt seam in this canyon.
     // Keep the racing line on the asphalt side; geometry and lap gates stay put.

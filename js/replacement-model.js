@@ -1,8 +1,8 @@
 import * as T from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import './vehicle-fit.js?v=1.0.0-prealpha.22';
+import './vehicle-fit.js?v=1.0.0-prealpha.23';
 
-const files={gray:'chevrolet-nova-ss.glb',blue:'nissan-skyline-r34.glb'},pending=new Map();
+const files={gray:'chevrolet-nova-ss.glb',blue:'nissan-skyline-r34.glb',barracuda:'plymouth-barracuda.glb'},pending=new Map();
 export async function parseReplacement(buffer,skin){
   const fit=globalThis.DriftVehicleFit[skin];
   if(!fit)throw new Error(`Unknown replacement car: ${skin}`);
@@ -38,7 +38,7 @@ export function loadReplacement(skin){
   }).then(buffer=>parseReplacement(buffer,skin)).catch(error=>{pending.delete(skin);throw error;}));
   return pending.get(skin);
 }
-export const loadNova=()=>loadReplacement('gray'),loadSkyline=()=>loadReplacement('blue');
+export const loadNova=()=>loadReplacement('gray'),loadSkyline=()=>loadReplacement('blue'),loadBarracuda=()=>loadReplacement('barracuda');
 
 export function separateNovaGlass(geometry){
   const uv=geometry.attributes.uv,pos=geometry.attributes.position,index=geometry.index,solid=[],glass=[];

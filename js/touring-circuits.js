@@ -11,7 +11,7 @@ globalThis.DriftTouring ||= (()=>{
   const dataBankFactor=d=>d.biome==='highland'?80:38;
   const cache=new Map();
   const definition=n=>definitions[clamp(Math.trunc(n)||1,1,definitions.length)-1];
-  function info(n){if(n>=201&&n<=203)return DriftNFS.info(n);if(n>=101&&n<=105)return {...DriftTouringLegacy.info(n-100),id:n,climate:'clear'};const d=definition(n);return {id:definitions.indexOf(d)+1,name:d.name,length:d.length,relief:d.relief,bank:d.bank,description:d.description,stage:'Carreteras · '+({clear:'Despejado',rain:'Lluvia',fog:'Bruma',snow:'Nieve'}[d.climate]),laps:4,biome:d.biome,climate:d.climate,sectors:d.landmarks,sectorBreaks:d.sectorBreaks};}
+  function info(n){if((n>=201&&n<=203)||n===301)return DriftNFS.info(n);if(n>=101&&n<=105)return {...DriftTouringLegacy.info(n-100),id:n,climate:'clear'};const d=definition(n);return {id:definitions.indexOf(d)+1,name:d.name,length:d.length,relief:d.relief,bank:d.bank,description:d.description,stage:'Carreteras · '+({clear:'Despejado',rain:'Lluvia',fog:'Bruma',snow:'Nieve'}[d.climate]),laps:4,biome:d.biome,climate:d.climate,sectors:d.landmarks,sectorBreaks:d.sectorBreaks};}
   // Monotone periodic cubic Hermite height: independent authored crests/valleys.
   // Zero derivative at extrema, harmonic derivatives elsewhere; no overshoot.
   function elevation(d,u){
@@ -54,7 +54,7 @@ globalThis.DriftTouring ||= (()=>{
     const result={...meta,points,count,step,features,minRadius:1/Math.max(...curvature.map(Math.abs))};cache.set(meta.id,result);return result;
   }
   function createTrack(Track,n=1){
-    if(n>=201&&n<=203)return DriftNFS.createTrack(Track,n);
+    if((n>=201&&n<=203)||n===301)return DriftNFS.createTrack(Track,n);
     if(n>=101&&n<=105){const tr=DriftTouringLegacy.createTrack(Track,n-100);Object.assign(tr,{legacyId:n-100,touringId:n,climate:'clear',roadVersion:2,tunnelHalf:22,tunnelWall:10,tunnelRise:12});tr.layout=info(n);return tr;}
     const data=layout(n),points=data.points.map(p=>({...p})),tr=new Track(points),count=points.length;
     Object.assign(tr,{elevated:true,touringId:data.id,roadHalf:12,length:data.length,totalLength:data.length,maxHeight:Math.max(...points.map(p=>p.h)),minHeight:Math.min(...points.map(p=>p.h)),raceLaps:4,features:data.features.map(f=>({...f})),biome:data.biome,climate:data.climate,roadVersion:3,terrainStep:16,cutHalf:15.8,tunnelHalf:22,tunnelWall:10,tunnelRise:12});

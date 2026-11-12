@@ -1,6 +1,7 @@
 import * as T from '../vendor/three.module.min.js';
-import {buildMountainTerrain} from './mountain-terrain.js?v=1.0.0-prealpha.22';
-import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.22';
+import {addRoadTrees} from './road-trees.js?v=1.0.0-prealpha.23';
+import {buildMountainTerrain} from './mountain-terrain.js?v=1.0.0-prealpha.23';
+import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.23';
 const mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.88,...extra});
 function mesh(parent,geo,material,x=0,y=0,z=0){const o=new T.Mesh(geo,material);o.position.set(x,y,z);parent.add(o);return o;}
 function box(p,m,x,y,z,w,h,d){return mesh(p,new T.BoxGeometry(w,h,d),m,x,y,z);}
@@ -59,12 +60,13 @@ export function buildMountain(track,world,low=false){
     }
   }
   band(track,world,mat(0xcfc8a3),-.09,.09,()=>.02,painted);
-  const object=new T.Object3D(),treeGeo=new T.ConeGeometry(2.8,10,5),treeMat=mat(0x284b43),trees=new T.InstancedMesh(treeGeo,treeMat,low?230:650);let ti=0,seed=734;
+  const object=new T.Object3D(),trees=[],treeLimit=low?230:650;let seed=734;
   const random=()=>((seed=(1664525*seed+1013904223)>>>0)/4294967296);
-  for(let i=0;i<5000&&ti<trees.count;i++){
+  for(let i=0;i<5000&&trees.length<treeLimit;i++){
     const x=b.minX-100+random()*(b.w+200),z=b.minY-100+random()*(b.h+200),q=track.sampleNearby(x,z);if(q&&q.distance<half+8)continue;
-    const scale=.7+random()*.9;object.position.set(x,track.terrainHeight(x,z)+5*scale,z);object.rotation.set(0,random()*6.28,0);object.scale.setScalar(scale);object.updateMatrix();trees.setMatrixAt(ti++,object.matrix);
-  }trees.count=ti;world.add(trees);
+    const scale=.7+random()*.9;object.position.set(x,track.terrainHeight(x,z),z);object.rotation.set(0,random()*6.28,0);object.scale.setScalar(scale);object.updateMatrix();trees.push(object.matrix.clone());
+  }
+
   for(let i=0;i<track.points.length-1;i+=3){const p=track.points[i],n=track.normalAt(i),q=track.points[Math.min(i+3,track.points.length-1)];
     for(const side of [-1,1]){
       const x=p.x+n.x*(half+1.15)*side,z=p.y+n.y*(half+1.15)*side;
@@ -86,5 +88,10 @@ export function buildMountain(track,world,low=false){
   const chevron=chevronGeometry(),chevronWhite=new T.MeshBasicMaterial({color:0xf0f0e7,side:T.DoubleSide});
   for(let s=180;s<track.finishS;s+=220){const p=track.atDistance(s),n=track.normalAt(p.i),x=p.x+n.x*(half+2.3),z=p.y+n.y*(half+2.3);box(world,dark,x,p.h+1,z,.12,2,.12);const sign=mesh(world,chevron,chevronWhite,x,p.h+2,z);sign.rotation.y=-track.tangentAt(p.i)-Math.PI/2;}
   batchWorld(world);
+  // Terrain gets its normal spatial batching first. Size forest cells from the
+  // remaining draw budget, retaining every supplied tree and both LODs.
+  const forest=new T.Group();forest.name='mountain-forest';world.add(forest);
+  addRoadTrees(forest,trees,{low,cellBudget:Math.max(12,1250-world.userData.chunks.length),lodByBounds:true});
+  batchWorld(forest);world.userData.chunks.push(...forest.userData.chunks);
   return world;
 }

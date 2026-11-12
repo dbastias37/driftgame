@@ -33,7 +33,10 @@ export function batchWorld(world,size=128){
     for(const matrices of cells.values()){
       const target=new T.InstancedMesh(source.geometry,source.material,matrices.length);target.name=source.name;Object.assign(target.userData,source.userData);
       const center=new T.Vector3();matrices.forEach((m,i)=>{target.setMatrixAt(i,m);center.add(new T.Vector3().setFromMatrixPosition(m));});
-      if(source.userData.lodMax!==undefined)target.userData.lodCenter=center.multiplyScalar(1/matrices.length);
+      if(source.userData.lodMax!==undefined){
+        target.userData.lodCenter=center.multiplyScalar(1/matrices.length);
+        if(source.userData.lodByBounds)target.userData.lodRadius=Math.max(...matrices.map(m=>new T.Vector3().setFromMatrixPosition(m).distanceTo(center)));
+      }
       target.computeBoundingSphere();target.matrixAutoUpdate=false;world.add(target);
     }
     source.dispose();
@@ -54,7 +57,8 @@ export function updateWorldVisibility(world,camera,far,overview=false){
     // speed-dependent loading, so fast driving/reversing cannot reveal a hole.
     o.visible=overview||camera.position.distanceToSquared(sphere.center)<(far+12+sphere.radius)**2;
     if(o.visible&&o.userData.lodCenter){
-      const d2=camera.position.distanceToSquared(o.userData.lodCenter);
+      const raw=camera.position.distanceToSquared(o.userData.lodCenter);
+      const d2=o.userData.lodRadius?Math.max(0,Math.sqrt(raw)-o.userData.lodRadius)**2:raw;
       o.visible=overview?o.userData.overviewLOD:d2>=o.userData.lodMin**2&&d2<o.userData.lodMax**2;
     }
     if(o.visible)visible++;

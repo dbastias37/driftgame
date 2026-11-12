@@ -1,0 +1,35 @@
+/* Shared menu language: the title screen's graphite, warm accent and display face. */
+.preparation-header h2,.garage-details #carName,.credits-shell h2{font-family:var(--display);font-style:italic;letter-spacing:-.02em;text-transform:uppercase}
+.preparation-header{border-bottom-color:var(--orange);background:#0a1115}
+.preparation-header,.raw-home-header,.title-top{padding-right:66px!important}
+.preparation-step{line-height:1.6}
+.preparation-footer button,.workshop-entry,.circuit-categories button{border-radius:0;font-family:var(--display);letter-spacing:.03em}
+.preparation-footer button:focus-visible,.circuit-categories button:focus-visible{outline:2px solid var(--cream);outline-offset:-4px}
+#garageWallet,#workshopWallet{display:block;font:700 clamp(20px,2.4vw,30px)/1.35 var(--display);color:var(--orange);padding:14px 16px;border:1px solid #ff9b4555;background:#ff9b450a;letter-spacing:.02em;overflow-wrap:anywhere}
+.home-wallet{font:700 17px/1.4 var(--display);color:var(--orange)}
+.circuit-categories{display:flex;flex:none;gap:6px;padding:8px 16px;background:#0a1115;border-bottom:1px solid #ffffff26;overflow-x:auto}
+.circuit-categories button{flex:1;white-space:nowrap;background:#18252d;color:#cad7dc;border:1px solid #3a4a54;min-height:42px;padding:8px 14px;font-size:16px}
+.circuit-categories button[aria-pressed=true]{color:#11191c;background:var(--orange);border-color:var(--orange)}
+#circuitMenu .track-group.hidden{display:none!important}
+.credits-shell{border-left-color:var(--orange)}
+.credits-shell p{font-size:15px}.credits-shell small{font-size:13px!important}
+/* A single top-right music anchor across menus and driving. */
+#musicReveal,body.in-game #musicReveal{top:calc(12px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right));bottom:auto;width:40px;height:40px}
+#musicDock,body.in-game #musicDock{top:calc(12px + env(safe-area-inset-top));right:calc(60px + env(safe-area-inset-right));left:auto;bottom:auto;transform:none;max-width:calc(100vw - 76px)}
+#musicNotice,body:has(#titleScreen:not(.hidden)) #musicNotice{top:calc(64px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right));left:auto;bottom:auto}
+body.in-game #musicReveal{background:#101821b3}
+#gameActions{right:62px!important}
+@media(max-width:700px){
+ .circuit-categories{padding:6px 10px;gap:5px;flex-wrap:wrap}
+ .circuit-categories button{flex:1 1 40%;font-size:14px;padding:7px;min-height:38px}
+ #garageWallet,#workshopWallet{font-size:22px;padding:10px 12px}
+ #musicDock button{flex-shrink:0;min-width:30px;padding:4px}
+ #musicDock #musicDockTitle{min-width:0;max-width:100px;flex:1}
+ #musicDock #musicDockDemo{display:none}
+ #musicNotice{width:min(350px,calc(100vw - 24px))}
+}
+@media(max-height:520px){
+ .circuit-categories{flex-wrap:nowrap;padding:4px 12px}
+ .circuit-categories button{font-size:13px;min-height:32px;padding:5px 9px}
+ #garageWallet,#workshopWallet{font-size:20px;padding:8px 10px}
+}

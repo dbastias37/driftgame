@@ -1,3 +1,12 @@
+## 1.0.0-prealpha.23 — GT Racing 2, Barracuda y menús
+
+- Glen Canyon Dam con superficies originales y colisiones de geometría, en su propia colección.
+- Sexto auto: Plymouth Barracuda 1970, ruedas, luces, pintura y conducción V8 de tracción trasera.
+- Pinos originales con instancias y LOD; menú y créditos monetarios más legibles.
+- Finalización normal del derrape separada de racha perdida; música arriba a la derecha.
+- Protocolo online 6 y claves de caché actualizadas. Cliente y servidor se actualizan juntos.
+- [Instalación, validación y límites](docs/gt-racing-barracuda-release.md).
+
 ## 1.0.0-prealpha.22 — NFS surfaces and collision repair
 
 - Solid guardrails and rocks use the imported mesh, with height-aware swept contacts, rebound and wall sliding.

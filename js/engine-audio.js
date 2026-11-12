@@ -6,6 +6,7 @@ globalThis.DriftEngineAudio = (() => {
   const profiles=Object.freeze({
     blue:    {label:'RB26 · I6 turbo',cyl:6,idle:850,redline:8000,base:0.61,body:1.0,rasp:.50,turbo:.8},
     yellow:  {label:'13B · rotary',cyl:6,idle:1000,redline:8500,base:1.10,body:.60,rasp:.95,turbo:.9,rotary:true},
+    barracuda:{label:'HEMI · V8',cyl:8,idle:750,redline:6200,base:.49,body:1.25,rasp:.55,turbo:0},
     gray:    {label:'V8 · Nova',cyl:8,idle:700,redline:6200,base:.50,body:1.38,rasp:.30,turbo:0},
     yugo:    {label:'I4 · Yugo',cyl:4,idle:850,redline:6200,base:.84,body:.72,rasp:.65,turbo:0},
     fujiwara:{label:'4A-GE · AE86',cyl:4,idle:900,redline:7800,base:1.02,body:.78,rasp:.86,turbo:0}

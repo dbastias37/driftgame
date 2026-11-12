@@ -1,5 +1,5 @@
 import * as T from '../vendor/three.module.min.js';
-import {TireSmokeRenderer} from './smoke-renderer.js?v=1.0.0-prealpha.22';
+import {TireSmokeRenderer} from './smoke-renderer.js?v=1.0.0-prealpha.23';
 const stoneCorners=[[-1,-.4,-.7],[.9,-.4,-.45],[.1,-.4,1],[0,1.15,0]],stoneFaces=[0,2,1,0,1,3,1,2,3,2,0,3],faceLight=[.65,.86,1,.76];
 const quadCorners=[[-1,-1],[1,-1],[-1,1],[-1,1],[1,-1],[1,1]];
 

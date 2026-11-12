@@ -1,29 +1,30 @@
 import * as T from '../vendor/three.module.min.js';
-import {SoftwareRenderer} from './software-renderer.js?v=1.0.0-prealpha.22';
-import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles,groundGeometry} from './track-surface.js?v=1.0.0-prealpha.22';
-import {buildSummit} from './summit-scene.js?v=1.0.0-prealpha.22';
-import {buildTouring} from './touring-scene.js?v=1.0.0-prealpha.22';
-import {buildMountain} from './mountain-scene.js?v=1.0.0-prealpha.22';
-import {loadRX7,createRX7} from './rx7-model.js?v=1.0.0-prealpha.22';
-import {loadYugo,createYugo} from './yugo-model.js?v=1.0.0-prealpha.22';
-import {loadFujiwara,createFujiwara} from './fujiwara-model.js?v=1.0.0-prealpha.22';
-import {batchWorld,updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.22';
-import {Atmosphere,buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.22';
-import {CinematicDirector} from './cinematic-camera.js?v=1.0.0-prealpha.22';
-import {loadNova,loadSkyline,createReplacement,updateVehicleLights} from './replacement-model.js?v=1.0.0-prealpha.22';
-import {applyVehiclePaint,disposePaint} from './vehicle-paint.js?v=1.0.0-prealpha.22';
-import {cloudTexture,TireSmokeRenderer} from './smoke-renderer.js?v=1.0.0-prealpha.22';
-import {WheelParticleRenderer} from './wheel-particles-renderer.js?v=1.0.0-prealpha.22';
-import {RetroRenderer} from './retro-renderer.js?v=1.0.0-prealpha.22';
-import {WeatherEffects} from './weather.js?v=1.0.0-prealpha.22';
-import {buildTraining} from './training-scene.js?v=1.0.0-prealpha.22';
-import {onboardCameras,onboardShot,startShot} from './driving-cameras.js?v=1.0.0-prealpha.22';
-import {applyRoadFeedback,roadFeedback} from './road-feedback.js?v=1.0.0-prealpha.22';
-import {SceneSpeedLines} from './scene-speed-lines.js?v=1.0.0-prealpha.22';
-import {LampDust} from './lamp-dust.js?v=1.0.0-prealpha.22';
-import {buildTrackProps} from './track-props-scene.js?v=1.0.0-prealpha.22';
+import {addRoadTrees} from './road-trees.js?v=1.0.0-prealpha.23';
+import {SoftwareRenderer} from './software-renderer.js?v=1.0.0-prealpha.23';
+import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles,groundGeometry} from './track-surface.js?v=1.0.0-prealpha.23';
+import {buildSummit} from './summit-scene.js?v=1.0.0-prealpha.23';
+import {buildTouring} from './touring-scene.js?v=1.0.0-prealpha.23';
+import {buildMountain} from './mountain-scene.js?v=1.0.0-prealpha.23';
+import {loadRX7,createRX7} from './rx7-model.js?v=1.0.0-prealpha.23';
+import {loadYugo,createYugo} from './yugo-model.js?v=1.0.0-prealpha.23';
+import {loadFujiwara,createFujiwara} from './fujiwara-model.js?v=1.0.0-prealpha.23';
+import {batchWorld,updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.23';
+import {Atmosphere,buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.23';
+import {CinematicDirector} from './cinematic-camera.js?v=1.0.0-prealpha.23';
+import {loadNova,loadSkyline,loadBarracuda,createReplacement,updateVehicleLights} from './replacement-model.js?v=1.0.0-prealpha.23';
+import {applyVehiclePaint,disposePaint} from './vehicle-paint.js?v=1.0.0-prealpha.23';
+import {cloudTexture,TireSmokeRenderer} from './smoke-renderer.js?v=1.0.0-prealpha.23';
+import {WheelParticleRenderer} from './wheel-particles-renderer.js?v=1.0.0-prealpha.23';
+import {RetroRenderer} from './retro-renderer.js?v=1.0.0-prealpha.23';
+import {WeatherEffects} from './weather.js?v=1.0.0-prealpha.23';
+import {buildTraining} from './training-scene.js?v=1.0.0-prealpha.23';
+import {onboardCameras,onboardShot,startShot} from './driving-cameras.js?v=1.0.0-prealpha.23';
+import {applyRoadFeedback,roadFeedback} from './road-feedback.js?v=1.0.0-prealpha.23';
+import {SceneSpeedLines} from './scene-speed-lines.js?v=1.0.0-prealpha.23';
+import {LampDust} from './lamp-dust.js?v=1.0.0-prealpha.23';
+import {buildTrackProps} from './track-props-scene.js?v=1.0.0-prealpha.23';
 const TAU=Math.PI*2;
-const SKINS={fujiwara:{color:0xe8e8da,roof:1.335,length:4.215},yugo:{color:0xce362b,roof:1.335,length:3.49},blue:{color:0x2955b8,roof:1.35,length:4.6,spoiler:true},yellow:{color:0xe6b52b,roof:.95,length:4.45,spoiler:true},gray:{color:0x16171a,roof:1.36,length:4.81}};
+const SKINS={barracuda:{color:0xe6e4dc,roof:1.32,length:4.74},fujiwara:{color:0xe8e8da,roof:1.335,length:4.215},yugo:{color:0xce362b,roof:1.335,length:3.49},blue:{color:0x2955b8,roof:1.35,length:4.6,spoiler:true},yellow:{color:0xe6b52b,roof:.95,length:4.45,spoiler:true},gray:{color:0x16171a,roof:1.36,length:4.81}};
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 function rng(seed=812){return()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};}
 export function disposeGroup(group){
@@ -87,7 +88,7 @@ function curbTexture(){
   const texture=new T.CanvasTexture(canvas);texture.wrapS=T.RepeatWrapping;texture.colorSpace=T.SRGBColorSpace;return texture;
 }
 export class DriftView3D{
-  constructor(canvas,{quality='auto',onFailure=()=>{},loadVehicle=loadRX7,loadYugoVehicle=loadYugo,loadFujiwaraVehicle=loadFujiwara,loadNovaVehicle=loadNova,loadSkylineVehicle=loadSkyline,onVehicleFailure=()=>{}}={}){
+  constructor(canvas,{quality='auto',onFailure=()=>{},loadVehicle=loadRX7,loadYugoVehicle=loadYugo,loadFujiwaraVehicle=loadFujiwara,loadNovaVehicle=loadNova,loadSkylineVehicle=loadSkyline,loadBarracudaVehicle=loadBarracuda,onVehicleFailure=()=>{}}={}){
     this.canvas=canvas;this.onFailure=onFailure;
     try{this.renderer=new T.WebGLRenderer({canvas,antialias:false,alpha:false,powerPreference:'high-performance'});}
     catch{this.renderer=new SoftwareRenderer(canvas);}
@@ -110,6 +111,7 @@ export class DriftView3D{
     this.fujiwaraReady=loadFujiwaraVehicle?loadFujiwaraVehicle().then(template=>{if(this.disposed)return;this.fujiwaraTemplate=template;if(this.key==='fujiwara')this.setSkin('fujiwara',true);}).catch(error=>{if(!this.disposed)onVehicleFailure(error);}):Promise.resolve();
     this.novaReady=loadNovaVehicle?loadNovaVehicle().then(template=>{if(this.disposed)return;this.novaTemplate=template;if(this.key==='gray')this.setSkin('gray',true);}).catch(error=>{if(!this.disposed)onVehicleFailure(error);}):Promise.resolve();
     this.skylineReady=loadSkylineVehicle?loadSkylineVehicle().then(template=>{if(this.disposed)return;this.skylineTemplate=template;if(this.key==='blue')this.setSkin('blue',true);}).catch(error=>{if(!this.disposed)onVehicleFailure(error);}):Promise.resolve();
+    this.barracudaReady=loadBarracudaVehicle?loadBarracudaVehicle().then(template=>{if(this.disposed)return;this.barracudaTemplate=template;if(this.key==='barracuda')this.setSkin('barracuda',true);}).catch(error=>{if(!this.disposed)onVehicleFailure(error);}):Promise.resolve();
     this.trailCache=new WeakMap();
     this.contextLost=e=>{e.preventDefault();this.onFailure(new Error('WebGL context lost'));};canvas.addEventListener('webglcontextlost',this.contextLost);
   }
@@ -162,11 +164,11 @@ export class DriftView3D{
     box(gate,metal,0,7.4,0,.75,.85,(half+3)*2);box(gate,orange,.4,7.4,0,.08,.32,half*1.5);
     for(let row=0;row<2;row++)for(let j=0;j<Math.ceil(half*2);j++){const check=box(gate,(j+row)%2?white:metal,row*.65,.055,j-half+.5,.65,.025,1);check.renderOrder=-55;}
     // Distant scenery stays beyond runoff; no new collision rules are introduced.
-    const treeGeo=new T.ConeGeometry(2.2,7,5),treeMat=mat(0x284b43),trunkMat=mat(0x514b3c),trees=new T.InstancedMesh(treeGeo,treeMat,200),trunks=new T.InstancedMesh(new T.CylinderGeometry(.22,.35,3,5),trunkMat,200);
+    const treeMatrices=[];
     let ti=0;const treeLimit=this.low?65:200;for(let attempt=0;attempt<700&&ti<treeLimit;attempt++){
       const x=cx+(r()-.5)*(b.w+180),z=cz+(r()-.5)*(b.h+180),idx=track.nearestIndex(x,z),p=track.point(idx);if(Math.hypot(x-p.x,z-p.y)<half+15)continue;
-      const scale=.7+r()*.9;o.position.set(x,5*scale,z);o.rotation.set(0,r()*TAU,0);o.scale.setScalar(scale);o.updateMatrix();trees.setMatrixAt(ti,o.matrix);o.position.y=1.5*scale;o.updateMatrix();trunks.setMatrixAt(ti,o.matrix);ti++;
-    }trees.count=trunks.count=ti;this.world.add(trees,trunks);
+      const scale=.7+r()*.9;o.position.set(x,0,z);o.rotation.set(0,r()*TAU,0);o.scale.setScalar(scale);o.updateMatrix();treeMatrices.push(o.matrix.clone());ti++;
+    }addRoadTrees(this.world,treeMatrices,{low:this.low});
     const mountainMat=mat(0x728a84);for(let i=0;i<14;i++){const a=i/14*TAU,rad=Math.max(b.w,b.h)*.7+350;const m=mesh(new T.ConeGeometry(65+r()*100,70+r()*100,5),mountainMat,this.world,cx+Math.cos(a)*rad,20,cz+Math.sin(a)*rad);m.rotation.y=r()*TAU;}
     // Track-side marker posts, pit sheds, and floodlights give scale to the world.
     const postGeo=new T.BoxGeometry(.16,1.2,.16),posts=new T.InstancedMesh(postGeo,white,layout.markers.length);let pi=0;
@@ -178,8 +180,8 @@ export class DriftView3D{
   setSkin(key,force=false){
     if(key===this.key&&!force)return;
     this.scene.remove(this.car.root,this.ghostCar.root);disposePaint(this.car);disposeGroup(this.car.root);disposeGroup(this.ghostCar.root);
-    this.car=key==='blue'&&this.skylineTemplate?createReplacement(this.skylineTemplate):key==='gray'&&this.novaTemplate?createReplacement(this.novaTemplate):key==='fujiwara'&&this.fujiwaraTemplate?createFujiwara(this.fujiwaraTemplate):key==='yugo'&&this.yugoTemplate?createYugo(this.yugoTemplate):key==='yellow'&&this.rx7Template?createRX7(this.rx7Template):createCar(key);
-    this.ghostCar=key==='blue'&&this.skylineTemplate?createReplacement(this.skylineTemplate,true):key==='gray'&&this.novaTemplate?createReplacement(this.novaTemplate,true):key==='fujiwara'&&this.fujiwaraTemplate?createFujiwara(this.fujiwaraTemplate,true):key==='yugo'&&this.yugoTemplate?createYugo(this.yugoTemplate,true):key==='yellow'&&this.rx7Template?createRX7(this.rx7Template,true):createCar(key,true);
+    this.car=key==='barracuda'&&this.barracudaTemplate?createReplacement(this.barracudaTemplate):key==='blue'&&this.skylineTemplate?createReplacement(this.skylineTemplate):key==='gray'&&this.novaTemplate?createReplacement(this.novaTemplate):key==='fujiwara'&&this.fujiwaraTemplate?createFujiwara(this.fujiwaraTemplate):key==='yugo'&&this.yugoTemplate?createYugo(this.yugoTemplate):key==='yellow'&&this.rx7Template?createRX7(this.rx7Template):createCar(key);
+    this.ghostCar=key==='barracuda'&&this.barracudaTemplate?createReplacement(this.barracudaTemplate,true):key==='blue'&&this.skylineTemplate?createReplacement(this.skylineTemplate,true):key==='gray'&&this.novaTemplate?createReplacement(this.novaTemplate,true):key==='fujiwara'&&this.fujiwaraTemplate?createFujiwara(this.fujiwaraTemplate,true):key==='yugo'&&this.yugoTemplate?createYugo(this.yugoTemplate,true):key==='yellow'&&this.rx7Template?createRX7(this.rx7Template,true):createCar(key,true);
     this.scene.add(this.car.root,this.ghostCar.root);this.key=key;
   }
   applyCosmetics(model,cosmetics={},skin=this.key){
@@ -195,11 +197,11 @@ export class DriftView3D{
     const ids=new Set(rivals.map(p=>p.id));
     for(const [id,model] of this.rivalModels)if(!ids.has(id)){this.scene.remove(model.root);disposePaint(model);disposeGroup(model.root);this.rivalModels.delete(id);}
     for(const car of rivals){
-      const key=car.skin,template=key==='blue'?this.skylineTemplate:key==='gray'?this.novaTemplate:key==='fujiwara'?this.fujiwaraTemplate:key==='yugo'?this.yugoTemplate:key==='yellow'?this.rx7Template:null;
+      const key=car.skin,template=key==='barracuda'?this.barracudaTemplate:key==='blue'?this.skylineTemplate:key==='gray'?this.novaTemplate:key==='fujiwara'?this.fujiwaraTemplate:key==='yugo'?this.yugoTemplate:key==='yellow'?this.rx7Template:null;
       let model=this.rivalModels.get(car.id);
       if(!model||model.skin!==key||model.template!==template){
         if(model){this.scene.remove(model.root);disposePaint(model);disposeGroup(model.root);}
-        model=(key==='blue'||key==='gray')&&template?createReplacement(template):key==='fujiwara'&&template?createFujiwara(template):key==='yugo'&&template?createYugo(template):key==='yellow'&&template?createRX7(template):createCar(key);
+        model=(key==='blue'||key==='gray'||key==='barracuda')&&template?createReplacement(template):key==='fujiwara'&&template?createFujiwara(template):key==='yugo'&&template?createYugo(template):key==='yellow'&&template?createRX7(template):createCar(key);
         model.skin=key;model.template=template;this.rivalModels.set(car.id,model);this.scene.add(model.root);
       }
       model.root.position.set(car.pos.x,0,car.pos.y);model.root.rotation.set(0,-car.angle,0,'YXZ');this.placeOnRoad(model,car,key,car.ride);

@@ -1,6 +1,7 @@
 import * as T from '../vendor/three.module.min.js';
-import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.22';
-import {buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.22';
+import {addRoadTrees} from './road-trees.js?v=1.0.0-prealpha.23';
+import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.23';
+import {buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.23';
 
 const mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.88,...extra});
 function box(g,m,x,y,z,w,h,d){const o=new T.Mesh(new T.BoxGeometry(w,h,d),m);o.position.set(x,y,z);g.add(o);return o;}
@@ -33,7 +34,8 @@ export function buildTraining(track,world){
   // Landscaped outer edges keep the eight and central crossing completely clear.
   for(const x of [-117,117])for(const z of [-75,-48,-18,13,44,77]){box(world,concrete,x,.25,z,5,.5,12);for(let j=-3;j<=3;j+=3){const bush=new T.Mesh(new T.IcosahedronGeometry(2.5,0),green);bush.position.set(x,1.8,z+j);bush.scale.y=.7;world.add(bush);}}
   for(const x of [-55,-12,12,55]){box(world,concrete,x,.25,99,12,.5,5);for(let j=-3;j<=3;j+=3){const bush=new T.Mesh(new T.IcosahedronGeometry(2.3,0),green);bush.position.set(x+j,1.6,99);world.add(bush);}}
-  for(const x of [-131,131])for(let z=-100;z<110;z+=35){box(world,trunk,x,2.4,z,.6,4.8,.6);const tree=new T.Mesh(new T.IcosahedronGeometry(4,0),green);tree.position.set(x,6,z);world.add(tree);}
+  const treeMatrices=[];for(const x of [-131,131])for(let z=-100;z<110;z+=35)treeMatrices.push(new T.Matrix4().makeTranslation(x,-.14,z));
+  addRoadTrees(world,treeMatrices);
   const street=buildStreetLights(track,world);batchWorld(world,80);
   // Moving props are added after batching, so their transforms stay live.
   const props=new T.Group();props.name='training-props';world.add(props);const count=track.coneSpawns.length;

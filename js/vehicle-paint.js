@@ -1,8 +1,10 @@
 import * as T from '../vendor/three.module.min.js';
+import {barracudaPaintMask} from './barracuda-paint-mask.js';
 
 // Masks follow the supplied atlases. Wheels, glass, badges, lights and decals
 // retain their source pixels; black paint needs replacement, not multiplication.
 export function paintPixel(skin,name,u,v,r,g,b){
+  if(skin==='barracuda')return name==='exterior.011'&&barracudaPaintMask(u,v)&&Math.min(r,g,b)>45;
   if(skin==='gray')return name==='Material_Nova'&&u<.512&&v<.395;
   if(skin==='blue')return ['Chassis','Hood','Trunkl','Right Door','Left Door','Front Bumper','Back Bumper','Stock Spoiler'].includes(name)&&b>45&&b>r*1.2&&b>g*1.08;
   if(skin==='yellow')return name==='material_1'&&r>130&&g>95&&b<g*.65;
