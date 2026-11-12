@@ -32,7 +32,9 @@
     try{
       if(!assets.entries.size){const response=await fetch('assets/preload-manifest.json?v=boot1',{cache:'no-cache',signal:AbortSignal.timeout(30000)});if(!response.ok)throw Error('No se pudo leer el catálogo de recursos');assets.configure((await response.json()).assets);}
       await assets.preload();await domReady;if(fatal)throw fatal;
-      if(!boot.coreReady||!tasks.has('renderer')||!tasks.has('music'))throw Error('El inicio del juego está incompleto. Recarga para reintentar.');
+      if(!boot.coreReady||!tasks.has('renderer')||!tasks.has('music')){
+        fatal=Error('La página cargó archivos de distintas versiones. Reintenta para actualizarla.');throw fatal;
+      }
       paint(90,'PREPARANDO MODELOS Y PISTAS');
       const {prepareResources}=await import('./boot-resources.js?v=boot1');
       await prepareResources((done,total)=>paint(90+8*done/total,'PREPARANDO MODELOS Y PISTAS'));
