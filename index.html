@@ -2,7 +2,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>DR1FT — 1.0 pre-alpha</title>
-<meta name="application-version" content="1.0.0-prealpha.25">
+<meta name="application-version" content="1.0.0-prealpha.26">
 <meta name="theme-color" content="#111719">
 <style>
   :root{--bg:#0b0b0b;--ink:#e6f1ff;}
@@ -254,7 +254,7 @@
     </div>
   </section>
   <script src="js/asset-preloader.js?v=boot1"></script>
-  <script src="js/boot.js?v=boot1"></script>
+  <script src="js/boot.js?v=1.0.0-prealpha.26"></script>
   <div id="ui">
     <div class="stat big">Puntos: <span id="score">0</span><small id="downhillTarget"></small></div>
     <div class="stat">Velocidad: <span id="speed">0</span> km/h</div>
@@ -536,7 +536,7 @@
   <aside id="musicNotice" aria-label="Canción actual" role="status" aria-live="polite" aria-atomic="true" aria-hidden="true"><div class="music-emblem">D1<small id="musicNoticeNumber">01</small></div><div class="music-meta"><small id="musicNoticeState">SONANDO AHORA</small><strong id="musicNoticeTitle"></strong><span id="musicNoticeArtist"></span></div><div class="music-stripe">MÚSICA</div></aside>
 
 <script src="js/career.js?v=1.0.0-prealpha.24"></script>
-<script src="js/replay.js?v=1.0.0-prealpha.24"></script>
+<script src="js/replay.js?v=1.0.0-prealpha.26"></script>
 <script src="js/drift-effects.js?v=1.0.0-prealpha.24"></script>
 <script src="js/attract-demo.js?v=1.0.0-prealpha.24"></script>
 <script src="js/circuit-layouts.js?v=1.0.0-prealpha.24"></script>
@@ -546,7 +546,9 @@
 <script src="js/nfs-rocky-data.js?v=1.0.0-prealpha.24"></script>
 <script src="js/nfs-redrock-data.js?v=1.0.0-prealpha.24"></script>
 <script src="js/glen-data.js?v=1.0.0-prealpha.24"></script>
-<script src="js/nfs-track.js?v=1.0.0-prealpha.24"></script>
+<script src="js/road-sign-data.js?v=1.0.0-prealpha.26"></script>
+<script src="js/road-signs.js?v=1.0.0-prealpha.26"></script>
+<script src="js/nfs-track.js?v=1.0.0-prealpha.26"></script>
 <script src="js/summit-track.js?v=1.0.0-prealpha.24"></script>
 <script src="js/touring-circuits.js?v=1.0.0-prealpha.24"></script>
 <script src="js/vehicle-fit.js?v=1.0.0-prealpha.24"></script>
@@ -1265,6 +1267,7 @@ function startWithTrack(tr, m='race',conditions=null){
   else DriftRace.grid(player,tr,0);
   if(tr.training){tr.practice=new DriftTraining.Run(tr);player.lives=Infinity;}
   DriftTrackProps.prepare(tr,{reset:true,enabled:mode!=='online'});
+  DriftSigns.prepare(tr,{reset:true});
   document.body.classList.toggle('training',!!tr.training);$('#trainingHud').classList.toggle('hidden',!tr.training);
   raceConditions=DriftOptions.conditions(conditions||renderPrefs);DriftOptions.apply(player,raceConditions);offlineRivals=[];offlineRace=null;startElapsed=0;
   if(mode==='race'&&renderPrefs.rivals){
@@ -1292,7 +1295,7 @@ function startWithTrack(tr, m='race',conditions=null){
   if(lapList) lapList.innerHTML='';
   camera.s=camera.targetS=(view.width<700||view.height<500)?Math.max(10,Math.min(18,view.height/30)):22;
   camera.tx=-player.pos.x*camera.s+view.width*.5;camera.ty=-player.pos.y*camera.s+view.height*.6;
-  currentTrackId = (track.elevated?(track.nfs?(track.touringId>=300?'GTR2.v1.':'NFSIII.v2.')+track.nfsSlug:track.legacyId?'TOURING.v1.'+track.legacyId:'ROADS.v3.'+track.touringId):track.downhill?'DOWNHILL.v2.'+track.routeLevel:encodeTrack(track.points))+':physics-v3'+(track.trackProps?.props.length?':tyres-v2':'')+DriftOptions.recordKey(raceConditions);
+  currentTrackId = (track.elevated?(track.nfs?(track.touringId>=300?'GTR2.v2.':'NFSIII.v3.')+track.nfsSlug:track.legacyId?'TOURING.v1.'+track.legacyId:'ROADS.v3.'+track.touringId):track.downhill?'DOWNHILL.v2.'+track.routeLevel:encodeTrack(track.points))+':physics-v3'+(track.trackProps?.props.length?':tyres-v2':'')+DriftOptions.recordKey(raceConditions);
   if(mode==='tt'&&player.upgradeSignature?.replace(/0/g,''))currentTrackId+=':tuned:'+chosen.sprite+':'+player.upgradeSignature;
   replayUI?.reset();
   unlockControls();syncTouchHUD(); // Nueva sesión, mismos autos y datos guardados.
@@ -1588,7 +1591,7 @@ function advanceLap(prevIdx,currentIdx){
   }
 }
 function simulate(step){
-  if(mode==='online'&&online?.racing){online.simulate(step);return;}
+  if(mode==='online'&&online?.racing){online.simulate(step);track?.roadSigns?.step(step,[player,...online.rivals()]);return;}
   if(state==='countdown'){
     startElapsed+=step;const delay=['race','training'].includes(mode)?DriftRace.INTRO.roll+DriftRace.INTRO.settle:0;
     if(startElapsed<delay)return;
@@ -1604,6 +1607,7 @@ function simulate(step){
   if(mode==='downhill'){
     const outcome=DriftDownhill.step(track,player,step,input(),chosen.sprite);
     track.trackProps?.step(step,[player]);
+    track.roadSigns?.step(step,[player]);
     careerRun?.observe(player,step);
     if(outcome.finished)finishDownhill();else if(outcome.respawn)loseLifeAndRespawn();
     updateDescentHUD();return;
@@ -1612,6 +1616,7 @@ function simulate(step){
   const ret=player.update(step,input(),track);
   offlineRace?.step(step);
   track.trackProps?.step(step,[player,...offlineRivals]);
+  track.roadSigns?.step(step,[player,...offlineRivals]);
   if(track.training){track.practice.step(step,player);DriftRoadContact.update(track,player,step,chosen.sprite);$('#trainingStats').textContent=track.practice.laps+' vuelta'+(track.practice.laps===1?'':'s')+' · '+track.practice.hits+' cono'+(track.practice.hits===1?'':'s');$('#trainingHint').textContent=track.practice.notice?'CONO DERRIBADO · −100 PTS':'Zona libre / ocho · −100 por obstáculo';return;}
   DriftRoadContact.update(track,player,step,chosen.sprite);
   wrongTimer=player.wrongWay?wrongTimer+step:Math.max(0,wrongTimer-step*2);
@@ -1658,7 +1663,7 @@ function loop(ms){
       const shouldRender=inSession?(active||changed):(changed||(demoVisible&&!attractDemo.paused&&!document.hidden&&now-lastSceneFrame>=1/(sceneView.software?18:60)));
       if(shouldRender){
         const presentationDt=inSession?(active?dt:0):Math.min(.1,now-lastSceneFrame);lastScenePresentation=revision;lastSceneFrame=now;
-        try{sceneView.render({track:inSession?track:attractTrack,player:inSession?shown:demoFrame.player,ghost:inSession&&!replayFrame?ghost:null,rivals:!inSession?demoFrame.rivals:replayFrame?.rivals||(mode==='online'?online?.rivals():opening?.slice(1)||offlineRivals.map(car=>presentationPoses.sample(car,simAccumulator/SIM_DT))),skin:!inSession?demoFrame.player.skin:replayFrame?.skin||chosen.sprite,dt:replayFrame?replayFrame.dt:presentationDt,inMenu:!inSession,time:replayFrame?.time??(inSession?raceTime:demoFrame.time),camera:!inSession?'demo':replayFrame?.camera||renderPrefs.camera,anchor:!inSession?demoFrame.anchor:replayFrame?.anchor,motion:renderPrefs.motion,timeOfDay:!inSession?demoFrame.day:replayFrame?.timeOfDay??renderPrefs.timeOfDay,impulse:driftEffect.boost,vibration:{vehicle:renderPrefs.vehicleVibration,camera:renderPrefs.cameraVibration},speedLines:{mode:renderPrefs.speedLines,intensity:renderPrefs.speedLinesIntensity,amount:driftEffect.lines,time:driftEffect.time},props:replayFrame?.props||null,frameDt:presentationDt,retro:renderPrefs.retro,weather:inSession?replayFrame?.weather||raceConditions.weather:renderPrefs.weather,weatherTime:replayFrame?.time??(inSession?startElapsed+raceTime:demoFrame.time),startIntro:(state==='countdown'||state==='paused'&&pausedState==='countdown')&&['race','training'].includes(mode)&&startElapsed<DriftRace.INTRO.roll+DriftRace.INTRO.settle?startElapsed:null});}
+        try{sceneView.render({track:inSession?track:attractTrack,player:inSession?shown:demoFrame.player,ghost:inSession&&!replayFrame?ghost:null,rivals:!inSession?demoFrame.rivals:replayFrame?.rivals||(mode==='online'?online?.rivals():opening?.slice(1)||offlineRivals.map(car=>presentationPoses.sample(car,simAccumulator/SIM_DT))),skin:!inSession?demoFrame.player.skin:replayFrame?.skin||chosen.sprite,dt:replayFrame?replayFrame.dt:presentationDt,inMenu:!inSession,time:replayFrame?.time??(inSession?raceTime:demoFrame.time),camera:!inSession?'demo':replayFrame?.camera||renderPrefs.camera,anchor:!inSession?demoFrame.anchor:replayFrame?.anchor,motion:renderPrefs.motion,timeOfDay:!inSession?demoFrame.day:replayFrame?.timeOfDay??renderPrefs.timeOfDay,impulse:driftEffect.boost,vibration:{vehicle:renderPrefs.vehicleVibration,camera:renderPrefs.cameraVibration},speedLines:{mode:renderPrefs.speedLines,intensity:renderPrefs.speedLinesIntensity,amount:driftEffect.lines,time:driftEffect.time},props:replayFrame?.props||null,signs:replayFrame?.signs||null,frameDt:presentationDt,retro:renderPrefs.retro,weather:inSession?replayFrame?.weather||raceConditions.weather:renderPrefs.weather,weatherTime:replayFrame?.time??(inSession?startElapsed+raceTime:demoFrame.time),startIntro:(state==='countdown'||state==='paused'&&pausedState==='countdown')&&['race','training'].includes(mode)&&startElapsed<DriftRace.INTRO.roll+DriftRace.INTRO.settle?startElapsed:null});}
         catch(error){fail3D(error);}
       }
     }else if(LEGACY_2D_ENABLED&&!preparing){
@@ -1939,10 +1944,10 @@ function checkChallengeProgress(){
 
 if(globalThis.DriftBoot)globalThis.DriftBoot.coreReady=true;
 </script>
-<script src="js/experience.js?v=1.0.0-prealpha.25"></script>
+<script src="js/experience.js?v=1.0.0-prealpha.26"></script>
 <script src="js/gamepad-ui.js?v=1.0.0-prealpha.24"></script>
 <script src="js/career-ui.js?v=1.0.0-prealpha.24"></script>
-<script src="js/replay-ui.js?v=1.0.0-prealpha.24"></script>
+<script src="js/replay-ui.js?v=1.0.0-prealpha.26"></script>
 <script src="js/online-config.js?v=1.0.0-prealpha.24"></script>
 <script src="js/online-client.js?v=1.0.0-prealpha.24"></script>
 <script src="js/menu-feedback.js?v=1.0.0-prealpha.24"></script>

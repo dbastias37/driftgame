@@ -2,7 +2,7 @@ import {loadRX7} from './rx7-model.js?v=1.0.0-prealpha.25';
 import {loadYugo} from './yugo-model.js?v=1.0.0-prealpha.25';
 import {loadFujiwara} from './fujiwara-model.js?v=1.0.0-prealpha.25';
 import {loadReplacement} from './replacement-model.js?v=1.0.0-prealpha.25';
-import {preloadScenery} from './summit-scene.js?v=1.0.0-prealpha.25';
+import {preloadScenery} from './summit-scene.js?v=1.0.0-prealpha.26';
 
 export async function prepareResources(progress){
   const assets=globalThis.DriftAssets;

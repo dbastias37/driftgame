@@ -1,10 +1,11 @@
+import {buildRoadSigns} from './road-signs-scene.js?v=1.0.0-prealpha.26';
 import * as T from '../vendor/three.module.min.js';
 import {addRoadTrees} from './road-trees.js?v=1.0.0-prealpha.25';
 import {SoftwareRenderer} from './software-renderer.js?v=1.0.0-prealpha.24';
 import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles,groundGeometry} from './track-surface.js?v=1.0.0-prealpha.24';
-import {buildSummit} from './summit-scene.js?v=1.0.0-prealpha.25';
+import {buildSummit} from './summit-scene.js?v=1.0.0-prealpha.26';
 import {buildTouring} from './touring-scene.js?v=1.0.0-prealpha.24';
-import {buildMountain} from './mountain-scene.js?v=1.0.0-prealpha.24';
+import {buildMountain} from './mountain-scene.js?v=1.0.0-prealpha.26';
 import {loadRX7,createRX7} from './rx7-model.js?v=1.0.0-prealpha.25';
 import {loadYugo,createYugo} from './yugo-model.js?v=1.0.0-prealpha.25';
 import {loadFujiwara,createFujiwara} from './fujiwara-model.js?v=1.0.0-prealpha.25';
@@ -133,11 +134,11 @@ export class DriftView3D{
   zoomBy(m){const key=this.cameraMode||'chase';this.cameraZoom[key]=this.distance=clamp((this.cameraZoom[key]||1)*m,.55,2.2);this.cameraReady=false;}
   build(track){
     this.summitScene?.cancel();this.summitScene=null;disposeGroup(this.world);this.trailCache=new WeakMap();this.track=track;const r=rng(),b=track.bounds,cx=b.minX+b.w/2,cz=b.minY+b.h/2,half=track.roadHalf;
-    this.trainingScene=null;this.trackPropsScene=null;
+    this.trainingScene=null;this.trackPropsScene=null;this.roadSignsScene=null;
     if(track.training){this.trainingScene=buildTraining(track,this.world);this.streetLights=this.trainingScene.street;this.trackPropsScene=buildTrackProps(track,this.world);return;}
     if(track.nfs){this.streetLights=null;this.summitScene=buildSummit(track,this.world,()=>{this.summitRevision=(this.summitRevision||0)+1;});return;}
     if(track.elevated){buildTouring(track,this.world,this.low);this.streetLights=buildStreetLights(track,this.world);batchWorld(this.world);return;}
-    if(track.downhill){buildMountain(track,this.world,this.low);this.streetLights=buildStreetLights(track,this.world);batchWorld(this.world);this.trackPropsScene=buildTrackProps(track,this.world);return;}
+    if(track.downhill){buildMountain(track,this.world,this.low);this.streetLights=buildStreetLights(track,this.world);batchWorld(this.world);this.trackPropsScene=buildTrackProps(track,this.world);this.roadSignsScene=buildRoadSigns(track,this.world);return;}
     const asphaltTexture=noiseTexture(),kerbTexture=curbTexture();
     asphaltTexture.anisotropy=Math.min(8,this.renderer.capabilities?.getMaxAnisotropy()||1);
     kerbTexture.anisotropy=asphaltTexture.anisotropy;
@@ -151,6 +152,8 @@ export class DriftView3D{
     // Adjacent regions retain their footprint; only the curb has a rounded
     // height profile, shared with the four-wheel terrain contact simulation.
     const layout=trackSurface(track);
+    Object.defineProperty(track,'roadSignMarkers',{value:layout.markers,configurable:true});
+    globalThis.DriftSigns?.prepare(track,{reset:track.roadSigns?.signs.length!==layout.markers.length});
     for(const [name,region] of Object.entries(layout.regions)){
       const geometry=name==='curb'?raisedCurbGeometry(track,layout.curbContours):surfaceGeometry(region);
       const pieces=name==='curb'?surfaceTiles(geometry):[geometry];
@@ -172,11 +175,9 @@ export class DriftView3D{
     }addRoadTrees(this.world,treeMatrices,{low:this.low});
     const mountainMat=mat(0x728a84);for(let i=0;i<14;i++){const a=i/14*TAU,rad=Math.max(b.w,b.h)*.7+350;const m=mesh(new T.ConeGeometry(65+r()*100,70+r()*100,5),mountainMat,this.world,cx+Math.cos(a)*rad,20,cz+Math.sin(a)*rad);m.rotation.y=r()*TAU;}
     // Track-side marker posts, pit sheds, and floodlights give scale to the world.
-    const postGeo=new T.BoxGeometry(.16,1.2,.16),posts=new T.InstancedMesh(postGeo,white,layout.markers.length);let pi=0;
-    for(const p of layout.markers){o.position.set(p.x,.6,p.z);o.rotation.set(0,0,0);o.scale.set(1,1,1);o.updateMatrix();posts.setMatrixAt(pi++,o.matrix);}posts.count=pi;this.world.add(posts);
     const pit=new T.Group();pit.position.set(start.x,0,start.y);pit.rotation.y=-a;this.world.add(pit);
     for(let i=0;i<4;i++){const z=half+16;box(pit,mat(i%2?0x647774:0x334c56),-13+i*9,2.5,z,7,5,8);box(pit,metal,-13+i*9,5.15,z,7.6,.35,8.6);box(pit,mat(0x17282f),-13+i*9,2,z-4.02,5,3.6,.06);box(pit,orange,-13+i*9,4.3,z-4.05,5,.2,.06);}
-    this.streetLights=buildStreetLights(track,this.world);batchWorld(this.world);this.trackPropsScene=buildTrackProps(track,this.world);
+    this.streetLights=buildStreetLights(track,this.world);batchWorld(this.world);this.trackPropsScene=buildTrackProps(track,this.world);this.roadSignsScene=buildRoadSigns(track,this.world);
   }
   ensureVehicle(key){
     if(!EXTRA_SKINS.has(key)||this.extraTemplates.has(key)||this.extraErrors.has(key)||!this.loadExtraVehicle)return Promise.resolve();
@@ -265,7 +266,7 @@ export class DriftView3D{
     if(v){attr.addUpdateRange(0,v);attr.needsUpdate=true;}
   }
 
-  render({track,player,ghost,rivals=[],skin='blue',dt=0,inMenu=false,time=0,camera='chase',motion='full',timeOfDay=0,anchor,impulse=0,frameDt=dt,weather='clear',retro,startIntro=null,weatherTime=time,vibration={vehicle:0,camera:0},speedLines={},props=null}){
+  render({track,player,ghost,rivals=[],skin='blue',dt=0,inMenu=false,time=0,camera='chase',motion='full',timeOfDay=0,anchor,impulse=0,frameDt=dt,weather='clear',retro,startIntro=null,weatherTime=time,vibration={vehicle:0,camera:0},speedLines={},props=null,signs=null}){
     if(!track||!player)return;this.setTimeOfDay(timeOfDay,weather);this.setRetro(retro);this.cameraMode=camera;this.distance=this.cameraZoom[camera]||1;this.adaptResolution(frameDt);if(this.track!==track){this.build(track);this.resetCamera();}this.setSkin(skin);
     const w=this.canvas.clientWidth||innerWidth,h=this.canvas.clientHeight||innerHeight;if(this.width!==w||this.height!==h){this.width=w;this.height=h;this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();}
     const p=player.pos,a=player.angle,speed=player.worldSpeed();this.car.root.position.set(p.x,0,p.y);this.car.root.rotation.set(0,-a,0,'YXZ');
@@ -346,6 +347,7 @@ export class DriftView3D{
     this.wheelParticles.update([player,...rivals],this.camera,track,this.low);
     this.trainingScene?.update();
     this.trackPropsScene?.update(props);
+    (this.summitScene?.signs||this.roadSignsScene)?.update(signs,this.camera,this.drawFar);
     this.weatherEffects.update({track,world:this.world,camera:this.camera,player,dt,reset:!!shot?.cut||this.weatherTrack!==track||this.weatherCamera!==camera,time:weatherTime,weather,reduced:motion==='reduced',night:this.atmosphere.state?.night||0,low:this.low});
     this.weatherTrack=track;this.weatherCamera=camera;
     this.lampDust.update(this.camera,this.streetLights,weatherTime,{night:this.atmosphere.state?.night||0,low:this.low,weather});

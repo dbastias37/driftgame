@@ -3,6 +3,7 @@ import {GLTFLoader} from '../vendor/GLTFLoader.js';
 import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.24';
 
 import {repairNFSGeometry} from './nfs-mesh-repair.js';
+import {separateSigns,buildRoadSigns} from './road-signs-scene.js?v=1.0.0-prealpha.26';
 
 const templates=new Map();
 export let summitRevision=0;
@@ -16,7 +17,7 @@ function dispose(root){const gs=new Set(),ms=new Set(),ts=new Set();root.travers
 export function buildSummit(track,world,onReady=()=>{}){
   // The native road is available immediately and remains driveable on a failed
   // scenery request. A late response can never attach to a different circuit.
-  const token={cancelled:false},fallback=new T.Group();fallback.name='summit-loading-road';
+  const token={cancelled:false,signs:null},fallback=new T.Group();fallback.name='summit-loading-road';
   const positions=[],indices=[];
   for(let i=0;i<=track.points.length;i++){
     const s=i*track.length/track.points.length,p=track.atDistance(s);
@@ -28,6 +29,7 @@ export function buildSummit(track,world,onReady=()=>{}){
   world.userData.summitLoad='loading';world.userData.summitError='';
   const ready=template(track.asset).then(result=>{
     if(token.cancelled)return false;
+    result.scene.traverse(o=>{const a=result.parser.associations.get(o);if(o.isMesh&&a)o.userData.roadSignSource=a.meshes+':'+a.primitives;});
     const root=result.scene.clone(true),materials=new Map();root.name='summit-scenery';
     root.traverse(o=>{
       if(!o.isMesh)return;
@@ -52,9 +54,10 @@ export function buildSummit(track,world,onReady=()=>{}){
       }
       o.material=materials.get(original);o.name='summit-original-scenery';
     });
+    const signMaterials=separateSigns(result,root,track);
     world.userData.nfsRepair=track.gt?null:repairNFSGeometry(root);
     dispose(fallback);fallback.removeFromParent();world.add(root);
-    batchWorld(world,128);world.userData.summitLoad='ready';summitRevision++;onReady();return true;
+    batchWorld(world,128);token.signs=buildRoadSigns(track,world,signMaterials);world.userData.summitLoad='ready';summitRevision++;onReady();return true;
   }).catch(error=>{if(!token.cancelled){world.userData.summitLoad='error';world.userData.summitError='El paisaje de '+track.layout.name+' no pudo cargar. Reabre la pista para reintentar.';summitRevision++;onReady();console.warn('Summit scenery:',error.message);}return false;});
-  return {ready,cancel(){token.cancelled=true;}};
+  return {ready,get signs(){return token.signs;},cancel(){token.cancelled=true;}};
 }

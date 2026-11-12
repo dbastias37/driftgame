@@ -4,17 +4,25 @@ globalThis.DriftReplay=(()=>{
   const angle=(a,b,t)=>a+Math.atan2(Math.sin(b-a),Math.cos(b-a))*t;
   class Recorder{
     constructor(seconds=MAX_SECONDS){this.maxSeconds=seconds;this.capacity=Math.ceil(seconds*HZ)+1;this.clear();}
-    clear(){this.count=0;this.head=0;this.lastTime=-Infinity;this.channels=new Map();this.propChannels=[];this.times=new Float64Array(this.capacity);this.meta=null;}
+    clear(){this.count=0;this.head=0;this.lastTime=-Infinity;this.channels=new Map();this.propChannels=[];this.signChannels=new Map();this.times=new Float64Array(this.capacity);this.meta=null;}
     reset(meta){this.clear();this.meta=meta;}
     index(i){return (this.head-this.count+i+this.capacity)%this.capacity;}
     get start(){return this.count?this.times[this.index(0)]:0;}
     get end(){return this.count?this.times[this.index(this.count-1)]:0;}
     get duration(){return this.end-this.start;}
-    get bytes(){return this.times.byteLength+[...this.channels.values()].reduce((s,c)=>s+c.data.byteLength,0)+this.propChannels.reduce((s,c)=>s+c.byteLength,0);}
-    capture(time,player,rivals=[],props=[]){
+    get bytes(){return this.times.byteLength+[...this.channels.values()].reduce((s,c)=>s+c.data.byteLength,0)+this.propChannels.reduce((s,c)=>s+c.byteLength,0)+[...this.signChannels.values()].reduce((s,c)=>s+c.length*8*8,0);}
+    capture(time,player,rivals=[],props=[],signs=[]){
       if(!this.meta||!Number.isFinite(time)||time-this.lastTime<1/HZ-1e-6)return false;
       const slot=this.head;this.times[slot]=time;
       props.slice(0,36).forEach((p,id)=>{const a=this.propChannels[id]??=new Float32Array(this.capacity*7);a.set([p.x,p.y,p.z,p.ground,p.tiltX,p.tiltY,p.heading||0],slot*7);});
+      // Only moving signs need samples; a settled pose persists. Recording every
+      // untouched roadside post at 20 Hz would waste tens of MB per race.
+      for(const p of signs){
+        if(!p.hit)continue;let samples=this.signChannels.get(p.id);if(!samples){samples=[];this.signChannels.set(p.id,samples);}
+        const values=[time,p.x,p.y,p.ground,p.lift,p.yaw,p.tilt,p.settled?1:0],last=samples.at(-1);
+        if(!last||!last[7]||!p.settled)samples.push(values);
+        while(samples.length>2&&samples[1][0]<time-this.maxSeconds)samples.shift();
+      }
       for(const [id,car,skin] of [['self',player,this.meta.skin],...rivals.slice(0,2).map(c=>[c.id,c,c.skin])]){
         let channel=this.channels.get(id);
         if(!channel){channel={id,skin,name:car.name||'',color:car.color,cosmetics:car.cosmetics?{...car.cosmetics}:null,dimensions:car.bodyDimensions?{...car.bodyDimensions}:null,data:new Float32Array(this.capacity*STRIDE),last:null,travel:0,first:time};this.channels.set(id,channel);}
@@ -44,7 +52,14 @@ globalThis.DriftReplay=(()=>{
         poses.push(pose);
       }
       const props=this.propChannels.map((data,id)=>{const read=n=>data[i*7+n]+(data[j*7+n]-data[i*7+n])*u;return {id,x:read(0),y:read(1),z:read(2),ground:read(3),tiltX:read(4),tiltY:read(5),heading:read(6)};});
-      return {time,player:poses.find(p=>p.id==='self'),rivals:poses.filter(p=>p.id!=='self'),props};
+      const signs=[];
+      for(const [id,values]of this.signChannels){
+        if(time<values[0][0])continue;let a=0,b=values.length-1;
+        while(a<b){const mid=Math.ceil((a+b)/2);if(values[mid][0]<=time)a=mid;else b=mid-1;}
+        const first=values[a],next=values[Math.min(a+1,values.length-1)],t=next[0]>first[0]?(time-first[0])/(next[0]-first[0]):0,read=i=>first[i]+(next[i]-first[i])*t;
+        signs.push({id,x:read(1),y:read(2),ground:read(3),lift:read(4),yaw:angle(first[5],next[5],t),tilt:read(6)});
+      }
+      return {time,player:poses.find(p=>p.id==='self'),rivals:poses.filter(p=>p.id!=='self'),props,signs};
     }
   }
   return {Recorder,MAX_SECONDS,HZ};

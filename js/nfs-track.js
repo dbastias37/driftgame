@@ -27,10 +27,12 @@ globalThis.DriftNFS = (()=>{
       const result=new Map();items.forEach(item=>{const b=bounds(item);for(let x=Math.floor((b[0]-pad)/32);x<=Math.floor((b[2]+pad)/32);x++)for(let y=Math.floor((b[1]-pad)/32);y<=Math.floor((b[3]+pad)/32);y++){const key=x+','+y;if(!result.has(key))result.set(key,[]);result.get(key).push(item);}});return result;
     }
     const roadGrid=grid(segments,a=>[Math.min(a.p.x,a.q.x),Math.min(a.p.y,a.q.y),Math.max(a.p.x,a.q.x),Math.max(a.p.y,a.q.y)],45);
-    const support=Array.from({length:source.indices.length/3},(_,i)=>source.indices.slice(i*3,i*3+3).flatMap(n=>source.vertices.slice(n*3,n*3+3)));
+    const excluded=new Set(globalThis.DriftSignData?.[meta(id).slug]?.solidFaces||[]);
+    const solid=t=>!excluded.size||!globalThis.DriftSigns||!excluded.has(globalThis.DriftSigns.faceKey(t));
+    const support=Array.from({length:source.indices.length/3},(_,i)=>source.indices.slice(i*3,i*3+3).flatMap(n=>source.vertices.slice(n*3,n*3+3))).filter(solid);
     const supportGrid=grid(support,t=>[Math.min(t[0],t[3],t[6]),Math.min(t[1],t[4],t[7]),Math.max(t[0],t[3],t[6]),Math.max(t[1],t[4],t[7])]);
     const triangles=values=>Array.from({length:(values?.length||0)/9},(_,i)=>values.slice(i*9,i*9+9));
-    const walls=triangles(source.walls),ceilings=triangles(source.ceilings);
+    const walls=triangles(source.walls).filter(solid),ceilings=triangles(source.ceilings).filter(solid);
     const bounds=t=>[Math.min(t[0],t[3],t[6]),Math.min(t[1],t[4],t[7]),Math.max(t[0],t[3],t[6]),Math.max(t[1],t[4],t[7])];
     const wallGrid=grid(walls,bounds,4),ceilingGrid=grid(ceilings,bounds);
     const prepared={...source,support,raw,points,segments,roadGrid,supportGrid,walls,wallGrid,ceilingGrid,length,step,at};cache.set(id,prepared);return prepared;

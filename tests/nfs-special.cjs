@@ -4,7 +4,7 @@ test('NFS III Especial selects all three independent maps, laps and record names
  const r=harness();r("document.getElementById('btnSummit').click()");assert.equal(r('previewSelection.track.touringId'),201);
  for(const [id,slug,asset] of [[201,'summit','summit.glb'],[202,'rocky','rocky-pass.glb'],[203,'redrock','redrock-ridge.glb']]){
   const result=r(`(()=>{previewTouring(${id},5);const t=previewSelection.track;startWithTrack(t,'tt');return {name:t.layout.name,stage:t.layout.stage,laps:t.raceLaps,key:currentTrackId,length:t.length,hash:DriftNFSData['${slug}'].sourceSHA256,start:t.atDistance(0),end:t.atDistance(t.length)}})()`);
-  assert.equal(result.stage,'NFS III Especial');assert.equal(result.laps,5);assert(result.key.startsWith('NFSIII.v2.'+slug));assert.deepEqual(result.start,result.end);assert(result.length>8700&&result.length<10400);
+  assert.equal(result.stage,'NFS III Especial');assert.equal(result.laps,5);assert(result.key.startsWith('NFSIII.v3.'+slug));assert.deepEqual(result.start,result.end);assert(result.length>8700&&result.length<10400);
   assert.equal(result.hash,crypto.createHash('sha256').update(fs.readFileSync(new URL('../assets/bonus/'+asset,'file://'+__filename))).digest('hex'));
  }
 });

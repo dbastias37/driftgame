@@ -36,7 +36,7 @@
         fatal=Error('La página cargó archivos de distintas versiones. Reintenta para actualizarla.');throw fatal;
       }
       paint(90,'PREPARANDO MODELOS Y PISTAS');
-      const {prepareResources}=await import('./boot-resources.js?v=boot1');
+      const {prepareResources}=await import('./boot-resources.js?v=1.0.0-prealpha.26');
       await prepareResources((done,total)=>paint(90+8*done/total,'PREPARANDO MODELOS Y PISTAS'));
       let count=0;
       for(const [name,prepare] of tasks){if(!completed.has(name)){await prepare();completed.add(name);}paint(98+(++count/tasks.size),'PREPARANDO MENÚ');}

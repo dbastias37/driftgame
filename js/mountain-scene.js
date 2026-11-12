@@ -16,14 +16,6 @@ function band(track,parent,material,a,b,height=()=>.025,filter=()=>true){
     const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(pos,3));geo.setAttribute('uv',new T.Float32BufferAttribute(uv,2));geo.setIndex(indices);geo.computeVertexNormals();mesh(parent,geo,material).name='mountain-road';
   }
 }
-// Direction cues are plain geometry, with no lettering or font texture.
-function chevronGeometry(){
-  const shapes=[];
-  for(const x of [-.9,0,.9]){
-    const shape=new T.Shape();shape.moveTo(x-.27,.46);shape.lineTo(x+.20,0);shape.lineTo(x-.27,-.46);shape.lineTo(x-.42,-.30);shape.lineTo(x-.11,0);shape.lineTo(x-.42,.30);shape.closePath();shapes.push(shape);
-  }
-  return new T.ShapeGeometry(shapes);
-}
 export function buildMountain(track,world,low=false){
   const grass=mat(0x526253),rock=mat(0x728a84),dark=mat(0x283b43),white=mat(0xdde0d3),orange=mat(0xc85837),metal=mat(0x8a9694,{metalness:.45}),asphalt=mat(0xaeb7ba,{map:noise()}),sand=mat(0x7a8074);
   const b=track.bounds,tile=64,step=8;
@@ -74,7 +66,7 @@ export function buildMountain(track,world,low=false){
         box(world,metal,x,p.h+.55,z,.14,1.1,.14);
         const nn=track.normalAt(Math.min(i+3,track.points.length-1)),xx=q.x+nn.x*(half+1.15)*side,zz=q.y+nn.y*(half+1.15)*side;
         const beam=box(world,metal,(x+xx)/2,(p.h+q.h)/2+.83,(z+zz)/2,Math.hypot(xx-x,zz-z,q.h-p.h),.26,.09);beam.rotation.set(0,-Math.atan2(zz-z,xx-x),Math.atan2(q.h-p.h,Math.hypot(xx-x,zz-z)),'YXZ');
-      }else if(i%9===0){box(world,white,x,p.h+.45,z,.16,.9,.16);box(world,orange,x,p.h+.76,z,.2,.14,.2);}
+      }
     }
     if(i%30===0){const x=p.x+n.x*(half+10),z=p.y+n.y*(half+10),stone=mesh(world,new T.DodecahedronGeometry(3.3,0),rock,x,track.terrainHeight(x,z)+1,z);stone.scale.set(1.1,1.7,.8);}
   }
@@ -84,9 +76,6 @@ export function buildMountain(track,world,low=false){
     box(gate,dark,0,7.4,0,.6,.8,(half+2)*2);
     for(let j=-Math.floor(half);j<half;j++)for(let row=0;row<2;row++)box(gate,(j+row)%2?white:dark,row*.6,.065,j+.5,.6,.03,1);
   }
-  // Graphic hairpin markers are scenery, not invisible collision walls.
-  const chevron=chevronGeometry(),chevronWhite=new T.MeshBasicMaterial({color:0xf0f0e7,side:T.DoubleSide});
-  for(let s=180;s<track.finishS;s+=220){const p=track.atDistance(s),n=track.normalAt(p.i),x=p.x+n.x*(half+2.3),z=p.y+n.y*(half+2.3);box(world,dark,x,p.h+1,z,.12,2,.12);const sign=mesh(world,chevron,chevronWhite,x,p.h+2,z);sign.rotation.y=-track.tangentAt(p.i)-Math.PI/2;}
   batchWorld(world);
   // Terrain gets its normal spatial batching first. Size forest cells from the
   // remaining draw budget, retaining every supplied tree and both LODs.

@@ -2,7 +2,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),fs=requir
 const {harness}=require('./harness.cjs');
 test('Summit route closes, follows supplied elevations and keeps its own race records',()=>{
   const r=harness();const result=r(`(()=>{const t=DriftTouring.createTrack(Track,201);let error=0,maxJump=0;for(let s=0;s<t.length;s+=11){const p=t.atDistance(s),q=t.atDistance(s+.1);error=Math.max(error,Math.abs(t.surfaceHeight(p.x,p.y)-p.h));maxJump=Math.max(maxJump,Math.abs(q.h-p.h));}startWithTrack(t,'tt');return {id:t.touringId,length:t.length,error,maxJump,key:currentTrackId,start:t.atDistance(0),end:t.atDistance(t.length),minWidth:Math.min(...t.points.map(p=>t.widthAt(p.s))),features:t.features,hash:DriftNFSData.summit.sourceSHA256}})()`);
-  assert.equal(result.id,201);assert(result.length>10000&&result.length<10600);assert(result.error<.01);assert(result.maxJump<.04);assert.deepEqual(result.start,result.end);assert(result.key.startsWith('NFSIII.v2.summit'));assert(result.minWidth>3.9);assert.equal(result.features.length,3);
+  assert.equal(result.id,201);assert(result.length>10000&&result.length<10600);assert(result.error<.01);assert(result.maxJump<.04);assert.deepEqual(result.start,result.end);assert(result.key.startsWith('NFSIII.v3.summit'));assert(result.minWidth>3.9);assert.equal(result.features.length,3);
   assert.equal(result.hash,crypto.createHash('sha256').update(fs.readFileSync(new URL('../assets/bonus/summit.glb','file://'+__filename))).digest('hex'));
   r("mode='race';previewTouring(201,5);confirmTrackPreview();showCircuitMenu();");assert.equal(r('previewSelection.track.touringId'),201);assert.equal(r('previewSelection.track.raceLaps'),5);
 });
