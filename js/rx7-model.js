@@ -44,7 +44,7 @@ export async function parseRX7(buffer){
 }
 
 export function loadRX7(){
-  if(!pending)pending=fetch(RX7_URL).then(response=>{
+  if(!pending)pending=(globalThis.DriftAssets?globalThis.DriftAssets.response(RX7_URL):fetch(RX7_URL)).then(response=>{
     if(!response.ok)throw new Error(`RX-7 download failed: ${response.status}`);
     return response.arrayBuffer();
   }).then(parseRX7).catch(error=>{pending=null;throw error;});

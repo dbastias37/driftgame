@@ -1,0 +1,30 @@
+/* Keep the game's exact wordmark, menu typeface and orange accent. */
+body.booting{background:#000;overflow:hidden}
+body.booting::before,body.booting::after{display:none!important}
+body.booting> :not(#bootScreen):not(script):not(style):not(noscript){visibility:hidden!important}
+#bootScreen{position:fixed;inset:0;z-index:100000;display:grid;place-items:center;box-sizing:border-box;padding:24px;background:#000;color:var(--cream,#ffffaa);opacity:1;transition:opacity .36s ease;isolation:isolate}
+#bootScreen[hidden]{display:none!important}
+.boot-content{width:min(480px,80vw);text-align:center;opacity:1;transition:opacity .3s ease}
+#bootScreen .boot-title{margin:0;font:normal 400 clamp(86px,14vw,180px)/1 var(--display,DriftDisplay,Impact,sans-serif);letter-spacing:-.035em;white-space:nowrap;color:var(--cream,#ffffaa);text-shadow:none}
+#bootScreen .boot-title em{display:inline-block;font-style:normal;color:var(--orange,#ff9249);transform:skew(-5deg);margin:0 .015em}
+.boot-controls{position:relative;height:110px;margin-top:48px}
+#bootLoading{transition:opacity .36s ease}
+#bootProgress{height:13px;border:1px solid var(--cream,#ffffaa);padding:3px;box-sizing:border-box;background:transparent}
+#bootFill{height:100%;width:100%;background:var(--orange,#ff9249);transform:scaleX(0);transform-origin:left center}
+.boot-caption{display:flex;justify-content:space-between;gap:16px;align-items:baseline;margin-top:13px}
+#bootStatus,#bootPercent,#bootError{font:normal 400 12px/1.5 var(--display,DriftDisplay,Impact,sans-serif);letter-spacing:1.2px}
+#bootStatus{color:var(--cream,#ffffaa);opacity:.65;text-align:left}
+#bootPercent{color:var(--orange,#ff9249)}
+#bootScreen #bootPlay,#bootScreen #bootRetry{border:0;border-radius:0;background:transparent;box-shadow:none;text-shadow:none;padding:10px 18px;color:var(--cream,#ffffaa);font:normal 400 32px/1.1 var(--display,DriftDisplay,Impact,sans-serif);letter-spacing:1px;min-height:48px;outline-offset:6px}
+#bootScreen #bootPlay{position:absolute;top:0;left:50%;transform:translateX(-50%);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .36s ease,color .15s ease}
+#bootScreen #bootPlay:hover,#bootScreen #bootPlay:focus-visible,#bootScreen #bootRetry:hover{color:var(--orange,#ff9249);background:transparent;box-shadow:none}
+#bootScreen #bootPlay:focus-visible,#bootScreen #bootRetry:focus-visible{outline:none;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.3em}
+#bootScreen #bootRetry{font-size:20px;margin-top:12px}
+#bootError{max-width:480px;overflow-wrap:anywhere;color:var(--orange,#ff9249);margin:12px auto 0;font-size:11px;letter-spacing:.5px}
+#bootScreen[data-phase=complete] #bootLoading,#bootScreen[data-phase=ready] #bootLoading,#bootScreen[data-phase=leaving] #bootLoading,#bootScreen[data-phase=revealing] #bootLoading{opacity:0;pointer-events:none}
+#bootScreen[data-phase=ready] #bootPlay{opacity:1;visibility:visible;pointer-events:auto}
+#bootScreen[data-phase=leaving] .boot-content,#bootScreen[data-phase=revealing] .boot-content{opacity:0}
+#bootScreen[data-phase=revealing]{opacity:0}
+@media(max-width:600px){.boot-content{width:80vw}.boot-controls{margin-top:34px}#bootScreen .boot-title{font-size:clamp(86px,27vw,150px)}#bootStatus,#bootPercent{font-size:10px;letter-spacing:.7px}}
+@media(max-height:420px){#bootScreen .boot-title{font-size:90px}.boot-controls{margin-top:25px;height:80px}}
+@media(prefers-reduced-motion:reduce){#bootScreen,#bootScreen *{transition:none!important}}

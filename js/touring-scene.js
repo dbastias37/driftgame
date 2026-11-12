@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
 import {buildMountainTerrain} from './mountain-terrain.js?v=1.0.0-prealpha.24';
-import {addRoadTrees} from './road-trees.js?v=1.0.0-prealpha.24';
+import {addRoadTrees} from './road-trees.js?v=1.0.0-prealpha.25';
 
 const mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.88,...extra});
 const palettes={snow:[0xd0dce0,0x8c9ca7,0x59736d],alpine:[0x526253,0x72847f,0x284b43],forest:[0x465b46,0x697571,0x244438],coast:[0x7b8061,0x9a9783,0x445c45],lake:[0x566c61,0x738582,0x2e554b],highland:[0x777c65,0x8c9185,0x465c48]};

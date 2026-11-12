@@ -2,7 +2,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>DR1FT — 1.0 pre-alpha</title>
-<meta name="application-version" content="1.0.0-prealpha.22">
+<meta name="application-version" content="1.0.0-prealpha.25">
 <meta name="theme-color" content="#111719">
 <style>
   :root{--bg:#0b0b0b;--ink:#e6f1ff;}
@@ -234,8 +234,27 @@
 <link rel="stylesheet" href="css/music.css?v=1.0.0-prealpha.24">
 <link rel="stylesheet" href="css/track-selection.css?v=1.0.0-prealpha.24">
 <link rel="stylesheet" href="css/menu-refresh.css?v=1.0.0-prealpha.24">
+<link rel="stylesheet" href="css/boot.css?v=boot1">
+<style>body.booting{background:#000}body.booting> :not(#bootScreen):not(script):not(style){visibility:hidden!important}#bootScreen{position:fixed;inset:0;z-index:100000;background:#000}</style>
 </head>
-<body>
+<body class="booting">
+  <section id="bootScreen" role="dialog" aria-modal="true" aria-label="Cargando DR1FT" aria-busy="true" data-phase="loading">
+    <div class="boot-content">
+      <h1 class="boot-title" aria-label="DR1FT">DR<em>1</em>FT</h1>
+      <div class="boot-controls">
+        <div id="bootLoading">
+          <div id="bootProgress" role="progressbar" aria-label="Carga de recursos" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="bootFill"></div></div>
+          <div class="boot-caption"><span id="bootStatus" role="status" aria-live="polite">INICIANDO</span><span id="bootPercent" aria-hidden="true">0%</span></div>
+        </div>
+        <button id="bootPlay" type="button" disabled>JUGAR</button>
+        <button id="bootRetry" type="button" hidden>REINTENTAR</button>
+        <p id="bootError" role="alert"></p>
+      </div>
+      <noscript>Activa JavaScript para cargar y jugar a DR1FT.</noscript>
+    </div>
+  </section>
+  <script src="js/asset-preloader.js?v=boot1"></script>
+  <script src="js/boot.js?v=boot1"></script>
   <div id="ui">
     <div class="stat big">Puntos: <span id="score">0</span><small id="downhillTarget"></small></div>
     <div class="stat">Velocidad: <span id="speed">0</span> km/h</div>
@@ -1608,6 +1627,7 @@ function simulate(step){
 }
 let lastScenePresentation=null,lastSceneFrame=0;
 function loop(ms){
+  if(globalThis.DriftBoot&&!globalThis.DriftBoot.started){lastTS=ms/1000;requestAnimationFrame(loop);return;}
   try{
     const now=ms/1000;perfNow=now;dt=clamp(now-lastTS,0,.25);lastTS=now;
     if(typeof pollController==='function')pollController(now);
@@ -1916,14 +1936,16 @@ function checkChallengeProgress(){
   if(careerRun){$('#challengeGoal').textContent=Math.floor(careerRun.bestScore).toLocaleString('es-CL')+' / '+activeChallengeGoal.toLocaleString('es-CL');}
 }
 
+
+if(globalThis.DriftBoot)globalThis.DriftBoot.coreReady=true;
 </script>
-<script src="js/experience.js?v=1.0.0-prealpha.24"></script>
+<script src="js/experience.js?v=1.0.0-prealpha.25"></script>
 <script src="js/gamepad-ui.js?v=1.0.0-prealpha.24"></script>
 <script src="js/career-ui.js?v=1.0.0-prealpha.24"></script>
 <script src="js/replay-ui.js?v=1.0.0-prealpha.24"></script>
 <script src="js/online-config.js?v=1.0.0-prealpha.24"></script>
 <script src="js/online-client.js?v=1.0.0-prealpha.24"></script>
 <script src="js/menu-feedback.js?v=1.0.0-prealpha.24"></script>
-<script src="js/menu-ux.js?v=1.0.0-prealpha.24"></script>
-<script type="module" src="js/music-ui.js?v=1.0.0-prealpha.24"></script>
+<script src="js/menu-ux.js?v=1.0.0-prealpha.25"></script>
+<script type="module" src="js/music-ui.js?v=1.0.0-prealpha.25"></script>
 </body></html>

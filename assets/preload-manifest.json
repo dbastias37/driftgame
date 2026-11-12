@@ -1,0 +1,270 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "path": "assets/bonus/glen-canyon-dam.glb",
+      "bytes": 19039016,
+      "hash": "88b2085988850b772f68"
+    },
+    {
+      "path": "assets/bonus/redrock-ridge.glb",
+      "bytes": 5489404,
+      "hash": "59f781d315db0de9d282"
+    },
+    {
+      "path": "assets/bonus/rocky-pass.glb",
+      "bytes": 5014736,
+      "hash": "fc5ccf8c57eeb43a5e4a"
+    },
+    {
+      "path": "assets/bonus/summit.glb",
+      "bytes": 6253924,
+      "hash": "f310644254c0f3c92622"
+    },
+    {
+      "path": "assets/cars/barracuda.png",
+      "bytes": 12750,
+      "hash": "720d63e77f6f7159ac2c"
+    },
+    {
+      "path": "assets/cars/blue.png",
+      "bytes": 4920,
+      "hash": "9637b45d35cf4fbef380"
+    },
+    {
+      "path": "assets/cars/bmw.png",
+      "bytes": 15628,
+      "hash": "e2c5b98b27b26feb7473"
+    },
+    {
+      "path": "assets/cars/fujiwara.png",
+      "bytes": 8168,
+      "hash": "001fe08737743072746f"
+    },
+    {
+      "path": "assets/cars/gray.png",
+      "bytes": 1892,
+      "hash": "653abcc744a22e800d06"
+    },
+    {
+      "path": "assets/cars/mustang.png",
+      "bytes": 13750,
+      "hash": "0a27f05727af66d428ad"
+    },
+    {
+      "path": "assets/cars/red.png",
+      "bytes": 534724,
+      "hash": "8145cf3d91207caea270"
+    },
+    {
+      "path": "assets/cars/shelby.png",
+      "bytes": 20218,
+      "hash": "96a893fc2d92d817d8ae"
+    },
+    {
+      "path": "assets/cars/subaru.png",
+      "bytes": 20014,
+      "hash": "3d29e05d87af34441154"
+    },
+    {
+      "path": "assets/cars/yellow.png",
+      "bytes": 22031,
+      "hash": "5d261106808c3dc02830"
+    },
+    {
+      "path": "assets/cars/yugo.png",
+      "bytes": 2904,
+      "hash": "d79631dd1e85b64ae5e2"
+    },
+    {
+      "path": "assets/models/ae86-fujiwara.glb",
+      "bytes": 145452,
+      "hash": "5d69cbf00e8d3dbddd6e"
+    },
+    {
+      "path": "assets/models/bmw-m3-gtr.glb",
+      "bytes": 4844128,
+      "hash": "49973dbce3c361ef4726"
+    },
+    {
+      "path": "assets/models/chevrolet-nova-ss.glb",
+      "bytes": 769756,
+      "hash": "dccdef2252e83b015232"
+    },
+    {
+      "path": "assets/models/mustang-gt-fastback.glb",
+      "bytes": 1429400,
+      "hash": "bb95b60cff229564c266"
+    },
+    {
+      "path": "assets/models/nissan-skyline-r34.glb",
+      "bytes": 2544396,
+      "hash": "f0fc8318615e1e56174a"
+    },
+    {
+      "path": "assets/models/plymouth-barracuda.glb",
+      "bytes": 1293680,
+      "hash": "071a9caafa7008972c47"
+    },
+    {
+      "path": "assets/models/rx7-fd-redsuns.glb",
+      "bytes": 161960,
+      "hash": "cf6e4a9ba6d67cc8a01a"
+    },
+    {
+      "path": "assets/models/shelby-gt500.glb",
+      "bytes": 1359300,
+      "hash": "711d3f62082fa7c4a874"
+    },
+    {
+      "path": "assets/models/subaru-impreza-s206.glb",
+      "bytes": 2508144,
+      "hash": "382fcb425a11f287199b"
+    },
+    {
+      "path": "assets/models/yugo-koral-55-pixel.glb",
+      "bytes": 84904,
+      "hash": "52eefdcee15153a44518"
+    },
+    {
+      "path": "assets/models/yugo-pixel-atlas.png",
+      "bytes": 6331,
+      "hash": "3eafce131fcc21bfe11b"
+    },
+    {
+      "path": "assets/scenery/pine-bark.jpg",
+      "bytes": 291098,
+      "hash": "a06a69794029479f13ae"
+    },
+    {
+      "path": "assets/scenery/pine-leaves.png",
+      "bytes": 515443,
+      "hash": "ec6e445d8e2c4b1c775b"
+    },
+    {
+      "path": "assets/scenery/tree-bark.png",
+      "bytes": 775222,
+      "hash": "2c25840ef6ab3f9661ec"
+    },
+    {
+      "path": "assets/scenery/tree-leaves.png",
+      "bytes": 585845,
+      "hash": "9823464d5710a548b2e2"
+    },
+    {
+      "path": "music/001.mp3",
+      "bytes": 5055924,
+      "hash": "5ce5fd89d0c51ebe03fb"
+    },
+    {
+      "path": "music/002.mp3",
+      "bytes": 5510745,
+      "hash": "b2269b601ea2d17478c8"
+    },
+    {
+      "path": "music/003.mp3",
+      "bytes": 5278861,
+      "hash": "b6ef41cfacc634626b9a"
+    },
+    {
+      "path": "music/004.mp3",
+      "bytes": 5108106,
+      "hash": "dc0abac2165add49b637"
+    },
+    {
+      "path": "music/005.mp3",
+      "bytes": 5170421,
+      "hash": "5aa2261d2d8e98219373"
+    },
+    {
+      "path": "music/006.mp3",
+      "bytes": 5756664,
+      "hash": "ccee16721f2dbc46db53"
+    },
+    {
+      "path": "music/007.mp3",
+      "bytes": 4686530,
+      "hash": "d1eed953a7acd36f6fc6"
+    },
+    {
+      "path": "music/008.mp3",
+      "bytes": 4663286,
+      "hash": "b024ae9994c5251f3481"
+    },
+    {
+      "path": "music/009.mp3",
+      "bytes": 4929795,
+      "hash": "07d8a806971aef93863a"
+    },
+    {
+      "path": "music/010.mp3",
+      "bytes": 4992044,
+      "hash": "c3dbfc0406e022304d00"
+    },
+    {
+      "path": "music/011.mp3",
+      "bytes": 5707429,
+      "hash": "e01d3dc07de930530b8d"
+    },
+    {
+      "path": "music/012.mp3",
+      "bytes": 6137945,
+      "hash": "c0f7bf529d2f855d80a9"
+    },
+    {
+      "path": "music/013.mp3",
+      "bytes": 4271411,
+      "hash": "7a91b5ce62a8d90fac31"
+    },
+    {
+      "path": "music/014.mp3",
+      "bytes": 6955298,
+      "hash": "7f7bce301d176260ecc5"
+    },
+    {
+      "path": "music/015.mp3",
+      "bytes": 6167221,
+      "hash": "e8781480b2bc192367f6"
+    },
+    {
+      "path": "music/016.mp3",
+      "bytes": 6368519,
+      "hash": "241ab21803367dbc0b02"
+    },
+    {
+      "path": "music/017.mp3",
+      "bytes": 6529957,
+      "hash": "5dad04567d91bb207f8d"
+    },
+    {
+      "path": "music/018.mp3",
+      "bytes": 6362527,
+      "hash": "21b4e628c2e08a8f88a5"
+    },
+    {
+      "path": "music/019.mp3",
+      "bytes": 5052827,
+      "hash": "a2fa84434740a2d8ca5a"
+    },
+    {
+      "path": "music/020.mp3",
+      "bytes": 5052827,
+      "hash": "a2fa84434740a2d8ca5a"
+    },
+    {
+      "path": "music/021.mp3",
+      "bytes": 6127164,
+      "hash": "aa78af625f91b9ebf9a5"
+    },
+    {
+      "path": "music/022.mp3",
+      "bytes": 4335665,
+      "hash": "ca725956605f0fc46355"
+    },
+    {
+      "path": "music/playlist.json",
+      "bytes": 2289,
+      "hash": "e68a516f85174e872211"
+    }
+  ]
+}

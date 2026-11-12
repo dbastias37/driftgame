@@ -1,7 +1,7 @@
 import * as T from '../vendor/three.module.min.js';
-import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.24';
+import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.25';
 import {updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.24';
-import {roadTreeRevision} from './road-trees.js?v=1.0.0-prealpha.24';
+import {roadTreeRevision} from './road-trees.js?v=1.0.0-prealpha.25';
 
 const material=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.82,...extra});
 function box(parent,m,x,y,z,w,h,d){const mesh=new T.Mesh(new T.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);parent.add(mesh);return mesh;}

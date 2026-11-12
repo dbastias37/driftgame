@@ -7,9 +7,10 @@ import {repairNFSGeometry} from './nfs-mesh-repair.js';
 const templates=new Map();
 export let summitRevision=0;
 function template(asset){
-  if(!templates.has(asset))templates.set(asset,new GLTFLoader().loadAsync(new URL('../assets/bonus/'+asset,import.meta.url).href).catch(error=>{templates.delete(asset);throw error;}));
+  if(!templates.has(asset))templates.set(asset,(globalThis.DriftAssets?globalThis.DriftAssets.response(new URL('../assets/bonus/'+asset,import.meta.url)).then(r=>r.arrayBuffer()).then(buffer=>new GLTFLoader().parseAsync(buffer,'')):new GLTFLoader().loadAsync(new URL('../assets/bonus/'+asset,import.meta.url).href)).catch(error=>{templates.delete(asset);throw error;}));
   return templates.get(asset);
 }
+export const preloadScenery=asset=>template(asset);
 function dispose(root){const gs=new Set(),ms=new Set(),ts=new Set();root.traverse(o=>{if(o.geometry)gs.add(o.geometry);if(o.material){ms.add(o.material);if(o.material.map)ts.add(o.material.map);}});gs.forEach(g=>g.dispose());ms.forEach(m=>m.dispose());ts.forEach(t=>t.dispose());root.clear();}
 
 export function buildSummit(track,world,onReady=()=>{}){

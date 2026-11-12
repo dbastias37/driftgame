@@ -32,7 +32,7 @@ export async function parseReplacement(buffer,skin){
   return {parts,fit,skin};
 }
 export function loadReplacement(skin){
-  if(!pending.has(skin))pending.set(skin,fetch(new URL('../assets/models/'+files[skin],import.meta.url)).then(response=>{
+  if(!pending.has(skin))pending.set(skin,(globalThis.DriftAssets?globalThis.DriftAssets.response(new URL('../assets/models/'+files[skin],import.meta.url)):fetch(new URL('../assets/models/'+files[skin],import.meta.url))).then(response=>{
     if(!response.ok)throw new Error(`${skin}: model download failed (${response.status})`);
     return response.arrayBuffer();
   }).then(buffer=>parseReplacement(buffer,skin)).catch(error=>{pending.delete(skin);throw error;}));

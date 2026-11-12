@@ -49,7 +49,7 @@ export async function parseFujiwara(buffer){
 }
 
 export function loadFujiwara(){
-  if(!pending)pending=fetch(FUJIWARA_URL).then(response=>{
+  if(!pending)pending=(globalThis.DriftAssets?globalThis.DriftAssets.response(FUJIWARA_URL):fetch(FUJIWARA_URL)).then(response=>{
     if(!response.ok)throw new Error(`Fujiwara download failed: ${response.status}`);
     return response.arrayBuffer();
   }).then(parseFujiwara).catch(error=>{pending=null;throw error;});

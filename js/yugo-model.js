@@ -11,7 +11,7 @@ export async function parseYugo(buffer){
   return {parts};
 }
 export function loadYugo(){
-  if(!pending)pending=fetch(YUGO_URL).then(r=>{if(!r.ok)throw new Error(`Yugo download failed: ${r.status}`);return r.arrayBuffer();}).then(parseYugo).catch(e=>{pending=null;throw e;});return pending;
+  if(!pending)pending=(globalThis.DriftAssets?globalThis.DriftAssets.response(YUGO_URL):fetch(YUGO_URL)).then(r=>{if(!r.ok)throw new Error(`Yugo download failed: ${r.status}`);return r.arrayBuffer();}).then(parseYugo).catch(e=>{pending=null;throw e;});return pending;
 }
 export function createYugo(template,ghost=false){
   const root=new T.Group(),body=new T.Group();root.name='Yugo Koral 55';body.name='body-motion';root.add(body);const wheels=[];

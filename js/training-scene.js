@@ -1,5 +1,5 @@
 import * as T from '../vendor/three.module.min.js';
-import {addRoadTrees} from './road-trees.js?v=1.0.0-prealpha.24';
+import {addRoadTrees} from './road-trees.js?v=1.0.0-prealpha.25';
 import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.24';
 import {buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.24';
 

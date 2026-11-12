@@ -1,3 +1,12 @@
+## 1.0.0-prealpha.25 — Precarga real e inicio con música
+
+- Pantalla negra desde el inicio, título DR1FT y barra con el naranja del «1».
+- Descarga completa de 53 recursos (166 MiB): diez autos, cuatro escenarios importados, texturas, miniaturas y las 22 canciones. Los trazados y módulos se inicializan antes de habilitar Jugar.
+- Progreso por bytes recibidos y preparación real de modelos; caché por contenido, concurrencia limitada y reintento sin perder descargas completas.
+- Al llegar al 100%, la barra se desvanece y aparece JUGAR sin contenedor. Clic o Enter activa la música, funde el título a negro y revela el menú.
+- La exhibición y los controles permanecen detenidos durante la precarga. Los modelos y texturas preparados se reutilizan en carrera y garaje.
+- Tras cambiar modelos, imágenes o música, ejecutar `npm run assets:manifest`. `npm run test:core` comprueba que el catálogo esté actualizado.
+
 ## 1.0.0-prealpha.24 — Cuatro autos y selección directa
 
 - Subaru S206 NBR, BMW M3 GTR, Shelby GT500 2013 y Mustang GT Fastback con modelos originales, ruedas, luces, pintura y perfiles propios.

@@ -317,9 +317,14 @@ $('#btnRecover').addEventListener('click',loseLifeAndRespawn);
 
 
 safeAddListener('btnSummit','click',()=>{mode='race';showCircuitMenu();setCircuitCategory('nfs');previewTouring(201);const group=$('#nfsSpecialGroup')?.parentElement;if(group)group.open=true;$('#circuitList').scrollTop=0;});
-import('./view3d.js?v=1.0.0-prealpha.24').then(async({DriftView3D})=>{
+async function prepareBootRenderer(){
+  const [{DriftView3D},module]=await Promise.all([import('./view3d.js?v=1.0.0-prealpha.25'),import('./menu-preview.js?v=1.0.0-prealpha.25')]);
   await document.fonts?.load('32px DriftDisplay');
-  sceneView=new DriftView3D($('#scene3d'),{quality:renderPrefs.quality,onFailure:fail3D,onVehicleFailure:()=>toast('No se pudo cargar un modelo de auto. Recarga para volver a intentarlo.')});
-  if(sceneView.software)toast('3D compatible activo · Calidad ligera');
-}).catch(fail3D);
-import('./menu-preview.js?v=1.0.0-prealpha.24').then(async module=>{await document.fonts?.load('32px DriftDisplay');MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});
+  MenuPreviewClass=module.MenuPreview3D;
+  if(!sceneView)sceneView=new DriftView3D($('#scene3d'),{quality:renderPrefs.quality,onFailure:fail3D,onVehicleFailure:()=>toast('No se pudo cargar un modelo de auto. Recarga para volver a intentarlo.')});
+  await Promise.all([sceneView.assetReady,sceneView.yugoReady,sceneView.fujiwaraReady,sceneView.novaReady,sceneView.skylineReady,sceneView.barracudaReady]);
+}
+if(globalThis.DriftBoot){
+  DriftBoot.register('renderer',prepareBootRenderer);
+  DriftBoot.onEnter=()=>{showMainMenu();};
+}else prepareBootRenderer().catch(fail3D);
