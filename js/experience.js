@@ -149,6 +149,9 @@ function showCircuitMenu(){
     const c=CircuitLayouts.info(i+1);
     return `<div class="challenge-item"><span class="circuit-num">${String(i+1).padStart(2,'0')}</span><canvas class="track-thumb" data-track="${i+1}" aria-label="${c.name}"></canvas><button data-circuit="${i+1}" aria-label="Ver circuito ${i+1}: ${c.name}">${c.name}</button></div>`;
   }).join('');
+  root.innerHTML=root.innerHTML.replace(/<h3 class="road-climate-heading"([^>]*)>(.*?)<\/h3>/g,(_,attrs,title)=>`</details><details class="track-group"><summary${attrs}>${title}</summary>`).replace('</details>','')+'</details>';
+  const selected=preparedTrack?.touringId||1;
+  root.querySelectorAll('.track-group').forEach(group=>{group.open=!!group.querySelector(`[data-touring="${selected}"]`);});
   drawTrackThumbnails(root);root.querySelectorAll('[data-circuit]').forEach(btn=>btn.addEventListener('click',()=>previewCircuit(Number(btn.dataset.circuit),false)));
   root.querySelectorAll('[data-touring]').forEach(btn=>btn.addEventListener('click',()=>previewTouring(Number(btn.dataset.touring))));
   root.querySelectorAll('[data-touring-map]').forEach(canvas=>{const t=DriftTouring.createTrack(Track,Number(canvas.dataset.touringMap)),ctx=canvas.getContext('2d'),b=t.bounds;canvas.width=128;canvas.height=108;const scale=Math.min(112/b.w,92/b.h);ctx.strokeStyle='#ffb16c';ctx.lineWidth=2;ctx.beginPath();t.points.forEach((p,i)=>{const x=64+(p.x-b.minX-b.w/2)*scale,y=54+(p.y-b.minY-b.h/2)*scale;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.closePath();ctx.stroke();});
@@ -296,10 +299,10 @@ $('#btnRecover').addEventListener('click',loseLifeAndRespawn);
 
 
 
-safeAddListener('btnSummit','click',()=>{mode='race';showCircuitMenu();previewTouring(201);$('#circuitList').scrollTop=0;});
-import('./view3d.js?v=1.0.0-prealpha.21').then(async({DriftView3D})=>{
+safeAddListener('btnSummit','click',()=>{mode='race';showCircuitMenu();previewTouring(201);const group=$('#nfsSpecialGroup')?.parentElement;if(group)group.open=true;$('#circuitList').scrollTop=0;});
+import('./view3d.js?v=1.0.0-prealpha.22').then(async({DriftView3D})=>{
   await document.fonts?.load('32px DriftDisplay');
   sceneView=new DriftView3D($('#scene3d'),{quality:renderPrefs.quality,onFailure:fail3D,onVehicleFailure:()=>toast('No se pudo cargar un modelo de auto. Recarga para volver a intentarlo.')});
   if(sceneView.software)toast('3D compatible activo · Calidad ligera');
 }).catch(fail3D);
-import('./menu-preview.js?v=1.0.0-prealpha.21').then(async module=>{await document.fonts?.load('32px DriftDisplay');MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});
+import('./menu-preview.js?v=1.0.0-prealpha.22').then(async module=>{await document.fonts?.load('32px DriftDisplay');MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});

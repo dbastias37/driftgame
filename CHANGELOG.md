@@ -1,3 +1,11 @@
+## 1.0.0-prealpha.22 — NFS surfaces and collision repair
+
+- Solid guardrails and rocks use the imported mesh, with height-aware swept contacts, rebound and wall sliding.
+- Removed floor-boundary walls and shortcut-wide tunnel ceilings; preserved wheel/chassis attachment.
+- Repaired atlas transparency, duplicate faces and small scenery seams.
+- Corrected NFS grid-shot elevation and Redrock rival line; grouped Quick Race tracks into expandable menus.
+- Added regression coverage for contacts, jumps, wheel travel and opening cameras.
+
 ## 1.0.0-prealpha.21 — NFS III Especial
 
 Summit, Rocky Pass y Redrock Ridge agrupados en el menú y el selector 3D, con sus modelos y texturas, piso lateral transitable, carreras de cuatro/cinco vueltas y récords independientes. Saltos con velocidad vertical, gravedad, ruedas junto al chasis y aterrizaje; repeticiones y fantasmas conservan el vuelo. Los niveles del puente de Redrock Ridge permanecen separados también al reaparecer.

@@ -74,3 +74,9 @@
 .touring-laps span{flex-basis:100%;color:#ffbc7d;font-size:12px}
 
 .road-climate-heading{grid-column:1/-1;margin:18px 0 6px;padding:8px 4px;border-bottom:1px solid #ffffff30;font-size:14px;letter-spacing:.04em}
+
+/* Native disclosure groups in Quick Race and Time Trial. */
+.track-group{border-bottom:1px solid #34414a;margin-bottom:8px;}
+.track-group>summary{cursor:pointer;padding:14px 10px;color:#f4c49c;font-size:15px;min-height:44px;box-sizing:border-box;}
+.track-group>summary:focus-visible{outline:2px solid #ff9b45;outline-offset:-2px;}
+.track-group[open]>summary{background:#1c2831;}

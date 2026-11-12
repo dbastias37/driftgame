@@ -93,11 +93,15 @@ globalThis.DriftRoadContact ||= (()=>{
   }
   function contacts(track,pose,skin){
     const ground=terrain(track),c=Math.cos(pose.angle),s=Math.sin(pose.angle);
-    const wheels=wheelOffsets(skin).map(p=>({...p,height:ground.height(pose.pos.x+c*p.x-s*p.z,pose.pos.y+s*p.x+c*p.z,pose.referenceHeight??pose.ride?.groundHeight)}));
+    const wheels=wheelOffsets(skin).map(p=>{
+      const x=pose.pos.x+c*p.x-s*p.z,y=pose.pos.y+s*p.x+c*p.z,reference=pose.referenceHeight??pose.ride?.groundHeight;
+      const support=track.nfs?track.supportHeight(x,y,reference):ground.height(x,y,reference);
+      return {...p,height:support??reference??track.sample(x,y).h,supported:support!==null};
+    });
     const rear=(wheels[0].height+wheels[1].height)/2,front=(wheels[2].height+wheels[3].height)/2;
     const left=(wheels[0].height+wheels[2].height)/2,right=(wheels[1].height+wheels[3].height)/2;
     const length=wheels[2].x-wheels[0].x,width=wheels[1].z-wheels[0].z;
-    return {wheels,height:rear+(front-rear)*(-wheels[0].x/length),roll:Math.atan2(left-right,width),pitch:Math.atan2(front-rear,length)};
+    return {wheels,supportedCount:wheels.filter(w=>w.supported).length,height:rear+(front-rear)*(-wheels[0].x/length),roll:Math.atan2(left-right,width),pitch:Math.atan2(front-rear,length)};
   }
   function reset(track,car,skin,referenceHeight){
     const pose=contacts(track,{pos:car.pos,angle:car.angle,referenceHeight},skin);
@@ -119,16 +123,17 @@ globalThis.DriftRoadContact ||= (()=>{
       const span=2,a=contacts(track,{pos:{x:pose.pos.x-ux*span,y:pose.pos.y-uy*span},angle:pose.angle,referenceHeight:r.groundHeight},skin).height,b=contacts(track,{pos:{x:pose.pos.x+ux*span,y:pose.pos.y+uy*span},angle:pose.angle,referenceHeight:r.groundHeight},skin).height;
       const tangentVy=(b-a)/(2*span)*speed,normalAcceleration=(a+b-2*target.height)/(span*span)*speed*speed;
       r.cooldown=Math.max(0,r.cooldown-h);r.landing=Math.max(0,r.landing-h*3);
-      if(!r.airborne&&speed>5&&Math.hypot(dx,dy)>.001&&!r.cooldown&&normalAcceleration<-10.2){
+      if(!r.airborne&&speed>5&&Math.hypot(dx,dy)>.001&&!r.cooldown&&(normalAcceleration<-10.2||target.supportedCount===0)){
         r.airborne=true;r.airTime=0;r.flightVy=r.groundVy;r.height=r.groundHeight;
       }
       if(r.airborne){
         r.height+=r.flightVy*h-.5*9.81*h*h;r.flightVy-=9.81*h;r.airTime+=h;
         // Free attitude retains the launch pitch, with gentle aerodynamic damping.
         r.vp*=Math.exp(-h*3);r.vr*=Math.exp(-h*3);r.pitch+=r.vp*h;r.roll+=r.vr*h;
-        const floor=Math.max(...target.wheels.map(w=>w.height-w.x*Math.tan(r.pitch)+w.z*Math.tan(r.roll)));
+        const floor=Math.max(...target.wheels.filter(w=>w.supported!==false).map(w=>w.height-w.x*Math.tan(r.pitch)+w.z*Math.tan(r.roll)));
         const feature=track.featureAt?.(track.sample(pose.pos.x,pose.pos.y,r.groundHeight).s,'tunnel');
-        if(feature?.clearance){const roof=target.height+feature.clearance-(car.bodyDimensions?.height||1.4);if(r.height>roof){r.height=roof;r.flightVy=Math.min(0,r.flightVy);}}
+        const roof=(track.ceilingHeight?track.ceilingHeight(pose.pos.x,pose.pos.y,r.groundHeight):feature?.clearance?target.height+feature.clearance:Infinity)-(car.bodyDimensions?.height||1.4);
+        if(r.height>roof){r.height=roof;r.flightVy=Math.min(0,r.flightVy);}
         if(r.height<=floor+.005&&r.flightVy<=tangentVy){
           r.landing=clamp((tangentVy-r.flightVy)/9,0,1);r.airborne=false;r.cooldown=.14;r.flightVy=0;r.airTime=0;r.height=target.height;
         }else if(r.height<floor)r.height=floor;

@@ -55,6 +55,7 @@ globalThis.DriftRace=(()=>{
       for(const o of neighbours)if(o.gap>0&&o.gap<Math.max(35,speed*1.5)&&Math.abs(o.lane-lateral)<2.8)
         trafficLimit=Math.min(trafficLimit,Math.max(2,o.other.worldSpeed()+(o.gap-Math.max(8,speed*.6))*.65));
     }
+    offset+=track.aiOffsetAt?.(track.point(index+look).s)||0;
     const path=track.point(index+look),ta=track.tangentAt(index+look),target={x:path.x-Math.sin(ta)*offset,y:path.y+Math.cos(ta)*offset};
     if(nearest<12&&speed<7){const forward=clamp(nearest-3,2,5);target.x=car.pos.x+f.x*forward+right.x*(offset-lateral);target.y=car.pos.y+f.y*forward+right.y*(offset-lateral);}
     const distance=Math.hypot(target.x-car.pos.x,target.y-car.pos.y),error=wrap(Math.atan2(target.y-car.pos.y,target.x-car.pos.x)-car.angle),outside=Math.max(0,Math.abs(lateral)-track.roadHalf*.65);
@@ -91,7 +92,7 @@ globalThis.DriftRace=(()=>{
   }
   const INTRO=Object.freeze({roll:4,settle:2,count:3});
   function rev(car,pressure,dt){car.launchHold=true;car.launchThrottle=(car.launchThrottle||0)+clamp((Number(pressure)||0)-(car.launchThrottle||0),-dt*2.5,dt*1.8);}
-  function presentation(cars,elapsed){const progress=clamp(elapsed/INTRO.roll,0,1),remaining=8*(1-progress)**2;return cars.map(car=>({...car,pos:{x:car.pos.x-Math.cos(car.angle)*remaining,y:car.pos.y-Math.sin(car.angle)*remaining},ride:null,wheelTravel:8-remaining,worldSpeed(){return 0;}}));}
+  function presentation(cars,elapsed,track=cars[0]?._effectTrack){const progress=clamp(elapsed/INTRO.roll,0,1),remaining=8*(1-progress)**2;return cars.map(car=>{const pose={...car,pos:{x:car.pos.x-Math.cos(car.angle)*remaining,y:car.pos.y-Math.sin(car.angle)*remaining},wheelTravel:8-remaining,worldSpeed(){return 0;}};pose.ride=track?{...car.ride,...DriftRoadContact.contacts(track,pose,car.skin)}:null;return pose;});}
   class Race{
     constructor(track,player,cars,{collisions=false,laps=5}={}){this.track=track;this.player=player;this.cars=cars;this.collisions=collisions;this.laps=laps;this.clock=0;this.total=track.points.length;this.entries=new Map();[player,...cars].forEach((car,slot)=>{grid(car,track,slot);this.entries.set(car,{index:track.nearestIndex(car.pos.x,car.pos.y,car.ride?.groundHeight),distance:-Math.floor(slot/2)*1.5,gate:1,lap:0,finished:0});});}
     step(dt){
@@ -110,7 +111,7 @@ globalThis.DriftRace=(()=>{
     }
     standings(){return [...this.entries].sort((a,b)=>{const x=a[1],y=b[1];return x.finished||y.finished?(x.finished||Infinity)-(y.finished||Infinity):y.distance-x.distance;}).map(([car,info])=>({car,...info}));}
     place(){return this.standings().findIndex(e=>e.car===this.player)+1;}
-    presentation(elapsed){return presentation([this.player,...this.cars],elapsed);}
+    presentation(elapsed){return presentation([this.player,...this.cars],elapsed,this.track);}
   }
   return {Race,grid,drive,collide,inertia,presentation,INTRO,rev};
 })();

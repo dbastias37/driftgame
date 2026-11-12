@@ -1,6 +1,8 @@
 import * as T from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.21';
+import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.22';
+
+import {repairNFSGeometry} from './nfs-mesh-repair.js';
 
 const templates=new Map();
 export let summitRevision=0;
@@ -31,16 +33,25 @@ export function buildSummit(track,world,onReady=()=>{}){
       o.geometry=o.geometry.clone();const original=o.material;
       if(!materials.has(original)){
         const map=original.map?.clone();if(map){
-          map.colorSpace=T.SRGBColorSpace;map.anisotropy=4;
+          map.colorSpace=T.SRGBColorSpace;
+          // Atlases have no mip padding: mipmaps mix neighbouring road, rock
+          // and transparent tiles. Keep texel boundaries stable at distance.
+          map.generateMipmaps=false;map.minFilter=T.NearestFilter;map.magFilter=T.NearestFilter;map.anisotropy=1;
           // The compatibility renderer samples canvas pixels, while WebGL also
           // accepts ImageBitmap. Decode once for both render paths.
           if(map.image&&!map.image.getContext){const c=document.createElement('canvas');c.width=map.image.width;c.height=map.image.height;c.getContext('2d').drawImage(map.image,0,0);map.source=new T.Source(c);}
+          if(track.nfsSlug==='redrock'){
+            const ctx=map.image.getContext('2d'),pixels=ctx.getImageData(0,0,map.image.width,map.image.height);
+            for(let i=3;i<pixels.data.length;i+=4)pixels.data[i]=pixels.data[i]>0?255:0;
+            ctx.putImageData(pixels,0,0);
+          }
           map.needsUpdate=true;
         }
         materials.set(original,new T.MeshBasicMaterial({map,color:original.color,side:T.DoubleSide,alphaTest:.2,toneMapped:false}));
       }
       o.material=materials.get(original);o.name='summit-original-scenery';
     });
+    world.userData.nfsRepair=repairNFSGeometry(root);
     dispose(fallback);fallback.removeFromParent();world.add(root);
     batchWorld(world,128);world.userData.summitLoad='ready';summitRevision++;onReady();return true;
   }).catch(error=>{if(!token.cancelled){world.userData.summitLoad='error';world.userData.summitError='El paisaje de '+track.layout.name+' no pudo cargar. Reabre la pista para reintentar.';summitRevision++;onReady();console.warn('Summit scenery:',error.message);}return false;});

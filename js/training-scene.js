@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
-import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.21';
-import {buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.21';
+import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.22';
+import {buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.22';
 
 const mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.88,...extra});
 function box(g,m,x,y,z,w,h,d){const o=new T.Mesh(new T.BoxGeometry(w,h,d),m);o.position.set(x,y,z);g.add(o);return o;}

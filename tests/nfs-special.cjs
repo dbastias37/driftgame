@@ -10,7 +10,7 @@ test('NFS III Especial selects all three independent maps, laps and record names
 });
 test('lateral floor remains usable beyond the central asphalt, with no invisible centre-line clamp',()=>{
  const r=harness();const rows=r(`(()=>{return [201,202,203].map(id=>{const t=DriftTouring.createTrack(Track,id),c=configureSelectedCar(new Car(t),CAR_DATA[0]);let checked=0,maxShift=0;for(let s=10;s<t.length;s+=41){const p=t.atDistance(s);for(const side of [-1,1]){const o=side*(t.roadHalf+4),x=p.x+p.nx*o,y=p.y+p.ny*o,a=t.sample(p.x,p.y,p.h).tang;if(!t.footprintFits(x,y,a,c.bodyDimensions))continue;c.pos={x,y};c.angle=a;c.vel={x:0,y:0};DriftTouring.afterStep(t,c);maxShift=Math.max(maxShift,Math.hypot(c.pos.x-x,c.pos.y-y));checked++;}}return {id,checked,maxShift}})})()`);
- for(const row of rows){assert(row.checked>50,JSON.stringify(row));assert.equal(row.maxShift,0);}
+ for(const row of rows){assert(row.checked>50,JSON.stringify(row));assert(row.maxShift<2,'Only local separation from visible walls is allowed: '+JSON.stringify(row));}
 });
 test('Redrock bridge and road below keep their distinct level, route station and wheel support',()=>{
  const r=harness();const rows=r(`(()=>{const t=DriftTouring.createTrack(Track,203);return [685,8665].map(s=>{const p=t.atDistance(s),q=t.sample(p.x,p.y,p.h),c={pos:{x:p.x,y:p.y},angle:q.tang,vel:{x:0,y:0}};DriftRoadContact.reset(t,c,'blue');c.ride.groundHeight=p.h;DriftRoadContact.update(t,c,1/60,'blue');return {s,station:q.s,h:p.h,support:t.surfaceHeight(p.x,p.y,p.h),ride:c.ride.height}})})()`);

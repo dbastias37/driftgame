@@ -10,9 +10,9 @@ test('Summit tyre contact matches the rendered triangle planes across both lanes
   const r=harness();const result=r(`(()=>{const t=DriftTouring.createTrack(Track,201);let maxError=0,n=0;for(const tri of DriftNFS.triangles(201)){const x=(tri[0]+tri[3]+tri[6])/3,y=(tri[1]+tri[4]+tri[7])/3,h=(tri[2]+tri[5]+tri[8])/3,q=t.sample(x,y);if(q.distance<t.widthAt(q.s)-.25&&Math.abs(h-q.h)<.08){maxError=Math.max(maxError,Math.abs(t.surfaceHeight(x,y)-h));n++;}}return {maxError,n}})()`);
   assert(result.n>4000);assert(result.maxError<.03,JSON.stringify(result));
 });
-test('Summit floor boundaries and tunnel cameras remain inside the supplied geometry',()=>{
-  const r=harness();const result=r(`(()=>{const t=DriftTouring.createTrack(Track,201),car=new Car(t);let maxSide=0,maxRoof=0;for(let s=10;s<t.length;s+=83){const p=t.atDistance(s);car.pos={x:p.x+p.nx*20,y:p.y+p.ny*20};car.angle=t.tangentAt(p.i);car.vel={x:p.nx*10,y:p.ny*10};DriftTouring.afterStep(t,car);const q=t.sample(car.pos.x,car.pos.y);maxSide=Math.max(maxSide,t.footprintFits(car.pos.x,car.pos.y,car.angle,car.bodyDimensions)?0:1);}for(const f of t.features){const p=t.atDistance((f.start+f.end)/2),position={x:p.x,y:p.h+30,z:p.y};DriftTouring.constrainCamera(t,car,position,null);maxRoof=Math.max(maxRoof,position.y-p.h-f.clearance);}return {maxSide,maxRoof}})()`);
-  assert(result.maxSide<=.05);assert(result.maxRoof<=0);
+test('Summit tunnel cameras use the actual local ceiling',()=>{
+ const r=harness();const rows=r(`(()=>{const t=DriftTouring.createTrack(Track,201);return t.features.map(f=>{const p=t.atDistance((f.start+f.end)/2),car={pos:{x:p.x,y:p.y},ride:{height:p.h}},position={x:p.x,y:p.h+30,z:p.y};DriftTouring.constrainCamera(t,car,position,null);return {eye:position.y,ground:p.h,roof:t.ceilingHeight(p.x,p.y,p.h)};})})()`);
+ for(const row of rows){assert(row.eye>row.ground);assert(row.eye<row.roof);}
 });
 
 test('all five bodies stay with their wheels at negative elevations, on the grid and across zero',async()=>{
@@ -38,7 +38,7 @@ test('each stock car can release the brake and start on the steepest Summit asce
 });
 
 test('rolling race intro samples the displayed position without moving the physical grid',()=>{
-  const r=harness();const result=r(`(()=>{const t=DriftTouring.createTrack(Track,201),c=configureSelectedCar(new Car(t),CAR_DATA[0]),p=t.atDistance(3408);c.pos={x:p.x,y:p.y};c.angle=t.sample(p.x,p.y).tang;DriftRoadContact.reset(t,c,c.skin);const before=JSON.stringify(c),samples=[0,1,2,3,4].map(time=>{const shown=DriftRace.presentation([c],time)[0],support=shown.ride||DriftRoadContact.contacts(t,shown,c.skin);return {height:support.height,ground:DriftRoadContact.contacts(t,shown,c.skin).height};});return {samples,unchanged:before===JSON.stringify(c)}})()`);
+  const r=harness();const result=r(`(()=>{const t=DriftTouring.createTrack(Track,201),c=configureSelectedCar(new Car(t),CAR_DATA[0]),p=t.atDistance(3408);c.pos={x:p.x,y:p.y};c.angle=t.sample(p.x,p.y).tang;DriftRoadContact.reset(t,c,c.skin);const before=JSON.stringify(c),samples=[0,1,2,3,4].map(time=>{const shown=DriftRace.presentation([c],time,t)[0],support=shown.ride||DriftRoadContact.contacts(t,shown,c.skin);return {height:support.height,ground:DriftRoadContact.contacts(t,shown,c.skin).height};});return {samples,unchanged:before===JSON.stringify(c)}})()`);
   assert(result.unchanged);assert(result.samples.at(-1).height-result.samples[0].height>2);
   for(const s of result.samples)assert(Math.abs(s.height-s.ground)<.001);
 });

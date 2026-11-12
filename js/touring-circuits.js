@@ -121,6 +121,12 @@ globalThis.DriftTouring ||= (()=>{
     }
   }
   function constrainCamera(track,car,position,target,mounted=false){
+    if(track.nfs){
+      const base=car.ride?.height??track.surfaceHeight(car.pos.x,car.pos.y);
+      const floor=track.cameraFloor(position.x,position.z,base),roof=track.ceilingHeight(position.x,position.z,base);
+      position.y=clamp(position.y,Math.min(floor,base+2)+.2,roof-.35);
+      return Number.isFinite(roof);
+    }
     const q=track.sample(position.x,position.z,car.ride?.groundHeight),feature=track.features.find(f=>f.kind==='tunnel'&&q.s>=f.start-12&&q.s<=f.end+12);
     if(!feature)return false;
     // Preserve yaw, look target, FOV and tracking spring. Only project an unsafe

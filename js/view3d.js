@@ -1,27 +1,27 @@
 import * as T from '../vendor/three.module.min.js';
-import {SoftwareRenderer} from './software-renderer.js?v=1.0.0-prealpha.21';
-import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles,groundGeometry} from './track-surface.js?v=1.0.0-prealpha.21';
-import {buildSummit} from './summit-scene.js?v=1.0.0-prealpha.21';
-import {buildTouring} from './touring-scene.js?v=1.0.0-prealpha.21';
-import {buildMountain} from './mountain-scene.js?v=1.0.0-prealpha.21';
-import {loadRX7,createRX7} from './rx7-model.js?v=1.0.0-prealpha.21';
-import {loadYugo,createYugo} from './yugo-model.js?v=1.0.0-prealpha.21';
-import {loadFujiwara,createFujiwara} from './fujiwara-model.js?v=1.0.0-prealpha.21';
-import {batchWorld,updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.21';
-import {Atmosphere,buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.21';
-import {CinematicDirector} from './cinematic-camera.js?v=1.0.0-prealpha.21';
-import {loadNova,loadSkyline,createReplacement,updateVehicleLights} from './replacement-model.js?v=1.0.0-prealpha.21';
-import {applyVehiclePaint,disposePaint} from './vehicle-paint.js?v=1.0.0-prealpha.21';
-import {cloudTexture,TireSmokeRenderer} from './smoke-renderer.js?v=1.0.0-prealpha.21';
-import {WheelParticleRenderer} from './wheel-particles-renderer.js?v=1.0.0-prealpha.21';
-import {RetroRenderer} from './retro-renderer.js?v=1.0.0-prealpha.21';
-import {WeatherEffects} from './weather.js?v=1.0.0-prealpha.21';
-import {buildTraining} from './training-scene.js?v=1.0.0-prealpha.21';
-import {onboardCameras,onboardShot,startShot} from './driving-cameras.js?v=1.0.0-prealpha.21';
-import {applyRoadFeedback,roadFeedback} from './road-feedback.js?v=1.0.0-prealpha.21';
-import {SceneSpeedLines} from './scene-speed-lines.js?v=1.0.0-prealpha.21';
-import {LampDust} from './lamp-dust.js?v=1.0.0-prealpha.21';
-import {buildTrackProps} from './track-props-scene.js?v=1.0.0-prealpha.21';
+import {SoftwareRenderer} from './software-renderer.js?v=1.0.0-prealpha.22';
+import {trackSurface,surfaceGeometry,raisedCurbGeometry,surfaceTiles,groundGeometry} from './track-surface.js?v=1.0.0-prealpha.22';
+import {buildSummit} from './summit-scene.js?v=1.0.0-prealpha.22';
+import {buildTouring} from './touring-scene.js?v=1.0.0-prealpha.22';
+import {buildMountain} from './mountain-scene.js?v=1.0.0-prealpha.22';
+import {loadRX7,createRX7} from './rx7-model.js?v=1.0.0-prealpha.22';
+import {loadYugo,createYugo} from './yugo-model.js?v=1.0.0-prealpha.22';
+import {loadFujiwara,createFujiwara} from './fujiwara-model.js?v=1.0.0-prealpha.22';
+import {batchWorld,updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.22';
+import {Atmosphere,buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.22';
+import {CinematicDirector} from './cinematic-camera.js?v=1.0.0-prealpha.22';
+import {loadNova,loadSkyline,createReplacement,updateVehicleLights} from './replacement-model.js?v=1.0.0-prealpha.22';
+import {applyVehiclePaint,disposePaint} from './vehicle-paint.js?v=1.0.0-prealpha.22';
+import {cloudTexture,TireSmokeRenderer} from './smoke-renderer.js?v=1.0.0-prealpha.22';
+import {WheelParticleRenderer} from './wheel-particles-renderer.js?v=1.0.0-prealpha.22';
+import {RetroRenderer} from './retro-renderer.js?v=1.0.0-prealpha.22';
+import {WeatherEffects} from './weather.js?v=1.0.0-prealpha.22';
+import {buildTraining} from './training-scene.js?v=1.0.0-prealpha.22';
+import {onboardCameras,onboardShot,startShot} from './driving-cameras.js?v=1.0.0-prealpha.22';
+import {applyRoadFeedback,roadFeedback} from './road-feedback.js?v=1.0.0-prealpha.22';
+import {SceneSpeedLines} from './scene-speed-lines.js?v=1.0.0-prealpha.22';
+import {LampDust} from './lamp-dust.js?v=1.0.0-prealpha.22';
+import {buildTrackProps} from './track-props-scene.js?v=1.0.0-prealpha.22';
 const TAU=Math.PI*2;
 const SKINS={fujiwara:{color:0xe8e8da,roof:1.335,length:4.215},yugo:{color:0xce362b,roof:1.335,length:3.49},blue:{color:0x2955b8,roof:1.35,length:4.6,spoiler:true},yellow:{color:0xe6b52b,roof:.95,length:4.45,spoiler:true},gray:{color:0x16171a,roof:1.36,length:4.81}};
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -217,9 +217,14 @@ export class DriftView3D{
     const cg=pose.bodyDimensions?.cgHeight||.55;
     model.body.position.x=cg*Math.sin(contact.pitch);model.body.position.z=-cg*Math.sin(contact.roll)*Math.cos(contact.pitch);model.body.position.y+=cg*(1-Math.cos(contact.roll)*Math.cos(contact.pitch));
     for(const wheel of model.wheels){
-      wheel.baseY??=wheel.steer.position.y;
-      const support=contact.wheels.find(p=>(p.x>0)===wheel.front&&(p.z>0)===(wheel.steer.position.z>0));
-      wheel.steer.position.y=wheel.baseY+(support?.height||0)-(mountain?contact.height:0);
+      wheel.basePosition??=wheel.steer.position.clone();wheel.baseY??=wheel.basePosition.y;
+      const base=wheel.basePosition,support=contact.wheels.find(p=>(p.x>0)===wheel.front&&(p.z>0)===(base.z>0));
+      // Keep the rigid axle location and bound suspension travel relative to
+      // the chassis, even beside cliffs, during jumps and in old replays.
+      wheel.steer.position.copy(base).applyEuler(model.body.rotation).add(model.body.position);
+      const desiredY=wheel.baseY+(support?.height??contact.height)-(mountain?contact.height:0);
+      wheel.steer.position.y+=contact.airborne?0:clamp(desiredY-wheel.steer.position.y,-.18,.16);
+      wheel.steer.rotation.x=contact.roll;wheel.steer.rotation.z=contact.pitch;
     }
     return contact;
   }
@@ -292,7 +297,7 @@ export class DriftView3D{
       const elevation=falling?descent.y:ride.height;
       if(!onboard&&!cinematic&&startIntro===null){desired.y+=elevation;target.y+=elevation;}
       if(falling&&!cinematic){desired.set(p.x-f.x*16,elevation+10,p.y-f.z*16);target.set(p.x,elevation,p.y);this.car.root.visible=true;}
-      desired.y=Math.max(desired.y,(this.track.cameraFloor||this.track.terrainHeight)(desired.x,desired.z)+(mounted?.18:1.8));
+      desired.y=Math.max(desired.y,(this.track.cameraFloor||this.track.terrainHeight)(desired.x,desired.z,ride.height)+(mounted?.18:1.8));
     }
     if(track.elevated&&!inMenu)DriftTouring.constrainCamera(track,player,desired,target,mounted);
     if(inMenu&&!shot?.mounted){
@@ -302,8 +307,9 @@ export class DriftView3D{
     }
     if(!inMenu&&motion!=='reduced')this.camera.fov+=clamp(impulse,0,1)*1.2;
     if(!this.cameraReady||shot?.cut||shot?.kind==='trackside'||mounted||startIntro!==null||motion==='reduced')this.camera.position.copy(desired);else this.camera.position.lerp(desired,alpha);
-    if(track.downhill||track.elevated)this.camera.position.y=Math.max(this.camera.position.y,(track.cameraFloor||track.terrainHeight)(this.camera.position.x,this.camera.position.z)+(mounted?.18:1.8));
+    if(track.downhill||track.elevated)this.camera.position.y=Math.max(this.camera.position.y,(track.cameraFloor||track.terrainHeight)(this.camera.position.x,this.camera.position.z,ride.height)+(mounted?.18:1.8));
     if(track.elevated&&!inMenu)DriftTouring.constrainCamera(track,player,this.camera.position,null,mounted);
+    if(track.nfs&&!inMenu&&!mounted)track.clipCamera(this.camera.position,new T.Vector3(p.x,ride.height+.7,p.y));
     if(!this.look)this.look=target.clone();if(!this.cameraReady||shot?.cut||mounted||startIntro!==null||motion==='reduced')this.look.copy(target);else this.look.lerp(target,alpha);
     this.camera.lookAt(this.look);
     if(!inMenu&&startIntro===null){const feedback=roadFeedback(player,weatherTime,feedbackSettings);this.feedbackRotation.set(feedback.cameraPitch,feedback.cameraYaw,feedback.cameraRoll);this.camera.quaternion.multiply(this.feedbackQuaternion.setFromEuler(this.feedbackRotation));}

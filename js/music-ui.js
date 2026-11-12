@@ -1,4 +1,4 @@
-import {MusicPlayer,MusicScenes,normalizeTracks} from './music-player.js?v=1.0.0-prealpha.21';
+import {MusicPlayer,MusicScenes,normalizeTracks} from './music-player.js?v=1.0.0-prealpha.22';
 const $=id=>document.getElementById(id),notice=$('musicNotice');let hideTimer,ready=false,dockTimer;
 const dock=$('musicDock'),launcher=$('musicReveal');
 function hideDock(){dock.classList.remove('visible');dock.inert=true;dock.setAttribute('aria-hidden','true');if(dock.contains(document.activeElement))launcher.focus({preventScroll:true});}
