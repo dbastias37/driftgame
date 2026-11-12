@@ -1,7 +1,7 @@
 import * as T from '../vendor/three.module.min.js';
-import {addRoadTrees} from './road-trees.js?v=1.0.0-prealpha.23';
-import {buildMountainTerrain} from './mountain-terrain.js?v=1.0.0-prealpha.23';
-import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.23';
+import {addRoadTrees} from './road-trees.js?v=1.0.0-prealpha.24';
+import {buildMountainTerrain} from './mountain-terrain.js?v=1.0.0-prealpha.24';
+import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.24';
 const mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.88,...extra});
 function mesh(parent,geo,material,x=0,y=0,z=0){const o=new T.Mesh(geo,material);o.position.set(x,y,z);parent.add(o);return o;}
 function box(p,m,x,y,z,w,h,d){return mesh(p,new T.BoxGeometry(w,h,d),m,x,y,z);}

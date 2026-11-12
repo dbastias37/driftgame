@@ -15,8 +15,8 @@ test('old career saves acquire independent Barracuda upgrades without losing cas
  assert.deepEqual(result,{cash:45000,blue:2,barracuda:0,skin:true,online:true});
 });
 
-test('new car selection, workshop and track preparation retain all six cars',()=>{
+test('new car selection, workshop and track preparation retain all ten cars',()=>{
  const run=harness();
  const result=run(`(()=>{previewTouring(301,5);confirmTrackPreview();carIdx=CAR_DATA.findIndex(c=>c.sprite==='barracuda');chosen=CAR_DATA[carIdx];updateGaragePerformance();return {count:CAR_DATA.length,name:previewSelection.track.layout.name,stage:previewSelection.track.layout.stage,laps:previewSelection.track.raceLaps,car:chosen.sprite}})()`);
- assert.equal(result.count,6);assert.equal(result.stage,'GT Racing 2');assert.equal(result.laps,5);assert.equal(result.car,'barracuda');
+ assert.equal(result.count,10);assert.equal(result.stage,'GT Racing 2');assert.equal(result.laps,5);assert.equal(result.car,'barracuda');
 });

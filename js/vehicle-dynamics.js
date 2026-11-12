@@ -4,6 +4,10 @@ globalThis.DriftDynamics=(()=>{
   'use strict';
   const SPEED_SCALE=1.10,G=9.81,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const profiles={
+    subaru:{front:.57,drive:.42,cg:.55,yaw:1.08,steer:.94,roll:.065,pitch:.05,spring:72,damp:11},
+    bmw:{front:.51,drive:0,cg:.49,yaw:1.04,steer:.98,roll:.055,pitch:.045,spring:80,damp:12},
+    shelby:{front:.56,drive:0,cg:.55,yaw:1.36,steer:.78,roll:.085,pitch:.065,spring:49,damp:9.2},
+    mustang:{front:.55,drive:0,cg:.60,yaw:1.30,steer:.77,roll:.105,pitch:.08,spring:44,damp:8.6},
     barracuda:{front:.55,drive:0,cg:.63,yaw:1.38,steer:.74,roll:.105,pitch:.078,spring:46,damp:8.8},
     blue:{front:.55,drive:.25,cg:.55,yaw:1.10,steer:.92,roll:.075,pitch:.055,spring:62,damp:10},
     gray:{front:.54,drive:0,cg:.64,yaw:1.32,steer:.72,roll:.11,pitch:.075,spring:44,damp:8.4},

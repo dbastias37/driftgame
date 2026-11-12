@@ -4,6 +4,10 @@ globalThis.DriftEngineAudio = (() => {
   'use strict';
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const profiles=Object.freeze({
+    subaru:{label:'Boxer · turbo',cyl:4,idle:850,redline:7500,base:.78,body:1.12,rasp:.70,turbo:.9},
+    bmw:{label:'M3 GTR · V8',cyl:8,idle:950,redline:8000,base:.71,body:.95,rasp:.85,turbo:0},
+    shelby:{label:'GT500 · V8',cyl:8,idle:750,redline:7000,base:.48,body:1.30,rasp:.62,turbo:.45},
+    mustang:{label:'Fastback · V8',cyl:8,idle:750,redline:6200,base:.51,body:1.28,rasp:.42,turbo:0},
     blue:    {label:'RB26 · I6 turbo',cyl:6,idle:850,redline:8000,base:0.61,body:1.0,rasp:.50,turbo:.8},
     yellow:  {label:'13B · rotary',cyl:6,idle:1000,redline:8500,base:1.10,body:.60,rasp:.95,turbo:.9,rotary:true},
     barracuda:{label:'HEMI · V8',cyl:8,idle:750,redline:6200,base:.49,body:1.25,rasp:.55,turbo:0},

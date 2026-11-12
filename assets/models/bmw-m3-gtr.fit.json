@@ -1,0 +1,48 @@
+{
+  "name": "2001 BMW M3 GTR E46 Strassenversion",
+  "length": 4.49,
+  "width": 1.859962,
+  "height": 1.361162,
+  "wheels": [
+    {
+      "node": "wheel-front-left",
+      "x": 1.432477,
+      "y": 0.350471,
+      "z": -0.7369,
+      "radius": 0.330471
+    },
+    {
+      "node": "wheel-front-right",
+      "x": 1.432477,
+      "y": 0.350471,
+      "z": 0.736899,
+      "radius": 0.330471
+    },
+    {
+      "node": "wheel-rear-left",
+      "x": -1.238691,
+      "y": 0.357761,
+      "z": -0.739376,
+      "radius": 0.337761
+    },
+    {
+      "node": "wheel-rear-right",
+      "x": -1.238691,
+      "y": 0.357761,
+      "z": 0.739376,
+      "radius": 0.337761
+    }
+  ],
+  "headlights": [
+    [
+      1.92,
+      0.61,
+      -0.58
+    ],
+    [
+      1.92,
+      0.61,
+      0.58
+    ]
+  ]
+}

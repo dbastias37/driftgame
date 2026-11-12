@@ -1,0 +1,48 @@
+{
+  "name": "Subaru Impreza WRX STI S206 NBR",
+  "length": 4.58,
+  "width": 2.016587,
+  "height": 1.625772,
+  "wheels": [
+    {
+      "node": "wheel-rear-left",
+      "x": -1.312098,
+      "y": 0.352624,
+      "z": -0.779873,
+      "radius": 0.332624
+    },
+    {
+      "node": "wheel-rear-right",
+      "x": -1.312098,
+      "y": 0.352624,
+      "z": 0.779873,
+      "radius": 0.332624
+    },
+    {
+      "node": "wheel-front-left",
+      "x": 1.293647,
+      "y": 0.352624,
+      "z": -0.779873,
+      "radius": 0.332624
+    },
+    {
+      "node": "wheel-front-right",
+      "x": 1.293647,
+      "y": 0.352624,
+      "z": 0.779873,
+      "radius": 0.332624
+    }
+  ],
+  "headlights": [
+    [
+      2.1,
+      0.66,
+      -0.67
+    ],
+    [
+      2.1,
+      0.66,
+      0.67
+    ]
+  ]
+}

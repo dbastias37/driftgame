@@ -12,8 +12,8 @@ test('changing 2D / 3D is purely visual throughout the same replay',()=>{
 test('view and camera switches preserve every part of the active race immediately',()=>{
   const run=harness();run("startWithTrack(presetTrack(2),'tt');state='running';keys.add('w');for(let i=0;i<120;i++)simulate(SIM_DT);");const before=run(snapshot);run("setRenderView('2d');setRenderView('3d');cycleCamera();cycleCamera();");assert.deepEqual(run(snapshot),before);
 });
-test('six selectable vehicles share the pace multiplier and preserve transmissions',()=>{
-  const run=harness();assert.equal(run('CAR_DATA.length'),6);assert.deepEqual(run('CAR_DATA.slice(0,3).map(c=>c.sprite)'),['blue','yellow','gray']);for(let i=0;i<3;i++){run(`carIdx=${i};chosen=CAR_DATA[carIdx];startWithTrack(presetTrack(1),'race');`);assert.equal(run('player.mass'),run('1200*chosen.tune.mass'));assert.equal(run('player.engineForce'),run('11800*chosen.tune.engine*DriftDynamics.SPEED_SCALE'));}
+test('ten selectable vehicles share the pace multiplier and preserve transmissions',()=>{
+  const run=harness();assert.equal(run('CAR_DATA.length'),10);assert.deepEqual(run('CAR_DATA.slice(0,3).map(c=>c.sprite)'),['blue','yellow','gray']);for(let i=0;i<3;i++){run(`carIdx=${i};chosen=CAR_DATA[carIdx];startWithTrack(presetTrack(1),'race');`);assert.equal(run('player.mass'),run('1200*chosen.tune.mass'));assert.equal(run('player.engineForce'),run('11800*chosen.tune.engine*DriftDynamics.SPEED_SCALE'));}
   run("player.auto=false;shiftManual(1)");assert.equal(run('player.gear'),2);run('shiftManual(-1)');assert.equal(run('player.gear'),1);
 });
 test('all 20 circuits retain valid closed geometry and complete lap gates',()=>{

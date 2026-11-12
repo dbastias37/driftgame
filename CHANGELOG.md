@@ -1,3 +1,11 @@
+## 1.0.0-prealpha.24 — Cuatro autos y selección directa
+
+- Subaru S206 NBR, BMW M3 GTR, Shelby GT500 2013 y Mustang GT Fastback con modelos originales, ruedas, luces, pintura y perfiles propios.
+- Catálogo de diez autos con miniaturas, selección directa y tipo de tracción.
+- Zoom del garaje limitado, cámara dentro de la sala y encuadre adaptable; controles más legibles.
+- Carga de los cuatro modelos bajo demanda y compatibilidad con taller, guardado y online.
+- 273 pruebas aprobadas. [Detalles de implementación y validación](docs/garage-expansion.md).
+
 ## 1.0.0-prealpha.23 — GT Racing 2, Barracuda y menús
 
 - Glen Canyon Dam con superficies originales y colisiones de geometría, en su propia colección.

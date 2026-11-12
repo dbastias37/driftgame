@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.23';
+import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.24';
 
 import {repairNFSGeometry} from './nfs-mesh-repair.js';
 

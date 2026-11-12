@@ -1,7 +1,7 @@
 import * as T from '../vendor/three.module.min.js';
-import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.23';
-import {updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.23';
-import {roadTreeRevision} from './road-trees.js?v=1.0.0-prealpha.23';
+import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.24';
+import {updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.24';
+import {roadTreeRevision} from './road-trees.js?v=1.0.0-prealpha.24';
 
 const material=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.82,...extra});
 function box(parent,m,x,y,z,w,h,d){const mesh=new T.Mesh(new T.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);parent.add(mesh);return mesh;}
@@ -47,11 +47,12 @@ export class MenuPreview3D extends DriftView3D{
     this.car.root.removeFromParent();this.ghostCar.root.removeFromParent();super.setSkin(key,force);
   }
   rotateBy(amount){if(this.previewMode==='garage')this.garageAngle+=amount;else this.droneAngle+=amount;}
-  panBy(dx,dy){const scale=(this.previewRadius||100)*this.previewZoom*2/Math.max(100,this.canvas.clientHeight);this.previewPan.x+=(-Math.sin(this.droneAngle)*dx+Math.cos(this.droneAngle)*dy)*scale;this.previewPan.z+=(Math.cos(this.droneAngle)*dx+Math.sin(this.droneAngle)*dy)*scale;}
+  panBy(dx,dy){if(this.previewMode==='garage')return;const scale=(this.previewRadius||100)*this.previewZoom*2/Math.max(100,this.canvas.clientHeight);this.previewPan.x+=(-Math.sin(this.droneAngle)*dx+Math.cos(this.droneAngle)*dy)*scale;this.previewPan.z+=(Math.cos(this.droneAngle)*dx+Math.sin(this.droneAngle)*dy)*scale;}
   orbitBy(dx,dy=0){this.droneAngle+=dx;this.previewPitch=Math.max(.2,Math.min(1.5,this.previewPitch+dy));}
-  zoomPreviewBy(factor){this.previewZoom=Math.max(.3,Math.min(3,this.previewZoom*factor));}
-  resetPreview(){this.previewPan.set(0,0,0);this.previewZoom=this.previewMode==='garage'?1:.82;this.previewPitch=.98;this.previewRevision=null;}
+  zoomPreviewBy(factor){if(!Number.isFinite(factor)||factor<=0)return;const garage=this.previewMode==='garage';this.previewZoom=Math.max(garage?.85:.3,Math.min(garage?1.18:3,this.previewZoom*factor));}
+  resetPreview(){if(this.previewMode==='garage')this.garageAngle=-.35;this.previewPan.set(0,0,0);this.previewZoom=this.previewMode==='garage'?1:.82;this.previewPitch=.98;this.previewRevision=null;}
   renderPreview({kind,track,skin='blue',dt=0,spinning=true,timeOfDay=0,cosmetics={},weather='clear',retro,player,time=0,camera='chase',vibration={},motion='full',speedLines={}}){
+    if(this.previewMode!==kind){this.previewMode=kind;this.resetPreview();}
     this.setTimeOfDay(timeOfDay,weather);this.setRetro(retro);
     if(kind==='settings'&&player){this.previewMode=kind;this.scene.add(this.car.root);this.smoke.visible=this.trails.visible=true;super.render({track,player:{...player,worldSpeed:()=>player.worldSpeed(),skin,cosmetics,ride:null,bodyDimensions:null},skin,dt,time,timeOfDay,weather,retro,camera,vibration,motion,speedLines});return;}
 
@@ -66,8 +67,10 @@ export class MenuPreview3D extends DriftView3D{
       if(spinning)this.garageAngle+=Math.min(dt,.1)*.24;
       this.garage.platform.rotation.y=this.garageAngle;
       this.car.root.visible=true;this.car.root.position.set(0,.28,0);this.car.root.rotation.set(0,0,0);this.car.body.position.set(0,0,0);this.car.body.rotation.set(0,0,0);
-      this.camera.fov=45;this.camera.far=100;
-      const fit=Math.max(1,1.25/this.camera.aspect);this.camera.position.set(7.1*fit*this.previewZoom,Math.min(4.7,3.7*fit),7.8*fit*this.previewZoom);this.camera.lookAt(0,.8,0);this.camera.updateProjectionMatrix();
+      this.camera.far=100;
+      // Widen the lens for portrait screens instead of backing through the walls.
+      this.camera.fov=2*Math.atan(Math.tan(54*Math.PI/360)/Math.min(1,this.camera.aspect))*180/Math.PI;
+      this.camera.position.set(5.6*this.previewZoom,3.4,6.2*this.previewZoom);this.camera.lookAt(0,.98,0);this.camera.updateProjectionMatrix();
       this.atmosphere.tintCar(this.car,true);this.retro.render(this.garage.scene,this.camera,width,height);
     }else if(track){
       if(this.track!==track){this.build(track);this.resetPreview();}

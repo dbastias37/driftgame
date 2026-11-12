@@ -1,8 +1,8 @@
 import * as T from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import './vehicle-fit.js?v=1.0.0-prealpha.23';
+import './vehicle-fit.js?v=1.0.0-prealpha.24';
 
-const files={gray:'chevrolet-nova-ss.glb',blue:'nissan-skyline-r34.glb',barracuda:'plymouth-barracuda.glb'},pending=new Map();
+const files={gray:'chevrolet-nova-ss.glb',blue:'nissan-skyline-r34.glb',barracuda:'plymouth-barracuda.glb',subaru:'subaru-impreza-s206.glb',bmw:'bmw-m3-gtr.glb',shelby:'shelby-gt500.glb',mustang:'mustang-gt-fastback.glb'},pending=new Map();
 export async function parseReplacement(buffer,skin){
   const fit=globalThis.DriftVehicleFit[skin];
   if(!fit)throw new Error(`Unknown replacement car: ${skin}`);

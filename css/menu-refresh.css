@@ -33,3 +33,49 @@ body.in-game #musicReveal{background:#101821b3}
  .circuit-categories button{font-size:13px;min-height:32px;padding:5px 9px}
  #garageWallet,#workshopWallet{font-size:20px;padding:8px 10px}
 }
+
+/* Direct selection keeps the complete garage within one horizontal catalog. */
+.car-catalog{display:flex;gap:8px;flex:none;overflow-x:auto;overflow-y:hidden;padding:10px 14px 12px;background:#0a1115;border-top:1px solid #fff2;scroll-snap-type:x proximity;scrollbar-color:#ff9b45 #18252d;scrollbar-width:thin}
+.car-choice{position:relative;display:grid;grid-template-rows:50px 34px 16px;align-items:center;justify-items:center;flex:0 0 154px;padding:8px;color:#c7d1d8;background:#16212a;border:1px solid #35454f;border-radius:0;scroll-snap-align:center;text-align:center;cursor:pointer}
+.car-choice img{width:72px;height:96px;object-fit:contain;transform:rotate(-90deg);pointer-events:none}
+.car-choice span{font:600 12px/1.25 var(--display);max-width:100%;align-self:center}
+.car-choice small{font:9px/1.2 monospace;letter-spacing:1px;color:#96abb8}
+.car-choice[aria-pressed=true]{border:2px solid var(--orange);padding:7px;background:#38291f;color:#fff}
+.car-choice[aria-pressed=true] small{color:var(--orange)}
+.car-choice:focus-visible{outline:2px solid white;outline-offset:-5px}
+#carPanel .preview-controls{gap:8px;flex-wrap:wrap;padding:8px 14px}
+#carPanel .preview-controls button{min-height:36px;min-width:36px}
+#carPanel .preview-controls small{display:none}
+#carPanel .garage-zoom{border:1px solid #ffffff40;font-size:22px;padding:0 6px}
+#carPanel #garageStage #carPreview{touch-action:none}
+#carPanel .garage-details #carName{font-size:clamp(20px,2.2vw,29px)}
+@media(max-width:650px) and (min-height:501px){
+ #carPanel .garage-showcase{height:calc(34dvh + 190px);min-height:390px}
+ #carPanel .preview-controls{gap:6px;padding:6px 10px}
+ #carPanel .preview-controls .text-button{font-size:11px}
+ .car-catalog{padding:8px 10px 10px;gap:6px}
+ .car-choice{flex-basis:132px;grid-template-rows:40px 32px 14px;padding:7px}
+ .car-choice[aria-pressed=true]{padding:6px}
+ .car-choice img{width:58px;height:80px}
+ .car-choice span{font-size:11px}
+ #carPanel.workshop-open .garage-showcase{height:380px}
+}
+@media(max-height:520px){
+ #carPanel .car-catalog{padding:5px 8px;gap:5px}
+ #carPanel .car-choice{flex-basis:132px;grid-template-rows:27px 28px;padding:5px}
+ #carPanel .car-choice[aria-pressed=true]{padding:4px}
+ #carPanel .car-choice img{width:40px;height:66px}
+ #carPanel .car-choice small{display:none}
+ #carPanel .car-choice span{font-size:10px}
+ #carPanel .preview-controls{padding:4px 8px;gap:5px;min-height:36px}
+ #carPanel .preview-controls button{min-height:30px;min-width:30px;font-size:11px}
+ #carPanel .preview-controls .garage-zoom{font-size:20px}
+}
+
+#carPanel .car-choice span{font-family:system-ui,sans-serif;text-transform:none;letter-spacing:0}
+#carPanel .preview-controls button,#carPanel #carCounter{font-family:system-ui,sans-serif;font-size:13px;letter-spacing:0}
+#carPanel .preview-controls .arrow{font-size:25px}#carPanel .preview-controls .garage-zoom{font-size:22px}
+#carPanel .garage-stats,#carPanel .garage-paint,#carPanel .tx-select,#carPanel .series-specs-label,#carPanel .garage-destination{font-family:system-ui,sans-serif}
+#carPanel .garage-stats{font-size:13px}#carPanel .series-specs-label{font-size:10px;line-height:1.5}
+/* Small controls need a readable face; the display font remains on headings. */
+#carPanel .car-choice span,#carPanel .car-choice small,#carPanel .preview-controls button,#carPanel #carCounter,#carPanel .garage-stats *,#carPanel .garage-paint *,#carPanel .tx-select *,#carPanel .series-specs-label,#carPanel .garage-destination *{font-family:Arial,Helvetica,sans-serif!important;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}

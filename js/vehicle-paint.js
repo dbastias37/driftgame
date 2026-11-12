@@ -1,9 +1,14 @@
 import * as T from '../vendor/three.module.min.js';
+import {subaruPaintMask} from './subaru-paint-mask.js';
+import {fordPaintMask} from './ford-paint-masks.js';
 import {barracudaPaintMask} from './barracuda-paint-mask.js';
 
 // Masks follow the supplied atlases. Wheels, glass, badges, lights and decals
 // retain their source pixels; black paint needs replacement, not multiplication.
 export function paintPixel(skin,name,u,v,r,g,b){
+  if(skin==='shelby'||skin==='mustang')return name===(skin==='shelby'?'exterior.009':'exterior')&&fordPaintMask(skin,u,v)&&Math.min(r,g,b)>45;
+  if(skin==='subaru')return name==='subaru-carpaint'&&subaruPaintMask(u,v)&&Math.min(r,g,b)>45;
+  if(skin==='bmw')return name==='bmw-paint'&&r>60&&r<210&&g>=r+3&&b>=g-2&&b<=g+10&&b-r<22;
   if(skin==='barracuda')return name==='exterior.011'&&barracudaPaintMask(u,v)&&Math.min(r,g,b)>45;
   if(skin==='gray')return name==='Material_Nova'&&u<.512&&v<.395;
   if(skin==='blue')return ['Chassis','Hood','Trunkl','Right Door','Left Door','Front Bumper','Back Bumper','Stock Spoiler'].includes(name)&&b>45&&b>r*1.2&&b>g*1.08;

@@ -66,3 +66,5 @@ function choosePaint(color){
 $('#paintCustom').addEventListener('change',e=>choosePaint(e.target.value));
 
 $('#modelCredits').innerHTML+=`<article><h3>NFS III Especial</h3><p>Summit · Rocky Pass · Redrock Ridge</p><small>Modelos aportados por Diego Bastias A. Summit: amogusstrikesback2 · CC BY 4.0 declarada en el archivo. <a href="assets/SCENERY-CREDITS.md" target="_blank" rel="noopener">Procedencia, atribución y adaptaciones</a>.</small></article>`;
+
+$('#modelCredits').insertAdjacentHTML('beforeend', `<article><h3>Subaru Impreza WRX STI S206 NBR · BMW M3 GTR E46 Straßenversion · Ford Shelby GT500 2013 · Ford Mustang GT Fastback</h3><p>Modelos y texturas de los cuatro archivos aportados por Diego Bastias A.</p><small>Adaptación para DR1FT: escala, ruedas independientes, iluminación, pintura y perfiles de conducción. Autor original no identificado en los archivos recibidos.</small></article>`);

@@ -1,6 +1,6 @@
 /* Shared fixed-step protocol. Inputs only cross the trust boundary; positions never do. */
 globalThis.DriftNet = (() => {
-  const VERSION=6, DT=1/60, SKINS=['blue','yellow','gray','yugo','fujiwara','barracuda'];
+  const VERSION=6, DT=1/60, SKINS=['blue','yellow','gray','yugo','fujiwara','barracuda','subaru','bmw','shelby','mustang'];
   const FIELDS=['angle','steerAngle','steerTarget','steerVel','throttleSm','handbrake','handbrakeMix','gear','shiftTimer','omega','yawRate','redBlink','offTrack','offTimer','edgeShake','wrongWay','score','best','mult','driftTime','comboState','comboFlashTime','comboPoints','comboBreak','trailOn','trailGrace','driftBreakTimer','_lastTrailOn','invuln','braking','reverseRequested','comboResult','comboResultPoints','accelLong','accelLat','frontSlip','rearSlip','driveSlip'];
   function capture(car){return [car.pos.x,car.pos.y,car.vel.x,car.vel.y,...FIELDS.map(k=>car[k])];}
   function restore(car,s){car.pos.x=s[0];car.pos.y=s[1];car.vel.x=s[2];car.vel.y=s[3];FIELDS.forEach((k,i)=>car[k]=s[i+4]);}

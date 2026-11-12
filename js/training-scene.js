@@ -1,7 +1,7 @@
 import * as T from '../vendor/three.module.min.js';
-import {addRoadTrees} from './road-trees.js?v=1.0.0-prealpha.23';
-import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.23';
-import {buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.23';
+import {addRoadTrees} from './road-trees.js?v=1.0.0-prealpha.24';
+import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.24';
+import {buildStreetLights} from './atmosphere.js?v=1.0.0-prealpha.24';
 
 const mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.88,...extra});
 function box(g,m,x,y,z,w,h,d){const o=new T.Mesh(new T.BoxGeometry(w,h,d),m);o.position.set(x,y,z);g.add(o);return o;}

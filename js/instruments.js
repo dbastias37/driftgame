@@ -1,6 +1,6 @@
 /* Presentation-only instruments: RPM follows road speed, current gearing and clutch slip. */
 globalThis.DriftInstruments=(()=>{
-  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),limits={barracuda:6200,gray:6200,yugo:6500,blue:8000,yellow:8500,fujiwara:7600};
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),limits={subaru:7500,bmw:8000,shelby:7000,mustang:6200,barracuda:6200,gray:6200,yugo:6500,blue:8000,yellow:8500,fujiwara:7600};
   function telemetry(car){const speed=car.worldSpeed()*3.6,redline=limits[car.skin]||8000,idle=['gray','barracuda'].includes(car.skin)?750:850,ratio=speed/Math.max(1,car.gearMax?.[car.gear-1]||198),free=idle+(car.throttleSm||0)*(car.handbrake?redline*.32:1400)*Math.max(0,1-speed/15);if(car.launchHold)return {speed,redline,rpm:idle+(redline*.82-idle)*(car.launchThrottle||0)};return {speed,redline,rpm:clamp(Math.max(idle,ratio*redline,free)+(car.driveSlip||0)*450,idle,redline*1.04)};}
   const angle=(v,max)=>Math.PI*(.75+1.5*clamp(v/max,0,1));
   class Cluster{

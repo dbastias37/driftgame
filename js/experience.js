@@ -249,7 +249,7 @@ function renderPreparationPreview(dt,time){
     if(time-previewLastFrame<1/(menuPreview.software?18:60))return true;
     const elapsed=previewLastFrame?Math.min(.1,time-previewLastFrame):dt;previewLastFrame=time;
     menuPreview.renderPreview({...preview,skin:chosen.sprite,dt:elapsed,spinning:previewSpinning,timeOfDay:renderPrefs.timeOfDay,cosmetics:garageCosmetics,retro:renderPrefs.retro,weather:renderPrefs.weather,player:demoFrame.player,time:demoFrame.time,camera:renderPrefs.camera,vibration:{vehicle:renderPrefs.vehicleVibration,camera:renderPrefs.cameraVibration},motion:renderPrefs.motion,speedLines:{mode:renderPrefs.speedLines,intensity:renderPrefs.speedLinesIntensity,amount:Math.max(0,(demoFrame.player.worldSpeed()*3.6-22)/100),time:demoFrame.time}});
-    if(status){const loading=preview.track?.nfs&&preview.kind==='track'&&menuPreview.world.userData.summitLoad!=='ready';status.classList.toggle('hidden',!loading);if(loading)status.textContent=menuPreview.world.userData.summitError||'Cargando '+preview.track.layout.name+'…';}
+    if(status){const vehicle=preview.kind==='garage'?menuPreview.vehicleStatus(chosen.sprite):'ready';const loading=vehicle!=='ready'||preview.track?.nfs&&preview.kind==='track'&&menuPreview.world.userData.summitLoad!=='ready';status.classList.toggle('hidden',!loading);if(loading)status.textContent=vehicle==='error'?'No se pudo cargar el auto. Recarga para reintentar.':vehicle==='loading'?'Cargando '+chosen.name+'…':menuPreview.world.userData.summitError||'Cargando '+preview.track.layout.name+'…';}
   }catch(error){console.warn('Preview unavailable',error);previewFailed=true;}
   return true;
 }
@@ -275,6 +275,7 @@ $('#carPreview').addEventListener('pointermove',e=>{
 for(const event of ['pointerup','pointercancel','lostpointercapture'])$('#carPreview').addEventListener(event,e=>previewPointers.delete(e.pointerId));
 $('#carPreview').addEventListener('wheel',e=>{e.preventDefault();if(menuPreview?.previewMode==='settings')menuPreview.zoomBy(Math.exp(e.deltaY*.001));else menuPreview?.zoomPreviewBy(Math.exp(e.deltaY*.001));previewSpinning=false;},{passive:false});
 $('#carPreview').addEventListener('keydown',e=>{const arrows={ArrowLeft:[-30,0],ArrowRight:[30,0],ArrowUp:[0,-30],ArrowDown:[0,30]};if(arrows[e.key]){e.preventDefault();if(e.shiftKey||menuPreview?.previewMode==='garage')menuPreview?.rotateBy(arrows[e.key][0]*.006);else menuPreview?.panBy(...arrows[e.key]);}else if(['+','=','-','Home'].includes(e.key)){e.preventDefault();if(e.key==='Home')menuPreview?.resetPreview();else menuPreview?.zoomPreviewBy(e.key==='-'?1.15:.87);}else return;previewSpinning=false;});
+document.querySelectorAll('[data-garage-zoom]').forEach(b=>b.addEventListener('click',()=>{menuPreview?.zoomPreviewBy(Number(b.dataset.garageZoom));previewSpinning=false;}));
 document.querySelectorAll('[data-preview-reset]').forEach(b=>b.addEventListener('click',()=>{menuPreview?.resetPreview();previewSpinning=false;}));
 
 function downhillBest(level){try{return JSON.parse(localStorage.getItem('downhill:v2:'+level)||'null')||{score:0,time:0};}catch{return {score:0,time:0};}}
@@ -316,9 +317,9 @@ $('#btnRecover').addEventListener('click',loseLifeAndRespawn);
 
 
 safeAddListener('btnSummit','click',()=>{mode='race';showCircuitMenu();setCircuitCategory('nfs');previewTouring(201);const group=$('#nfsSpecialGroup')?.parentElement;if(group)group.open=true;$('#circuitList').scrollTop=0;});
-import('./view3d.js?v=1.0.0-prealpha.23').then(async({DriftView3D})=>{
+import('./view3d.js?v=1.0.0-prealpha.24').then(async({DriftView3D})=>{
   await document.fonts?.load('32px DriftDisplay');
   sceneView=new DriftView3D($('#scene3d'),{quality:renderPrefs.quality,onFailure:fail3D,onVehicleFailure:()=>toast('No se pudo cargar un modelo de auto. Recarga para volver a intentarlo.')});
   if(sceneView.software)toast('3D compatible activo · Calidad ligera');
 }).catch(fail3D);
-import('./menu-preview.js?v=1.0.0-prealpha.23').then(async module=>{await document.fonts?.load('32px DriftDisplay');MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});
+import('./menu-preview.js?v=1.0.0-prealpha.24').then(async module=>{await document.fonts?.load('32px DriftDisplay');MenuPreviewClass=module.MenuPreview3D;}).catch(error=>{console.warn('Preview unavailable',error);previewFailed=true;});
