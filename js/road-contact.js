@@ -69,23 +69,23 @@ globalThis.DriftRoadContact ||= (()=>{
     }
     return Math.sqrt(best);
   }
-  function surface(track,x,y,wetness=0){
+  function surface(track,x,y,wetness=0,referenceHeight){
     if(!track?.points?.length)return {kind:'asphalt',height:0,wetness,gx:0,gy:0};
     if(track.training)return {kind:'asphalt',height:0,wetness,gx:0,gy:0};
-    const q=(track.downhill||track.elevated)?track.sampleNearby(x,y):null;
+    const q=(track.downhill||track.elevated)?track.sampleNearby(x,y,referenceHeight):null;
     const distance=q?.distance??((track.downhill||track.elevated)?Infinity:flatSurface(track,x,y));
     const edge=distance-(q&&track.widthAt?track.widthAt(q.s):track.roadHalf),outer=track.downhill?1.3:track.elevated?track.cutHalf-track.roadHalf:4;
     const feature=q&&track.featureAt?.(q.s),sheltered=feature?.kind==='tunnel';
     const kind=edge<=curb.start?'asphalt':track.curbs!==false&&edge<=curb.start+curb.width?'curb':edge<=outer?(feature?'concrete':'gravel'):'grass';
     const grade=q?(track.downhill?-q.grade:q.grade):0,bank=q?.bank?Math.tan(q.bank):0,c=Math.cos(q?.tang||0),s=Math.sin(q?.tang||0);
-    return {kind,distance,height:q?track.surfaceHeight(x,y):(track.downhill||track.elevated)?track.terrainHeight(x,y):profile(edge),wetness:sheltered?0:clamp(wetness,0,1),gx:grade*c-bank*s,gy:grade*s+bank*c};
+    return {kind,distance,height:q?track.surfaceHeight(x,y,referenceHeight):(track.downhill||track.elevated)?track.terrainHeight(x,y):profile(edge),wetness:sheltered?0:clamp(wetness,0,1),gx:grade*c-bank*s,gy:grade*s+bank*c};
   }
   function curbWheels(track,pose,skin){
     if(track.curbs===false||!track?.points?.length||pose.descent?.motion==='falling')return 0;
     const c=Math.cos(pose.angle),s=Math.sin(pose.angle),ground=terrain(track);let count=0;
     for(const p of wheelOffsets(skin)){
       const x=pose.pos.x+c*p.x-s*p.z,y=pose.pos.y+s*p.x+c*p.z;
-      const q=(track.downhill||track.elevated)?track.sampleNearby(x,y):null;
+      const q=(track.downhill||track.elevated)?track.sampleNearby(x,y,pose.ride?.groundHeight):null;
       const raised=(track.downhill||track.elevated)?(q?profile(q.distance-track.roadHalf):0):ground.height(x,y);
       if(raised>.005)count++;
     }
@@ -93,25 +93,66 @@ globalThis.DriftRoadContact ||= (()=>{
   }
   function contacts(track,pose,skin){
     const ground=terrain(track),c=Math.cos(pose.angle),s=Math.sin(pose.angle);
-    const wheels=wheelOffsets(skin).map(p=>({...p,height:ground.height(pose.pos.x+c*p.x-s*p.z,pose.pos.y+s*p.x+c*p.z)}));
+    const wheels=wheelOffsets(skin).map(p=>({...p,height:ground.height(pose.pos.x+c*p.x-s*p.z,pose.pos.y+s*p.x+c*p.z,pose.referenceHeight??pose.ride?.groundHeight)}));
     const rear=(wheels[0].height+wheels[1].height)/2,front=(wheels[2].height+wheels[3].height)/2;
     const left=(wheels[0].height+wheels[2].height)/2,right=(wheels[1].height+wheels[3].height)/2;
     const length=wheels[2].x-wheels[0].x,width=wheels[1].z-wheels[0].z;
     return {wheels,height:rear+(front-rear)*(-wheels[0].x/length),roll:Math.atan2(left-right,width),pitch:Math.atan2(front-rear,length)};
   }
-  function reset(track,car,skin){
-    const pose=contacts(track,car,skin);
+  function reset(track,car,skin,referenceHeight){
+    const pose=contacts(track,{pos:car.pos,angle:car.angle,referenceHeight},skin);
     globalThis.DriftWheelParticles?.reset(car);
     globalThis.DriftDynamics?.reset(car);
-    car.ride={...pose,groundHeight:pose.height,vy:0,vr:0,vp:0,lastX:car.pos.x,lastY:car.pos.y,lastAngle:car.angle,skin};
+    car.ride={...pose,groundHeight:pose.height,groundVy:Math.tan(pose.pitch)*((car.vel?.x||0)*Math.cos(car.angle)+(car.vel?.y||0)*Math.sin(car.angle))-Math.tan(pose.roll)*(-(car.vel?.x||0)*Math.sin(car.angle)+(car.vel?.y||0)*Math.cos(car.angle)),flightVy:0,airborne:false,airTime:0,landing:0,cooldown:0,vy:0,vr:0,vp:0,lastX:car.pos.x,lastY:car.pos.y,lastAngle:car.angle,skin};
     return car.ride;
+  }
+  // Contact is unilateral: the road can push a tyre upwards, never pull it
+  // down across a crest. Height and vertical momentum survive loss of support.
+  function mountainUpdate(track,car,dt,skin,r){
+    const dx=car.pos.x-r.lastX,dy=car.pos.y-r.lastY,da=Math.atan2(Math.sin(car.angle-r.lastAngle),Math.cos(car.angle-r.lastAngle));
+    const speed=Math.hypot(car.vel?.x||0,car.vel?.y||0),ux=speed>.1?car.vel.x/speed:Math.cos(car.angle),uy=speed>.1?car.vel.y/speed:Math.sin(car.angle);
+    const count=Math.max(1,Math.ceil(dt*120)),h=dt/count,handling=car.handling||{},stiffness=car.suspensionTune?.stiffness||1;
+    let target;
+    for(let i=1;i<=count;i++){
+      const pose={pos:{x:r.lastX+dx*i/count,y:r.lastY+dy*i/count},angle:r.lastAngle+da*i/count,referenceHeight:r.groundHeight};
+      target=contacts(track,pose,skin);
+      const span=2,a=contacts(track,{pos:{x:pose.pos.x-ux*span,y:pose.pos.y-uy*span},angle:pose.angle,referenceHeight:r.groundHeight},skin).height,b=contacts(track,{pos:{x:pose.pos.x+ux*span,y:pose.pos.y+uy*span},angle:pose.angle,referenceHeight:r.groundHeight},skin).height;
+      const tangentVy=(b-a)/(2*span)*speed,normalAcceleration=(a+b-2*target.height)/(span*span)*speed*speed;
+      r.cooldown=Math.max(0,r.cooldown-h);r.landing=Math.max(0,r.landing-h*3);
+      if(!r.airborne&&speed>5&&Math.hypot(dx,dy)>.001&&!r.cooldown&&normalAcceleration<-10.2){
+        r.airborne=true;r.airTime=0;r.flightVy=r.groundVy;r.height=r.groundHeight;
+      }
+      if(r.airborne){
+        r.height+=r.flightVy*h-.5*9.81*h*h;r.flightVy-=9.81*h;r.airTime+=h;
+        // Free attitude retains the launch pitch, with gentle aerodynamic damping.
+        r.vp*=Math.exp(-h*3);r.vr*=Math.exp(-h*3);r.pitch+=r.vp*h;r.roll+=r.vr*h;
+        const floor=Math.max(...target.wheels.map(w=>w.height-w.x*Math.tan(r.pitch)+w.z*Math.tan(r.roll)));
+        const feature=track.featureAt?.(track.sample(pose.pos.x,pose.pos.y,r.groundHeight).s,'tunnel');
+        if(feature?.clearance){const roof=target.height+feature.clearance-(car.bodyDimensions?.height||1.4);if(r.height>roof){r.height=roof;r.flightVy=Math.min(0,r.flightVy);}}
+        if(r.height<=floor+.005&&r.flightVy<=tangentVy){
+          r.landing=clamp((tangentVy-r.flightVy)/9,0,1);r.airborne=false;r.cooldown=.14;r.flightVy=0;r.airTime=0;r.height=target.height;
+        }else if(r.height<floor)r.height=floor;
+      }
+      if(!r.airborne){
+        r.height=target.height;r.groundVy=tangentVy;
+        const roll=target.roll-clamp((car.accelLat||0)/9.81*(handling.roll||.075)*1.24/stiffness,-.19,.19),pitch=target.pitch+clamp((car.accelLong||0)/9.81*(handling.pitch||.055)*1.24/stiffness,-.14,.14);
+        for(const [axis,velocity,value,k,damping] of [['roll','vr',roll,(handling.spring||62)*.88,(handling.damp||10)*.94],['pitch','vp',pitch,(handling.spring||62)*1.02,(handling.damp||10)*1.03]]){
+          r[velocity]+=(k*stiffness*(value-r[axis])-damping*(car.suspensionTune?.damping||1)*r[velocity])*h;r[axis]+=r[velocity]*h;
+        }
+      }
+      r.groundHeight=target.height;
+    }
+    // All four wheels travel with the chassis in flight; none remain glued to
+    // the surface. Existing pose interpolation and replay store these heights.
+    r.wheels=r.airborne?wheelOffsets(skin).map(w=>({...w,height:r.height+w.x*Math.tan(r.pitch)-w.z*Math.tan(r.roll)})):target.wheels;
+    r.lastX=car.pos.x;r.lastY=car.pos.y;r.lastAngle=car.angle;
   }
   function update(track,car,dt,skin){
     if(!(dt>0))return;
     let r=car.ride;
     const moved=r?Math.hypot(car.pos.x-r.lastX,car.pos.y-r.lastY):Infinity;
     if(!r||r.skin!==skin||moved>20)return reset(track,car,skin);
-    if(track.elevated){const groundHeight=contacts(track,car,skin).height;r.height+=groundHeight-(r.groundHeight??groundHeight);r.groundHeight=groundHeight;}
+    if(track.elevated)return mountainUpdate(track,car,Math.min(dt,.1),skin,r);
     const da=Math.atan2(Math.sin(car.angle-r.lastAngle),Math.cos(car.angle-r.lastAngle));
     // Sweep the tire path so even a fast transverse crossing cannot skip a
     // narrow curb between 60 Hz simulation ticks. Springs run at <= 1/120 s.

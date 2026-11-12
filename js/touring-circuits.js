@@ -11,7 +11,7 @@ globalThis.DriftTouring ||= (()=>{
   const dataBankFactor=d=>d.biome==='highland'?80:38;
   const cache=new Map();
   const definition=n=>definitions[clamp(Math.trunc(n)||1,1,definitions.length)-1];
-  function info(n){if(n===201)return DriftSummit.info();if(n>=101&&n<=105)return {...DriftTouringLegacy.info(n-100),id:n,climate:'clear'};const d=definition(n);return {id:definitions.indexOf(d)+1,name:d.name,length:d.length,relief:d.relief,bank:d.bank,description:d.description,stage:'Carreteras · '+({clear:'Despejado',rain:'Lluvia',fog:'Bruma',snow:'Nieve'}[d.climate]),laps:4,biome:d.biome,climate:d.climate,sectors:d.landmarks,sectorBreaks:d.sectorBreaks};}
+  function info(n){if(n>=201&&n<=203)return DriftNFS.info(n);if(n>=101&&n<=105)return {...DriftTouringLegacy.info(n-100),id:n,climate:'clear'};const d=definition(n);return {id:definitions.indexOf(d)+1,name:d.name,length:d.length,relief:d.relief,bank:d.bank,description:d.description,stage:'Carreteras · '+({clear:'Despejado',rain:'Lluvia',fog:'Bruma',snow:'Nieve'}[d.climate]),laps:4,biome:d.biome,climate:d.climate,sectors:d.landmarks,sectorBreaks:d.sectorBreaks};}
   // Monotone periodic cubic Hermite height: independent authored crests/valleys.
   // Zero derivative at extrema, harmonic derivatives elsewhere; no overshoot.
   function elevation(d,u){
@@ -54,7 +54,7 @@ globalThis.DriftTouring ||= (()=>{
     const result={...meta,points,count,step,features,minRadius:1/Math.max(...curvature.map(Math.abs))};cache.set(meta.id,result);return result;
   }
   function createTrack(Track,n=1){
-    if(n===201)return DriftSummit.createTrack(Track);
+    if(n>=201&&n<=203)return DriftNFS.createTrack(Track,n);
     if(n>=101&&n<=105){const tr=DriftTouringLegacy.createTrack(Track,n-100);Object.assign(tr,{legacyId:n-100,touringId:n,climate:'clear',roadVersion:2,tunnelHalf:22,tunnelWall:10,tunnelRise:12});tr.layout=info(n);return tr;}
     const data=layout(n),points=data.points.map(p=>({...p})),tr=new Track(points),count=points.length;
     Object.assign(tr,{elevated:true,touringId:data.id,roadHalf:12,length:data.length,totalLength:data.length,maxHeight:Math.max(...points.map(p=>p.h)),minHeight:Math.min(...points.map(p=>p.h)),raceLaps:4,features:data.features.map(f=>({...f})),biome:data.biome,climate:data.climate,roadVersion:3,terrainStep:16,cutHalf:15.8,tunnelHalf:22,tunnelWall:10,tunnelRise:12});
@@ -100,16 +100,18 @@ globalThis.DriftTouring ||= (()=>{
   }
   function gravity(q){const slope=Math.tan(q.bank),denom=1+q.grade*q.grade+slope*slope,g=-9.81/denom,c=Math.cos(q.tang),s=Math.sin(q.tang);return {x:g*(q.grade*c-slope*s),y:g*(q.grade*s+slope*c)};}
   function beforeStep(track,car,dt,input){
-    const q=track.sample(car.pos.x,car.pos.y),g=gravity(q);
+    const q=track.sample(car.pos.x,car.pos.y,car.ride?.groundHeight),g=car.ride?.airborne?{x:0,y:0}:gravity(q);
+    if(track.nfs)car._nfsPrevious={x:car.pos.x,y:car.pos.y,angle:car.angle};
     car.gradeLoad=-car.mass*(g.x*Math.cos(car.angle)+g.y*Math.sin(car.angle));
     car.hitTimer=Math.max(0,(car.hitTimer||0)-dt);
-    const hold=!!(input.brake||input.handbrake)&&!input.accel&&car.worldSpeed()<.8;
+    const hold=!car.ride?.airborne&&!!(input.brake||input.handbrake)&&!input.accel&&car.worldSpeed()<.8;
     car._touringHold=hold?{...car.pos}:null;
     if(!hold){car.vel.x+=g.x*dt;car.vel.y+=g.y*dt;}
   }
   function afterStep(track,car){
     if(car._touringHold){Object.assign(car.pos,car._touringHold);car.vel.x=car.vel.y=car.omega=0;}
-    const q=track.sample(car.pos.x,car.pos.y),angle=car.angle-q.tang,dimensions=car.bodyDimensions||{length:4.4,width:1.96};
+    if(track.constrainCar){track.constrainCar(car);return;}
+    const q=track.sample(car.pos.x,car.pos.y,car.ride?.groundHeight),angle=car.angle-q.tang,dimensions=car.bodyDimensions||{length:4.4,width:1.96};
     const extent=Math.abs(Math.cos(angle))*dimensions.width/2+Math.abs(Math.sin(angle))*dimensions.length/2;
     const limit=(track.barrierHalfAt?track.barrierHalfAt(q):track.roadHalf+1.4)-extent;
     if(Math.abs(q.offset)>limit){
@@ -119,14 +121,14 @@ globalThis.DriftTouring ||= (()=>{
     }
   }
   function constrainCamera(track,car,position,target,mounted=false){
-    const q=track.sample(position.x,position.z),feature=track.features.find(f=>f.kind==='tunnel'&&q.s>=f.start-12&&q.s<=f.end+12);
+    const q=track.sample(position.x,position.z,car.ride?.groundHeight),feature=track.features.find(f=>f.kind==='tunnel'&&q.s>=f.start-12&&q.s<=f.end+12);
     if(!feature)return false;
     // Preserve yaw, look target, FOV and tracking spring. Only project an unsafe
     // eye into the enlarged vault. Ordinary chase/onboard poses are unchanged.
-    const half=track.summit?track.widthAt(q.s)+.8:track.tunnelHalf||22,margin=.9,side=clamp(q.offset,-half+margin,half-margin);
+    const half=track.nfs?track.widthAt(q.s)+.8:track.tunnelHalf||22,margin=.9,side=clamp(q.offset,-half+margin,half-margin);
     if(side!==q.offset){position.x=q.cx-Math.sin(q.tang)*side;position.z=q.cy+Math.cos(q.tang)*side;}
     const p=track.atDistance(q.s),road=p.h+Math.tan(p.bank)*side;
-    const ceiling=track.summit?feature.clearance-margin:(track.tunnelWall||10)+(track.tunnelRise||12)*Math.sqrt(Math.max(0,1-(side/half)**2))-margin;
+    const ceiling=track.nfs?feature.clearance-margin:(track.tunnelWall||10)+(track.tunnelRise||12)*Math.sqrt(Math.max(0,1-(side/half)**2))-margin;
     // Begin lowering tall aerial views before the portal, without a hard cut.
     const inside=q.s>=feature.start&&q.s<=feature.end;
     const blend=inside?1:smooth(clamp(Math.min(q.s-feature.start+12,feature.end+12-q.s)/12,0,1));

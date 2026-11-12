@@ -1,12 +1,12 @@
 import * as T from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.20';
+import {batchWorld} from './world-optimization.js?v=1.0.0-prealpha.21';
 
-let templatePromise;
+const templates=new Map();
 export let summitRevision=0;
-function template(){
-  if(!templatePromise)templatePromise=new GLTFLoader().loadAsync(new URL('../assets/bonus/summit.glb',import.meta.url).href).catch(error=>{templatePromise=null;throw error;});
-  return templatePromise;
+function template(asset){
+  if(!templates.has(asset))templates.set(asset,new GLTFLoader().loadAsync(new URL('../assets/bonus/'+asset,import.meta.url).href).catch(error=>{templates.delete(asset);throw error;}));
+  return templates.get(asset);
 }
 function dispose(root){const gs=new Set(),ms=new Set(),ts=new Set();root.traverse(o=>{if(o.geometry)gs.add(o.geometry);if(o.material){ms.add(o.material);if(o.material.map)ts.add(o.material.map);}});gs.forEach(g=>g.dispose());ms.forEach(m=>m.dispose());ts.forEach(t=>t.dispose());root.clear();}
 
@@ -17,13 +17,13 @@ export function buildSummit(track,world,onReady=()=>{}){
   const positions=[],indices=[];
   for(let i=0;i<=track.points.length;i++){
     const s=i*track.length/track.points.length,p=track.atDistance(s);
-    for(const offset of [-p.left-1.15,p.right+1.15]){const q=track.ribbonPoint(s,offset);positions.push(q.x,q.h,q.y);}
+    for(const offset of [-Math.min(p.left,8),Math.min(p.right,8)]){const q=track.ribbonPoint(s,offset);positions.push(q.x,q.h,q.y);}
     if(i<track.points.length){const a=i*2;indices.push(a,a+1,a+2,a+1,a+3,a+2);}
   }
   const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Float32BufferAttribute(positions,3));geometry.setIndex(indices);geometry.computeVertexNormals();
   fallback.add(new T.Mesh(geometry,new T.MeshBasicMaterial({color:0x505254,side:T.DoubleSide})));world.add(fallback);
   world.userData.summitLoad='loading';world.userData.summitError='';
-  const ready=template().then(result=>{
+  const ready=template(track.asset).then(result=>{
     if(token.cancelled)return false;
     const root=result.scene.clone(true),materials=new Map();root.name='summit-scenery';
     root.traverse(o=>{
@@ -43,6 +43,6 @@ export function buildSummit(track,world,onReady=()=>{}){
     });
     dispose(fallback);fallback.removeFromParent();world.add(root);
     batchWorld(world,128);world.userData.summitLoad='ready';summitRevision++;onReady();return true;
-  }).catch(error=>{if(!token.cancelled){world.userData.summitLoad='error';world.userData.summitError='El paisaje de Summit no pudo cargar. Reabre la pista para reintentar.';summitRevision++;onReady();console.warn('Summit scenery:',error.message);}return false;});
+  }).catch(error=>{if(!token.cancelled){world.userData.summitLoad='error';world.userData.summitError='El paisaje de '+track.layout.name+' no pudo cargar. Reabre la pista para reintentar.';summitRevision++;onReady();console.warn('Summit scenery:',error.message);}return false;});
   return {ready,cancel(){token.cancelled=true;}};
 }

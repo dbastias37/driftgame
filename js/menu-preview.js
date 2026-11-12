@@ -1,6 +1,6 @@
 import * as T from '../vendor/three.module.min.js';
-import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.20';
-import {updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.20';
+import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.21';
+import {updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.21';
 import {roadTreeRevision} from './road-trees.js';
 
 const material=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.82,...extra});

@@ -1,7 +1,7 @@
 import * as T from '../vendor/three.module.min.js';
-import './game-options.js?v=1.0.0-prealpha.20';
-import {cloudTexture} from './smoke-renderer.js?v=1.0.0-prealpha.20';
-import {SnowMotion} from './snow-motion.js?v=1.0.0-prealpha.20';
+import './game-options.js?v=1.0.0-prealpha.21';
+import {cloudTexture} from './smoke-renderer.js?v=1.0.0-prealpha.21';
+import {SnowMotion} from './snow-motion.js?v=1.0.0-prealpha.21';
 const fract=n=>n-Math.floor(n),random=n=>fract(Math.sin(n*78.233+12.9898)*43758.5453);
 const corners=[0,1,2,2,1,3];
 
@@ -29,7 +29,7 @@ export class WeatherEffects{
   sheltered(track,x,y,z){
     if(!track.elevated)return false;
     const q=track.sampleNearby(x,z),f=q&&track.featureAt(q.s,'tunnel');
-    return !!(f&&q.distance<(track.summit?track.widthAt(q.s)+1:track.tunnelHalf||22)&&y<q.h+(f.clearance||30));
+    return !!(f&&q.distance<(track.nfs?track.widthAt(q.s)+1:track.tunnelHalf||22)&&y<q.h+(f.clearance||30));
   }
   spawn(f,i,camera,track,initial=false){
     const seed=i+f.generation++*1543,side=(random(seed+100)-.5)*56,ahead=initial?2+random(seed+500)*60:12+random(seed+500)*54;

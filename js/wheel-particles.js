@@ -54,7 +54,7 @@ globalThis.DriftWheelParticles=(()=>{
           const floor=p.floor+p.gx*(p.x-p.originX)+p.gy*(p.y-p.originY);
           // Most airborne particles need no surface query. The last few cm
           // use the actual ribbon/kerb, including the bank and vertical grade.
-          if(p.height<floor+.3){const real=ground.height(p.x,p.y)+.025;
+          if(p.height<floor+.3){const real=ground.height(p.x,p.y,p.height)+.025;
             if(p.height<real){
               if(p.type==='drop'){state.free.push(p);continue;}
               p.height=real;
@@ -79,6 +79,7 @@ globalThis.DriftWheelParticles=(()=>{
     const state=stateFor(car,track),speed=Math.hypot(car.vel.x,car.vel.y),old=state.last;
     if(old&&Math.hypot(car.pos.x-old.x,car.pos.y-old.y)>Math.max(12,speed*dt*2+3))reset(car);
     advance(state,track,dt);
+    if(car.ride?.airborne){state.last=null;state.acc.fill(0);return;}
     const c=Math.cos(car.angle),s=Math.sin(car.angle),forward=car.vel.x*c+car.vel.y*s,lateral=-car.vel.x*s+car.vel.y*c;
     const slip=Math.max(Math.abs(lateral)/Math.max(4,speed),Math.abs(car.rearSlip||0),car.driveSlip||0);
     const impact=old?clamp((old.speed-speed)/Math.max(.001,dt)/35,0,1):0;
@@ -87,7 +88,7 @@ globalThis.DriftWheelParticles=(()=>{
     const last=state.last;
     for(let w=0;w<4;w++){
       const wheel=state.wheels[w],x=car.pos.x+c*wheel.x-s*wheel.z,y=car.pos.y+s*wheel.x+c*wheel.z;
-      const surface=DriftRoadContact.surface(track,x,y,wet),gravel=surface.kind==='gravel',water=surface.kind!=='grass'?surface.wetness:0;
+      const surface=DriftRoadContact.surface(track,x,y,wet,car.ride?.groundHeight),gravel=surface.kind==='gravel',water=surface.kind!=='grass'?surface.wetness:0;
       // Sideways velocity and yaw fling material across the shoulder. Braking
       // and impacts add energy, but a parked car never creates an endless plume.
       const side=clamp((lateral+(car.omega||0)*wheel.x)*.22,-3,3)+(wheel.z>0?.4:-.4);
@@ -98,7 +99,7 @@ globalThis.DriftWheelParticles=(()=>{
         state.acc[i]+=rates[k]*dt;const count=Math.min(8,Math.floor(state.acc[i]));state.acc[i]-=Math.floor(state.acc[i]);
         for(let j=0;j<count;j++){
           const t=(j+.5)/count,px=last?last.x+(car.pos.x-last.x)*t+c*wheel.x-s*wheel.z:x,py=last?last.y+(car.pos.y-last.y)*t+s*wheel.x+c*wheel.z:y;
-          const contact=DriftRoadContact.surface(track,px,py,wet);
+          const contact=DriftRoadContact.surface(track,px,py,wet,car.ride?.groundHeight);
           if((k<2&&contact.kind!=='gravel')||(k>=2&&(!contact.wetness||contact.kind==='grass')))continue;
           emit(state,type,px,py,contact,car.vel.x,car.vel.y,c*direction,s*direction,side,kick,speed,w);
         }

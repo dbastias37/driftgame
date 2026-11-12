@@ -44,6 +44,13 @@ globalThis.DriftDynamics=(()=>{
     c.steerTarget=clamp(steer*c.maxSteer*sf+assist.counter*clamp(bodySlip,-.6,.6),-c.maxSteer,c.maxSteer);
     const before=c.steerAngle,rate=c.steerRate*p.steer/(1+speed*.012);
     c.steerAngle+=clamp(c.steerTarget-c.steerAngle,-rate*dt,rate*dt);c.steerVel=(c.steerAngle-before)/dt;
+    if(c.ride?.airborne){
+      const drag=Math.exp(-dt*(c.dragLinear+c.dragQuad*speed)/m);
+      c.vel.x*=drag;c.vel.y*=drag;c.omega*=Math.exp(-dt*.35);c.angle+=c.omega*dt;c.yawRate=c.omega;
+      c.pos.x+=c.vel.x*dt;c.pos.y+=c.vel.y*dt;
+      c.frontLoad=c.rearLoad=c.frontSlip=c.rearSlip=c.driveSlip=c.accelLat=0;c.accelLong=-speed*(1-drag)/dt;
+      return;
+    }
     const cos=Math.cos(c.angle),sin=Math.sin(c.angle),vx=c.vel.x*cos+c.vel.y*sin,vy=-c.vel.x*sin+c.vel.y*cos;
     // Reverse is a separate driving command: ordinary brakes never propel the car.
     const reverse=!!c.reverseRequested && thr===0;

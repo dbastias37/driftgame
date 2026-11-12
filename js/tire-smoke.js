@@ -4,7 +4,7 @@ globalThis.DriftTireSmoke=(()=>{
   function update(car,dt,f,r,slip,kmh,vlat){
     if(!(dt>=0))return;
     const particles=car.smoke,volume=car.cosmetics?.smokeVolume||1,limit=car.smokeLimit||800;
-    const friction=Math.max(Math.abs(car.rearSlip||0),slip,car.driveSlip||0),active=!car.offTrack&&car.descent?.motion!=='falling'&&kmh>8&&(car.trailOn||friction>.19||car.handbrake);
+    const friction=Math.max(Math.abs(car.rearSlip||0),slip,car.driveSlip||0),active=!car.ride?.airborne&&!car.offTrack&&car.descent?.motion!=='falling'&&kmh>8&&(car.trailOn||friction>.19||car.handbrake);
     const intensity=active?clamp((friction-.09)/.48,.15,1)*clamp(kmh/75,.2,1):0;
     car.smokeAcc+=intensity*(16+28*Math.sqrt(volume))*dt;
     const old=car._smokeEmitter,now=car.pos;
@@ -14,7 +14,7 @@ globalThis.DriftTireSmoke=(()=>{
     const emitWheels=car.handling?.drive===1&&!car.handbrake&&car.driveSlip>.1?wheels.slice(2):wheels.slice(0,2);
     for(let i=0;i<count;i++)for(const wheel of emitWheels){
       const t=(i+.5)/Math.max(1,count),x=(continuous?old.x+(now.x-old.x)*t:now.x)+f.x*wheel.x+r.x*wheel.z,y=(continuous?old.y+(now.y-old.y)*t:now.y)+f.y*wheel.x+r.y*wheel.z;
-      const surface=DriftRoadContact.surface(track,x,y,globalThis.DriftWheelParticles?.wetness(car.conditions?.weather)||0);
+      const surface=DriftRoadContact.surface(track,x,y,globalThis.DriftWheelParticles?.wetness(car.conditions?.weather)||0,car.ride?.groundHeight);
       if(surface.kind==='gravel'||surface.kind==='grass')continue;
       const rnd=()=>Math.random()-.5,ground=surface.height;
       particles.push({x:x+rnd()*.08,y:y+rnd()*.08,height:ground+.16,vx:car.vel.x*.08+r.x*(vlat*.10+rnd()*.5)-f.x*.2,vy:car.vel.y*.08+r.y*(vlat*.10+rnd()*.5)-f.y*.2,lift:.34+Math.random()*.26,r:.19+Math.random()*.13,grow:(.62+Math.random()*.35)*Math.cbrt(volume),density:(.3+intensity*.2)*(1-surface.wetness*.85),a:0,life:0,ttl:2.1+Math.random()*.9,rotation:Math.random()*6.28,spin:rnd()*.55,color:car.cosmetics?.smokeColor||'#dde8e8'});

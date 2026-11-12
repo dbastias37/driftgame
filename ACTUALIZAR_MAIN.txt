@@ -1,0 +1,56 @@
+DRIFTGAME — NFS III ESPECIAL
+Actualización para main · 12 de noviembre de 2026
+Versión: 1.0.0-prealpha.21
+Repositorio: https://github.com/dbastias37/driftgame
+
+SUBIDA MANUAL A GITHUB
+1. Descomprime este ZIP en tu computador.
+2. Abre el repositorio dbastias37/driftgame y selecciona la rama main.
+3. Desde la raíz del repositorio, abre Add file > Upload files.
+4. Arrastra TODO el contenido extraído: archivos sueltos y carpetas
+   assets, docs, js, scripts, server y tests. Conserva sus nombres y rutas.
+   El archivo index.html debe quedar en la raíz del repositorio.
+5. Confirma la carga y guarda el commit en main. Mensaje sugerido:
+   feat: NFS III Especial, piso completo y saltos
+
+Sube los archivos extraídos; GitHub no descomprime el ZIP por ti.
+Conserva todos los demás archivos que ya existen en main.
+Esta entrega contiene 49 archivos nuevos/modificados del proyecto,
+más esta guía y CAMBIOS_SHA256.txt. No hay archivos que eliminar.
+El juego completo requiere también los recursos que ya están en main,
+incluido assets/bonus/summit.glb.
+
+CONTENIDO
+- Summit, Rocky Pass y Redrock Ridge agrupados en NFS III Especial.
+- Modelos y texturas de los dos nuevos mapas.
+- Contacto con todo el piso transitable conectado a la carretera.
+- Saltos según velocidad y rasante, gravedad y aterrizajes.
+- Ruedas unidas al auto durante el vuelo; sin tracción o marcas en el aire.
+- Puente y carretera inferior de Redrock diferenciados por altura.
+- Recuperación, repeticiones y fantasmas compatibles con los saltos.
+- Se conservan los ajustes anteriores de Summit y nieve.
+
+COMPROBACIONES DE ESTA ENTREGA
+- npm run test:core: 248 aprobadas, 0 fallidas.
+- npm run validate:nfs: los cinco autos completaron los tres mapas.
+  Cero muestras fuera del piso y cero saltos de posición en el trazado.
+- Navegador: selección y texturas de los tres mapas, garaje, salida y
+  aceleración en Redrock Ridge comprobados en renderizador compatible.
+- Integridad ZIP, rutas y reconstrucción exacta sobre main verificadas.
+- Las pruebas Playwright requieren Chromium y no están incluidas en la
+  cifra anterior. Rendimiento WebGL y móviles físicos pendientes.
+
+BASE Y APLICACIÓN
+Main base: b5b1648f54a0a4ab7ff36343e2de6b4aaca233bc
+Revisión preparada: 615c8d637fff8eeccb06d601a50923656ac6f792
+Este paquete queda listo para tu subida manual. No se publicó durante
+esta entrega ni se inició un despliegue en Render.
+Tras la subida, el despliegue dependerá de la configuración de Render.
+
+Para comprobarlo: Menú principal > NFS III Especial > elegir mapa >
+elegir auto > A la pista. Si conservas la pestaña del juego abierta,
+recarga con Ctrl+F5 después de finalizar tu despliegue.
+
+CAMBIOS_SHA256.txt verifica los archivos de esta actualización.
+PACKAGE_SHA256.txt corresponde al proyecto completo actualizado.
+Detalles técnicos: docs/nfs-special-release.md.

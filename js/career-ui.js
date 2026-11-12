@@ -63,3 +63,5 @@ function choosePaint(color){
   syncPaint();drawCarPreview();$('#paintStatus').textContent='Pintura guardada para este auto.';
 }
 $('#paintCustom').addEventListener('change',e=>choosePaint(e.target.value));
+
+$('#modelCredits').innerHTML+=`<article><h3>NFS III Especial</h3><p>Summit · Rocky Pass · Redrock Ridge</p><small>Modelos aportados por Diego Bastias A. Summit: amogusstrikesback2 · CC BY 4.0 declarada en el archivo. <a href="assets/SCENERY-CREDITS.md" target="_blank" rel="noopener">Procedencia, atribución y adaptaciones</a>.</small></article>`;

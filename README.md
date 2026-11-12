@@ -1,3 +1,11 @@
+## 1.0.0-prealpha.21 — NFS III Especial
+
+Summit, Rocky Pass y Redrock Ridge comparten la categoría **NFS III Especial** en el menú y la selección 3D. Cada pista conserva su paisaje y atlas suministrados, carreras de cuatro/cinco vueltas y récords separados.
+
+El piso transitable completo sustituye los límites de la franja central. Las crestas pueden producir despegue físico: velocidad vertical, gravedad, ruedas junto al chasis y aterrizaje. Los puentes distinguen el nivel superior del inferior. Se conservan los ajustes de altura negativa, arranque en subida y nieve.
+
+Pruebas: `npm run test:core`, `npm run test:nfs` y `npm run validate:nfs`. Detalles en `docs/nfs-special-release.md`. Arranque local: `npm ci` y `npm run preview`.
+
 ## 1.0.0-prealpha.20 — Summit conducible y suspensión corregida
 
 Summit se juega desde **SUMMIT · CONDUCIR** o la selección de circuitos: 10,30 km, cinco autos, rivales, cuatro o cinco vueltas y contrarreloj. El paisaje y el atlas proceden del modelo recibido; la carretera, el contacto, las barreras y la carrera usan las mecánicas de DR1FT.
