@@ -1,3 +1,10 @@
+## 1.0.0-prealpha.27 — Seguimiento original del RX-7 para todos los autos
+
+- Una función común conserva la distancia, altura, anticipación, suavizado y campo de visión originales del RX-7 para los diez modelos.
+- Cada partida inicia en Seguimiento con el zoom original, también en online. Cambiar de auto o volver de una cámara cinematográfica descarta la orientación anterior; terminar de cargar el mismo modelo no provoca un salto.
+- Las vistas alternativas siguen disponibles con C o desde Ajustes durante la partida.
+- Validación: 290 pruebas aprobadas; comparación de los diez GLB durante curvas, derrape, marcha atrás y cruce de ángulo; 60 combinaciones de auto/modo. Subaru probado visualmente al acelerar y girar en Mercado Ocho.
+
 ## 1.0.0-prealpha.25 — Precarga real e inicio con música
 
 - Pantalla negra desde el inicio, título DR1FT y barra con el naranja del «1».

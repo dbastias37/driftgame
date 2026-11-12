@@ -19,7 +19,7 @@ import {WheelParticleRenderer} from './wheel-particles-renderer.js?v=1.0.0-preal
 import {RetroRenderer} from './retro-renderer.js?v=1.0.0-prealpha.24';
 import {WeatherEffects} from './weather.js?v=1.0.0-prealpha.24';
 import {buildTraining} from './training-scene.js?v=1.0.0-prealpha.24';
-import {onboardCameras,onboardShot,startShot} from './driving-cameras.js?v=1.0.0-prealpha.24';
+import {chaseShot,onboardCameras,onboardShot,startShot} from './driving-cameras.js?v=1.0.0-prealpha.27';
 import {applyRoadFeedback,roadFeedback} from './road-feedback.js?v=1.0.0-prealpha.24';
 import {SceneSpeedLines} from './scene-speed-lines.js?v=1.0.0-prealpha.24';
 import {LampDust} from './lamp-dust.js?v=1.0.0-prealpha.24';
@@ -193,6 +193,9 @@ export class DriftView3D{
   vehicleStatus(key){return this.extraErrors.has(key)?'error':this.extraPending.has(key)?'loading':'ready';}
   setSkin(key,force=false){
     if(key===this.key&&!force)return;
+    // A different car must not inherit the previous car's orbit. An async
+    // replacement of the same car's placeholder keeps its current follow pose.
+    if(key!==this.key)this.resetCamera();
     this.ensureVehicle(key);
     this.scene.remove(this.car.root,this.ghostCar.root);disposePaint(this.car);disposeGroup(this.car.root);disposeGroup(this.ghostCar.root);
     this.car=this.extraTemplates.has(key)?createReplacement(this.extraTemplates.get(key)):key==='barracuda'&&this.barracudaTemplate?createReplacement(this.barracudaTemplate):key==='blue'&&this.skylineTemplate?createReplacement(this.skylineTemplate):key==='gray'&&this.novaTemplate?createReplacement(this.novaTemplate):key==='fujiwara'&&this.fujiwaraTemplate?createFujiwara(this.fujiwaraTemplate):key==='yugo'&&this.yugoTemplate?createYugo(this.yugoTemplate):key==='yellow'&&this.rx7Template?createRX7(this.rx7Template):createCar(key);
@@ -267,6 +270,7 @@ export class DriftView3D{
   }
 
   render({track,player,ghost,rivals=[],skin='blue',dt=0,inMenu=false,time=0,camera='chase',motion='full',timeOfDay=0,anchor,impulse=0,frameDt=dt,weather='clear',retro,startIntro=null,weatherTime=time,vibration={vehicle:0,camera:0},speedLines={},props=null,signs=null}){
+    if(this.cameraMode!==camera)this.resetCamera();
     if(!track||!player)return;this.setTimeOfDay(timeOfDay,weather);this.setRetro(retro);this.cameraMode=camera;this.distance=this.cameraZoom[camera]||1;this.adaptResolution(frameDt);if(this.track!==track){this.build(track);this.resetCamera();}this.setSkin(skin);
     const w=this.canvas.clientWidth||innerWidth,h=this.canvas.clientHeight||innerHeight;if(this.width!==w||this.height!==h){this.width=w;this.height=h;this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();}
     const p=player.pos,a=player.angle,speed=player.worldSpeed();this.car.root.position.set(p.x,0,p.y);this.car.root.rotation.set(0,-a,0,'YXZ');
@@ -306,7 +310,7 @@ export class DriftView3D{
     if(shot){desired.copy(shot.position);target.copy(shot.target);this.camera.fov=shot.fov;}
     else if(camera==='aerial'){desired.set(p.x-22,38,p.y+24);target.set(p.x+f.x*4,0,p.y+f.z*4);this.camera.fov=52;}
     else if(onboard){const mounted=onboardShot(camera,this.car,player.bodyDimensions);desired.copy(mounted.position);target.copy(mounted.target);this.camera.fov=clamp(mounted.fov*Math.sqrt(this.distance),38,105);}
-    else{const d=12.5+Math.min(speed,45)*.075;desired.set(p.x-f.x*d,6.5,p.y-f.z*d);target.set(p.x+f.x*7,.6,p.y+f.z*7);this.camera.fov=58+(motion==='reduced'?0:Math.min(speed*.12,7));}
+    else this.camera.fov=chaseShot(desired,target,p,f,speed,motion==='reduced');
     if(track.elevated&&camera==='chase'&&!inMenu&&startIntro===null){const scale=DriftTouring.cameraDistanceScale(track,track.sample(p.x,p.y).s);desired.sub(target).multiplyScalar(scale).add(target);}
     if(startIntro!==null){const opening=startShot([player,...rivals],motion==='reduced'?5.99:startIntro);desired.copy(opening.position);target.copy(opening.target);this.camera.fov=opening.fov;}
     else if(!mounted){if(shot?.kind==='trackside')this.camera.fov=clamp(this.camera.fov*Math.sqrt(this.distance),30,100);else desired.sub(target).multiplyScalar(this.distance).add(target);}

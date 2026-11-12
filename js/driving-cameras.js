@@ -1,4 +1,12 @@
 import * as T from '../vendor/three.module.min.js';
+// Original RX-7 chase framing. Every vehicle uses the same physical heading,
+// distance, height, look-ahead and speed-based FOV, independent of its GLB rig.
+export function chaseShot(position,target,point,forward,speed,reduced=false){
+  const distance=12.5+Math.min(speed,45)*.075;
+  position.set(point.x-forward.x*distance,6.5,point.y-forward.z*distance);
+  target.set(point.x+forward.x*7,.6,point.y+forward.z*7);
+  return 58+(reduced?0:Math.min(speed*.12,7));
+}
 export const onboardCameras=new Set(['hood','fender','fenderRight','bumper','rear']);
 export function onboardShot(mode,model,dimensions={}){
   const length=dimensions?.length||4.4,width=dimensions?.width||1.8;
