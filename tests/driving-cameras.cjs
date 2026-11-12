@@ -27,23 +27,66 @@ async function setup(){
   return {view,track,player,templates};
 }
 const snapshot=view=>[...view.camera.position.toArray(),...view.camera.quaternion.toArray(),...view.look.toArray(),view.camera.fov];
-test('all ten loaded cars reproduce the RX-7 chase through turns, drift, reverse and angle wrapping',async()=>{
+test('all ten loaded cars share trajectory follow through turns, drift, stopping, reverse and angle wrapping',async()=>{
   const {view,track,player,templates}=await setup();
   try{
     let reference;
     for(const skin of Object.keys(templates)){
-      view.resetCamera();const frames=[];
+      view.resetCamera();const frames=[];player.pos={x:0,y:0};
       for(let i=0;i<90;i++){
-        const angle=3+i*.018,speed=i<60?25:-8;
-        player.pos={x:i*.3,y:Math.sin(i*.02)*8};player.angle=Math.atan2(Math.sin(angle),Math.cos(angle));player.vel={x:Math.cos(angle+.4)*speed,y:Math.sin(angle+.4)*speed};
+        const angle=3+i*.018,speed=i<50?25:i<70?(69-i)*1.25:-Math.min(6,(i-69)*.5);
+        player.angle=Math.atan2(Math.sin(angle),Math.cos(angle));player.vel={x:Math.cos(angle+.4)*speed,y:Math.sin(angle+.4)*speed};
+        player.pos.x+=player.vel.x/60;player.pos.y+=player.vel.y/60;
         const before=JSON.stringify(player);view.render({track,player,skin,dt:1/60});
         assert.equal(JSON.stringify(player),before);assert(view.car.imported,skin);frames.push(snapshot(view));
-        const behind=(view.camera.position.x-player.pos.x)*Math.cos(player.angle)+(view.camera.position.z-player.pos.y)*Math.sin(player.angle);
-        assert(behind<0,`${skin} camera must remain behind during normal driving`);
+        const behind=(view.camera.position.x-player.pos.x)*Math.cos(angle+.4)+(view.camera.position.z-player.pos.y)*Math.sin(angle+.4);
+        assert(behind<0,`${skin} camera must remain behind the travel axis`);
       }
       if(!reference)reference=frames;else assert.deepEqual(frames,reference,`${skin} differs from RX-7`);
     }
   }finally{view.dispose();}
+});
+test('sustained drift and countersteer rotate the car, not the follow view, on mobile and desktop including reduced motion',async()=>{
+  const {view,track,player}=await setup();
+  try{
+    for(const [width,height] of [[1280,720],[390,844]])for(const motion of ['full','reduced']){
+      view.canvas.clientWidth=width;view.canvas.clientHeight=height;
+      let straight;
+      for(const drift of [0,Math.PI/4,-Math.PI/3,Math.PI*.95]){
+        view.resetCamera();const frames=[];
+        for(let i=0;i<60;i++){
+          player.pos={x:i/3,y:0};player.vel={x:20,y:0};player.angle=drift*Math.sin(i/60*Math.PI/2);
+          player.steerAngle=-player.angle*.2;
+          view.render({track,player,skin:'subaru',dt:1/60,motion});frames.push(snapshot(view));
+          assert(Math.abs(view.yaw)<1e-10,'body yaw must not steer the follow camera');
+          assert.equal(view.car.root.rotation.y,-player.angle,'the rendered body must still rotate');
+        }
+        if(!straight)straight=frames;else assert.deepEqual(frames,straight,`${width} / ${motion} / ${drift}`);
+      }
+    }
+  }finally{view.dispose();}
+});
+test('travel heading turns smoothly at different frame rates, ignores zero-speed noise and handles reverse without a half-turn',async()=>{
+  const {ChaseHeading}=await import('../js/driving-cameras.js');
+  const difference=(a,b)=>Math.abs(Math.atan2(Math.sin(a-b),Math.cos(a-b))),final=[];
+  for(const hz of [20,30,60,120]){
+    const follow=new ChaseHeading(),player={angle:0,vel:{x:20,y:0}};
+    assert.equal(follow.update(player,1/hz),0);player.vel={x:0,y:20};
+    let previous=0;
+    for(let i=0;i<hz;i++){const yaw=follow.update(player,1/hz);assert(yaw>=previous);assert(yaw-previous<.26);previous=yaw;}
+    assert(difference(previous,Math.PI/2)<.05);final.push(previous);
+    for(let i=0;i<50;i++){player.angle=i*.3;player.vel={x:Math.sin(i)*.2,y:Math.cos(i)*.2};assert.equal(follow.update(player,1/hz),previous);}
+    player.vel={x:-20,y:0};assert.equal(follow.update(player,0),previous,'pause must freeze yaw');
+  }
+  assert(Math.max(...final)-Math.min(...final)<1e-10,'smoothing must not depend on FPS');
+  const follow=new ChaseHeading(),player={angle:0,vel:{x:0,y:0}};follow.update(player,0);
+  for(const sign of [1,-1,1]){
+    for(let i=0;i<=120;i++){player.vel.x=sign*Math.min(6,i*.1);assert(difference(follow.update(player,1/60),0)<1e-10);}
+    for(let i=60;i>=0;i--){player.vel.x=sign*i*.1;assert(difference(follow.update(player,1/60),0)<1e-10);}
+  }
+  follow.reset();player.vel.x=-6;assert(difference(follow.update(player,0),0)<1e-10,'replay seek into reverse');
+  follow.reset();player.angle=0;player.vel={x:-20,y:.01};const before=follow.update(player,0);player.vel.y=-.01;
+  assert(difference(follow.update(player,1/60),before)<.01,'crossing ±PI must not orbit the long way');
 });
 test('switching cars or leaving a cinematic immediately reacquires the rear; a same-car async refresh does not snap',async()=>{
   const {view,track,player}=await setup();

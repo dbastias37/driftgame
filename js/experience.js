@@ -323,7 +323,7 @@ $('#btnRecover').addEventListener('click',loseLifeAndRespawn);
 
 safeAddListener('btnSummit','click',()=>{mode='race';showCircuitMenu();setCircuitCategory('nfs');previewTouring(201);const group=$('#nfsSpecialGroup')?.parentElement;if(group)group.open=true;$('#circuitList').scrollTop=0;});
 async function prepareBootRenderer(){
-  const [{DriftView3D},module]=await Promise.all([import('./view3d.js?v=1.0.0-prealpha.27'),import('./menu-preview.js?v=1.0.0-prealpha.27')]);
+  const [{DriftView3D},module]=await Promise.all([import('./view3d.js?v=1.0.0-prealpha.28'),import('./menu-preview.js?v=1.0.0-prealpha.28')]);
   await document.fonts?.load('32px DriftDisplay');
   MenuPreviewClass=module.MenuPreview3D;
   if(!sceneView)sceneView=new DriftView3D($('#scene3d'),{quality:renderPrefs.quality,onFailure:fail3D,onVehicleFailure:()=>toast('No se pudo cargar un modelo de auto. Recarga para volver a intentarlo.')});

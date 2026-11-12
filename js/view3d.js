@@ -19,7 +19,7 @@ import {WheelParticleRenderer} from './wheel-particles-renderer.js?v=1.0.0-preal
 import {RetroRenderer} from './retro-renderer.js?v=1.0.0-prealpha.24';
 import {WeatherEffects} from './weather.js?v=1.0.0-prealpha.24';
 import {buildTraining} from './training-scene.js?v=1.0.0-prealpha.24';
-import {chaseShot,onboardCameras,onboardShot,startShot} from './driving-cameras.js?v=1.0.0-prealpha.27';
+import {ChaseHeading,chaseShot,onboardCameras,onboardShot,startShot} from './driving-cameras.js?v=1.0.0-prealpha.28';
 import {applyRoadFeedback,roadFeedback} from './road-feedback.js?v=1.0.0-prealpha.24';
 import {SceneSpeedLines} from './scene-speed-lines.js?v=1.0.0-prealpha.24';
 import {LampDust} from './lamp-dust.js?v=1.0.0-prealpha.24';
@@ -130,7 +130,7 @@ export class DriftView3D{
     const next=clamp(this.pixelRatio+(this.frameAverage>1/42?-.15:this.frameAverage<1/58?.1:0),.65,Math.min(devicePixelRatio||1,this.low?1:1.5));
     if(Math.abs(next-this.pixelRatio)>.01){this.pixelRatio=next;this.renderer.setPixelRatio(next);this.width=0;}
   }
-  resetCamera(){this.cameraReady=false;this.director??=new CinematicDirector();this.director.reset();}
+  resetCamera(){this.cameraReady=false;this.director??=new CinematicDirector();this.director.reset();this.chaseHeading??=new ChaseHeading();this.chaseHeading.reset();}
   zoomBy(m){const key=this.cameraMode||'chase';this.cameraZoom[key]=this.distance=clamp((this.cameraZoom[key]||1)*m,.55,2.2);this.cameraReady=false;}
   build(track){
     this.summitScene?.cancel();this.summitScene=null;disposeGroup(this.world);this.trailCache=new WeakMap();this.track=track;const r=rng(),b=track.bounds,cx=b.minX+b.w/2,cz=b.minY+b.h/2,half=track.roadHalf;
@@ -305,7 +305,7 @@ export class DriftView3D{
     const mounted=onboard||!!shot?.mounted;if(shot?.mounted){this.camera.near=.06;this.car.root.visible=!shot.hideBody;}
     this.cinematicLabel=shot?.label||'';
     const desired=new T.Vector3(),target=new T.Vector3(),alpha=1-Math.exp(-Math.min(dt,.1)*5),angleDelta=Math.atan2(Math.sin(a-(this.yaw??a)),Math.cos(a-(this.yaw??a)));
-    this.yaw=this.cameraReady?(this.yaw+angleDelta*(motion==='reduced'?1:alpha)):a;
+    this.yaw=camera==='chase'?this.chaseHeading.update(player,dt):this.cameraReady?(this.yaw+angleDelta*(motion==='reduced'?1:alpha)):a;
     const yaw=this.yaw,f=new T.Vector3(Math.cos(yaw),0,Math.sin(yaw)),right=new T.Vector3(-f.z,0,f.x);
     if(shot){desired.copy(shot.position);target.copy(shot.target);this.camera.fov=shot.fov;}
     else if(camera==='aerial'){desired.set(p.x-22,38,p.y+24);target.set(p.x+f.x*4,0,p.y+f.z*4);this.camera.fov=52;}

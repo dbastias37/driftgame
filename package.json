@@ -1,6 +1,6 @@
 {
   "name": "dr1ft",
-  "version": "1.0.0-prealpha.27",
+  "version": "1.0.0-prealpha.28",
   "private": true,
   "scripts": {
     "test": "node --test tests/frame-presentation.cjs tests/simulation.cjs tests/rendering.cjs tests/track-surface.cjs tests/circuit-layouts.cjs tests/road-contact.cjs tests/rx7-model.cjs tests/menu-flow.cjs tests/menu-preview.cjs tests/downhill.cjs tests/yugo.cjs tests/fujiwara-model.cjs tests/optimization.cjs tests/regression.cjs tests/online.cjs tests/flow-mobile.cjs tests/cinematics.cjs tests/attract-demo.cjs tests/career.cjs tests/replacement-models.cjs tests/vehicle-dynamics.cjs tests/race-options.cjs tests/retro-options.cjs tests/gamepad.cjs tests/racing-upgrade.cjs tests/training.cjs tests/road-feedback.cjs tests/music.cjs tests/menu-feedback.cjs tests/touring-circuits.cjs tests/touring-scene.cjs tests/wheel-particles.cjs tests/road-assets.cjs tests/summit.cjs tests/snow.cjs tests/nfs-special.cjs tests/nfs-contacts.cjs tests/airborne.cjs tests/glen-canyon.cjs tests/barracuda.cjs tests/trees-new.cjs tests/continuation-ui.cjs tests/ford-models.cjs tests/garage-expansion.cjs tests/preloader.cjs tests/road-signs.cjs tests/driving-cameras.cjs",

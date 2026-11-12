@@ -1,3 +1,10 @@
+## 1.0.0-prealpha.28 — Cámara de seguimiento por trayectoria
+
+- Seguimiento toma el rumbo real del desplazamiento y lo suaviza: la carrocería puede girar y la cola abrirse durante el derrape sin arrastrar la cámara. Se aplica por igual a los diez autos, en escritorio, móvil y movimiento reducido.
+- Al detenerse conserva el último rumbo fiable; la marcha atrás mantiene el lado de la cámara sin provocar un giro de 180°. Las vistas a bordo y cinematográficas conservan su funcionamiento.
+- El historial de `main` vigente el 5 de noviembre (commit `cf05d98d`) también seguía el ángulo de la carrocería. La versión anterior unificó el encuadre, pero no desacopló el giro.
+- Validación: 292 pruebas aprobadas, incluyendo derrape/contravolante, diez modelos, tamaños móvil/escritorio, movimiento reducido, 20–120 FPS, parada, marcha atrás y cruce de ángulo. Comparación visual con el Subaru en navegador de compatibilidad; tacto en teléfono físico pendiente.
+
 ## 1.0.0-prealpha.27 — Seguimiento original del RX-7 para todos los autos
 
 - Una función común conserva la distancia, altura, anticipación, suavizado y campo de visión originales del RX-7 para los diez modelos.

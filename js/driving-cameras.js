@@ -1,6 +1,38 @@
 import * as T from '../vendor/three.module.min.js';
-// Original RX-7 chase framing. Every vehicle uses the same physical heading,
-// distance, height, look-ahead and speed-based FOV, independent of its GLB rig.
+const angleDifference=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
+// Follow the path through world space, not the yaw of the sliding body. Keep
+// the last reliable direction near rest so tire jitter cannot orbit the camera.
+export class ChaseHeading{
+  constructor(){this.reset();}
+  reset(){this.yaw=null;this.reversing=false;}
+  update(player,dt){
+    const body=Number.isFinite(player.angle)?player.angle:0;
+    const vx=Number.isFinite(player.vel?.x)?player.vel.x:0,vz=Number.isFinite(player.vel?.y)?player.vel.y:0;
+    const speed=Math.hypot(vx,vz),longitudinal=vx*Math.cos(body)+vz*Math.sin(body);
+    if(this.yaw===null){
+      // A camera cut into an already reversing car must use the same side as
+      // a continuous stop/reverse. High-speed spins never select reverse.
+      this.reversing=speed<8&&longitudinal<-.6;
+      this.yaw=speed>=1.2?Math.atan2(vz,vx)+(this.reversing?Math.PI:0):body;
+      return this.yaw;
+    }
+    const elapsed=Number.isFinite(dt)?Math.max(0,Math.min(dt,.25)):0;
+    if(!elapsed||speed<.7)return this.yaw;
+    // Change driving direction only near a stop, with a dead zone. Once moving,
+    // countersteer/body rotation cannot reinterpret a drift as reverse driving.
+    if(speed<2.5){
+      if(longitudinal<-.6)this.reversing=true;
+      else if(longitudinal>.6)this.reversing=false;
+    }
+    const direction=Math.atan2(vz,vx)+(this.reversing?Math.PI:0);
+    const confidence=Math.min(1,(speed-.7)/2.3);
+    const blend=1-Math.exp(-elapsed*3.5*confidence*confidence);
+    this.yaw+=angleDifference(direction,this.yaw)*blend;
+    return this.yaw;
+  }
+}
+// Keep the original distance, height, look-ahead and speed-based FOV for every
+// model. The independent path heading above leaves the rear free during drift.
 export function chaseShot(position,target,point,forward,speed,reduced=false){
   const distance=12.5+Math.min(speed,45)*.075;
   position.set(point.x-forward.x*distance,6.5,point.y-forward.z*distance);

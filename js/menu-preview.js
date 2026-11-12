@@ -1,5 +1,5 @@
 import * as T from '../vendor/three.module.min.js';
-import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.27';
+import {DriftView3D,disposeGroup} from './view3d.js?v=1.0.0-prealpha.28';
 import {updateWorldVisibility} from './world-optimization.js?v=1.0.0-prealpha.24';
 import {roadTreeRevision} from './road-trees.js?v=1.0.0-prealpha.25';
 
